@@ -411,7 +411,7 @@
       "name": "GIMP",
       "category": "image-tools",
       "description": "Open-source raster graphics editor for image retouching, compositing, layers, masks, and batch image processing.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/image-tools/gimp/TOOL.md",
       "official_url": "https://www.gimp.org/",
       "source_repository": "https://gitlab.gnome.org/GNOME/gimp",
@@ -425,8 +425,8 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
+        "installation_tested": true,
+        "runtime_tested": true
       }
     },
     {
@@ -434,7 +434,7 @@
       "name": "rembg",
       "category": "image-tools",
       "description": "Python-based AI background removal tool with CLI, library, HTTP server, and local ONNX model inference.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/image-tools/rembg/TOOL.md",
       "official_url": "https://github.com/danielgatis/rembg",
       "source_repository": "https://github.com/danielgatis/rembg",
@@ -448,8 +448,8 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
+        "installation_tested": true,
+        "runtime_tested": true
       }
     }
   ]
