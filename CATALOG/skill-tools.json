@@ -253,6 +253,19 @@
       "recommended": [
         "python"
       ]
+    },
+    {
+      "id": "crypto-security",
+      "required_any": [],
+      "recommended": [
+        "bandit",
+        "pip-audit",
+        "gitleaks",
+        "trivy",
+        "age",
+        "restic",
+        "podman"
+      ]
     }
   ]
-}
+}\n
