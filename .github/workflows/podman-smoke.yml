@@ -1,0 +1,55 @@
+name: Podman rootless container smoke test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "TOOLS/container-runtime/podman/**"
+      - "scripts/inventory.py"
+      - ".github/workflows/podman-smoke.yml"
+  pull_request:
+    paths:
+      - "TOOLS/container-runtime/podman/**"
+      - "scripts/inventory.py"
+      - ".github/workflows/podman-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  podman-smoke:
+    name: Install Podman and run a rootless container
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Podman
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes podman
+          podman --version
+          python3 scripts/inventory.py --pretty > inventory.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          inventory = json.loads(Path("inventory.json").read_text())
+          assert inventory["commands"]["podman"]["installed"] is True
+          print("Podman executable inventory detection: PASS")
+          PY
+
+      - name: Verify rootless runtime and run isolated container
+        shell: bash
+        run: |
+          set -euo pipefail
+          rootless="$(podman info --format '{{.Host.Security.Rootless}}')"
+          echo "Podman rootless mode: $rootless"
+          test "$rootless" = "true"
+
+          output="$(podman run --rm --pull=always --network=none docker.io/library/alpine:3.22 sh -c 'printf podman-container-ok')"
+          test "$output" = "podman-container-ok"
+          echo "Rootless isolated container execution: PASS"
