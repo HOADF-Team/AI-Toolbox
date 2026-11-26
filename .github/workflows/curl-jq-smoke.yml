@@ -35,6 +35,8 @@ jobs:
           sudo apt-get install --yes --reinstall curl jq
           curl --version | head -n 1
           jq --version
+          python3 scripts/inventory.py --pretty > inventory.json
+          jq -e '.commands.curl.installed == true and .commands.jq.installed == true' inventory.json
 
       - name: Exercise GET, POST, HTTP errors, and jq filters
         shell: bash
