@@ -122,7 +122,7 @@
       "name": "Playwright",
       "category": "web-testing",
       "description": "Browser automation and end-to-end testing for websites and web applications; supports Chromium, Firefox and WebKit.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/web-testing/playwright/TOOL.md",
       "official_url": "https://playwright.dev/",
       "source_repository": "https://github.com/microsoft/playwright",
@@ -143,8 +143,8 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
+        "installation_tested": true,
+        "runtime_tested": true
       }
     },
     {
