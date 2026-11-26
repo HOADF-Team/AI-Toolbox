@@ -577,7 +577,7 @@
       "name": "Bandit",
       "category": "security",
       "description": "Python AST-based security linter that reports common risky code patterns through security-focused plugins.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/security/bandit/TOOL.md",
       "official_url": "https://bandit.readthedocs.io/en/latest/",
       "source_repository": "https://github.com/PyCQA/bandit",
@@ -590,8 +590,8 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
+        "installation_tested": true,
+        "runtime_tested": true
       }
     }
   ]
