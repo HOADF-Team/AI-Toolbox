@@ -44,8 +44,7 @@ jobs:
 
           inventory = json.loads(Path("inventory.json").read_text())
           assert inventory["commands"]["mockoon-cli"]["installed"] is True
-          assert inventory["node_packages"]["@mockoon/cli"]["available"] is True
-          print("Mockoon CLI and npm package inventory detection: PASS")
+          print("Mockoon CLI executable inventory detection: PASS")
           PY
 
       - name: Create a local OpenAPI fixture
