@@ -2,7 +2,11 @@
 """Tests for catalog-to-inventory matching."""
 from __future__ import annotations
 
+import sys
 import unittest
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from typing import Any
 
 from match_inventory import match_catalog
