@@ -70,7 +70,10 @@ def validate(skills_root: Path, map_path: Path, tool_mapping_path: Path, catalog
         tool_mapping = json.loads(tool_mapping_path.read_text(encoding="utf-8"))
         catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
         tool_skills = tool_mapping.get("skills", [])
-        tool_skill_ids = [item.get("id") for item in tool_skills if isinstance(item, dict)]
+        tool_skill_ids = [
+            item["id"] for item in tool_skills
+            if isinstance(item, dict) and isinstance(item.get("id"), str)
+        ]
         if len(tool_skill_ids) != len(set(tool_skill_ids)):
             errors.append("Duplicate Skill IDs in machine-readable tool map")
         if set(tool_skill_ids) != actual:
