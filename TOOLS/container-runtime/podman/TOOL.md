@@ -2,14 +2,15 @@
 
 - **ID:** `podman`
 - **Category:** container-runtime
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainers:** Podman community; project currently hosted under the podman-container-tools GitHub organization
 - **Official website:** https://podman.io/
 - **Source repository:** https://github.com/podman-container-tools/podman
 - **Documentation:** https://docs.podman.io/
 - **License:** Apache-2.0
 - **Platforms:** Linux; Windows and macOS through Podman Machine (a managed Linux VM)
-- **Version reviewed:** 6.2.0
+- **Latest upstream version reviewed:** 6.2.0
+- **CI-tested distro package:** 5.7.0 (Ubuntu repository)
 - **Last reviewed:** 2026-11-26
 
 ## What it does
@@ -81,9 +82,14 @@ podman info
 
 - **Review date:** 2026-11-26.
 - **Source/license review:** official installation guidance, release information, repository, and Apache-2.0 license reviewed.
-- **Installation test:** pending pinned distribution package installation in GitHub Actions.
-- **Runtime test:** pending rootless container execution using a small public image with networking disabled after image pull.
-- **Status:** `reviewed`; do not treat as installed or runtime-tested until the workflow passes.
+- **CI environment:** GitHub-hosted Ubuntu runner.
+- **Installation:** Ubuntu repository package installed successfully; the package reported `podman version 5.7.0`. The latest upstream release reviewed separately is 6.2.0.
+- **Inventory:** `scripts/inventory.py` detected the `podman` executable.
+- **Rootless verification:** `podman info` reported `Host.Security.Rootless=true`.
+- **Runtime test:** pulled `docker.io/library/alpine:3.22` and ran a disposable container with `--network=none`; container printed the expected marker and exited successfully.
+- **Result:** installation, inventory detection, rootless-mode check, and isolated container execution passed. Workflow run: https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45856734424
+- **Version scope:** the test confirms Ubuntu's packaged Podman 5.7.0, not upstream 6.2.0. Distribution packages may lag upstream and should be checked for security updates before use.
+- **Status:** `tested`; verified on this Ubuntu CI runner only.
 
 ## Sources
 
