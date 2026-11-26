@@ -20,6 +20,7 @@ COMMANDS = {
     "uv": ["--version"],
     "pytest": ["--version"],
     "ruff": ["--version"],
+    "mypy": ["--version"],
     "node": ["--version"],
     "npm": ["--version"],
     "npx": ["--version"],
@@ -41,7 +42,7 @@ COMMANDS = {
 }
 
 PYTHON_MODULES = [
-    "pytest", "ruff", "playwright", "pandas", "PIL", "docx",
+    "pytest", "ruff", "mypy", "playwright", "pandas", "PIL", "docx",
     "openpyxl", "reportlab", "cv2", "rembg", "imageio",
 ]
 NODE_PACKAGES = ["playwright", "lighthouse", "axe-core"]
