@@ -1,0 +1,58 @@
+name: Playwright smoke test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "TOOLS/web-testing/playwright/**"
+      - ".github/workflows/playwright-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  playwright-smoke:
+    name: Install Chromium and run a browser test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Create isolated test project
+        run: |
+          mkdir playwright-smoke
+          cd playwright-smoke
+          npm init -y
+          npm install --save-dev @playwright/test
+          npx playwright --version
+
+      - name: Install Chromium and system dependencies
+        working-directory: playwright-smoke
+        run: npx playwright install --with-deps chromium
+
+      - name: Create a minimal browser test
+        working-directory: playwright-smoke
+        run: |
+          mkdir tests
+          cat > tests/smoke.spec.js <<'EOF'
+          const { test, expect } = require('@playwright/test');
+
+          test('Chromium opens a page and checks its title', async ({ page }) => {
+            await page.goto('https://example.com');
+            await expect(page).toHaveTitle('Example Domain');
+            await expect(page.locator('h1')).toHaveText('Example Domain');
+          });
+          EOF
+
+      - name: Run browser test
+        working-directory: playwright-smoke
+        run: npx playwright test --reporter=list
