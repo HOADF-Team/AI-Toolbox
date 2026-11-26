@@ -2,7 +2,7 @@
 
 - **ID:** `bandit`
 - **Category:** security
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** PyCQA (Python Code Quality Authority)
 - **Official website:** https://bandit.readthedocs.io/en/latest/
 - **Source repository:** https://github.com/PyCQA/bandit
@@ -100,11 +100,12 @@ A `# nosec` comment suppresses a finding on that line. Use narrow, documented su
 
 - **Source and license review:** official PyCQA repository, security policy, documentation, and Apache-2.0 license reviewed on 2026-11-26.
 - **Version reviewed:** 1.9.4, latest release found on PyPI on the review date.
-- **Installation test:** pending isolated CI installation.
-- **Runtime test:** pending isolated CI test against safe and intentionally unsafe source fixtures.
-- **Planned checks:** install Bandit 1.9.4 on a GitHub-hosted Linux runner; confirm it reports expected rule IDs B301 (unsafe pickle deserialization) and B602 (subprocess with `shell=True`) in a fixture; confirm a safe fixture has no findings.
-- **Safety:** fixtures are scanned as source text; no insecure function is executed.
-- **Limitations:** the planned smoke test will not verify every plugin, every platform, custom configuration, or every real-project finding.
+- **CI environment:** GitHub-hosted Ubuntu 26.04, CPython 3.13.18.
+- **Installation:** pinned `bandit==1.9.4` installed successfully from PyPI; the CLI reported `bandit 1.9.4`.
+- **Runtime test:** intentionally unsafe source produced B301 (pickle deserialization) and B602 (subprocess with `shell=True`); the safe fixture produced zero findings. Run: https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45844130119
+- **Safety:** fixtures were scanned as source text; no insecure function was executed.
+- **Additional validation:** catalog validator passed (run 45844129655); Ruff and mypy passed (run 45844129907).
+- **Scope:** confirms installation and the tested rules on this Linux CI runner. It does not verify every plugin, every platform, custom configuration, or every real-project finding.
 
 ## Security and limitations
 
