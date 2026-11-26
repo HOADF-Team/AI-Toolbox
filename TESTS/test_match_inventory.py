@@ -18,12 +18,15 @@ class MatchInventoryTests(unittest.TestCase):
             {"id": "git", "name": "Git", "record": "TOOLS/git.md"},
             {"id": "playwright", "name": "Playwright", "record": "TOOLS/playwright.md"},
             {"id": "hummingbot", "name": "Hummingbot", "record": "TOOLS/hummingbot.md"},
-            {"id": "future-tool", "name": "Future tool", "record": "TOOLS/future.md"},\n            {"id": "gitleaks", "name": "Gitleaks", "record": "TOOLS/gitleaks.md"},\n            {"id": "pip-audit", "name": "pip-audit", "record": "TOOLS/pip-audit.md"},
+            {"id": "future-tool", "name": "Future tool", "record": "TOOLS/future.md"},
+            {"id": "gitleaks", "name": "Gitleaks", "record": "TOOLS/gitleaks.md"},
+            {"id": "pip-audit", "name": "pip-audit", "record": "TOOLS/pip-audit.md"},
         ]}
         self.report: dict[str, Any] = {
             "scope": "current_process_environment_only",
             "generated_at": "2026-11-27T00:00:00+00:00",
-            "commands": {"git": {"installed": True}, "hummingbot": {"installed": False}, "gitleaks": {"installed": True}},\n            "python_modules": {"playwright": {"available": False}, "pip_audit": {"available": True}},
+            "commands": {"git": {"installed": True}, "hummingbot": {"installed": False}, "gitleaks": {"installed": True}},
+            "python_modules": {"playwright": {"available": False}, "pip_audit": {"available": True}},
             "python_modules": {"playwright": {"available": False}},
             "node_packages": {"playwright": {"available": True}},
         }
@@ -45,7 +48,13 @@ class MatchInventoryTests(unittest.TestCase):
         result = match_catalog(self.catalog, self.report)
         self.assertEqual(result["tools"][3]["availability"], "not_probed")
 
-    def test_security_tool_probes_are_mapped(self) -> None:\n        result = match_catalog(self.catalog, self.report)\n        by_id = {item["id"]: item for item in result["tools"]}\n        self.assertEqual(by_id["gitleaks"]["availability"], "available")\n        self.assertEqual(by_id["pip-audit"]["availability"], "available")\n\n    def test_counts_and_scope_are_reported(self) -> None:
+    def test_security_tool_probes_are_mapped(self) -> None:
+        result = match_catalog(self.catalog, self.report)
+        by_id = {item["id"]: item for item in result["tools"]}
+        self.assertEqual(by_id["gitleaks"]["availability"], "available")
+        self.assertEqual(by_id["pip-audit"]["availability"], "available")
+
+    def test_counts_and_scope_are_reported(self) -> None:
         result = match_catalog(self.catalog, self.report)
         self.assertEqual(result["catalog_match"]["counts"], {
             "available": 2, "missing": 1, "not_probed": 1,
