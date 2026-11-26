@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "scripts/**/*.py"
+      - "TESTS/**/*.py"
       - "pyproject.toml"
       - "requirements-dev.txt"
       - ".github/workflows/python-quality.yml"
@@ -38,3 +39,5 @@ jobs:
         run: ruff check scripts/
       - name: Run mypy
         run: mypy scripts/
+      - name: Run environment inventory smoke tests
+        run: python -m unittest discover -s TESTS -p "test_*.py" -v
