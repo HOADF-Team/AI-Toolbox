@@ -1,0 +1,71 @@
+name: Redocly OpenAPI lint and API smoke test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "TOOLS/api-tooling/redocly-cli/**"
+      - "TESTS/fixtures/openapi-smoke/**"
+      - "scripts/inventory.py"
+      - ".github/workflows/redocly-openapi-smoke.yml"
+  pull_request:
+    paths:
+      - "TOOLS/api-tooling/redocly-cli/**"
+      - "TESTS/fixtures/openapi-smoke/**"
+      - "scripts/inventory.py"
+      - ".github/workflows/redocly-openapi-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  redocly-smoke:
+    name: Install Redocly CLI; lint OpenAPI and test API response
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.16.0"
+
+      - name: Install pinned Redocly CLI
+        run: |
+          npm install --no-save --no-package-lock @redocly/cli@2.83.0
+          ./node_modules/.bin/redocly --version
+
+      - name: Lint the OpenAPI fixture
+        run: |
+          ./node_modules/.bin/redocly lint --extends minimal TESTS/fixtures/openapi-smoke/openapi.yaml
+
+      - name: Run Arazzo API workflow against a local fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 TESTS/fixtures/openapi-smoke/server.py > server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+
+          python3 - <<'PY'
+          import time
+          import urllib.error
+          import urllib.request
+
+          url = "http://127.0.0.1:8765/items"
+          for attempt in range(20):
+              try:
+                  with urllib.request.urlopen(url, timeout=1) as response:
+                      if response.status == 200:
+                          break
+              except (OSError, urllib.error.URLError):
+                  time.sleep(0.25)
+          else:
+              raise SystemExit("Local API fixture did not become ready")
+          PY
+
+          ./node_modules/.bin/redocly respect TESTS/fixtures/openapi-smoke/workflow.arazzo.yaml
