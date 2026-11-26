@@ -6,10 +6,10 @@
 
 | Priority | Venue | CCXT id | Initial scope | Current evidence |
 |---|---|---|---|---|
-| Primary | BingX | `bingx` | Spot ticker/markets; USDT-M swap metadata | Supported by CCXT; isolated CI smoke test pending |
-| Secondary | Binance | `binance` | Spot ticker/markets | Listed by CCXT; isolated CI smoke test pending |
-| Secondary | Bybit | `bybit` | Spot ticker/markets | Listed by CCXT; isolated CI smoke test pending |
-| Secondary | OKX | `okx` | Spot ticker/markets | Listed by CCXT; isolated CI smoke test pending |
+| Primary | BingX | `bingx` | Spot ticker/markets; USDT-M swap metadata | **Passed** public spot ticker and USDT-M swap metadata checks in isolated CI |
+| Secondary | Binance | `binance` | Spot ticker/markets | Adapter is listed; public test blocked by HTTP 451 restricted-location response from GitHub runner; not marked tested |
+| Secondary | Bybit | `bybit` | Spot ticker/markets | Adapter is listed; public test blocked by CloudFront HTTP 403 runner-region restriction; not marked tested |
+| Secondary | OKX | `okx` | Spot ticker/markets | **Passed** public spot ticker and market metadata check in isolated CI |
 
 ## Interpretation
 
