@@ -1,7 +1,7 @@
 # Skill → Tool dependency map
 
-**Source:** `HOADF-Team/Personal-AI-Library` — 24 `SKILL.md` files in `main`.
-**Inventory date:** 2026-11-26.
+**Source:** `HOADF-Team/Personal-AI-Library` — 24 `SKILL.md` files on `integration/skills-toolbox-workflow` (PR #9 pending).
+**Inventory date:** 2026-11-27.
 **Purpose:** map workflow instructions to concrete software capabilities. This is a discovery and planning document, not a claim that every candidate is installed, reviewed, or tested.
 
 ## Status legend
