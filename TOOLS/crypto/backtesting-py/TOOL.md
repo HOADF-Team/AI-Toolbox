@@ -2,7 +2,7 @@
 
 - **ID:** `backtesting-py`
 - **Category:** crypto
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** kernc / backtesting.py contributors
 - **Official documentation:** https://kernc.github.io/backtesting.py/
 - **Source repository:** https://github.com/kernc/backtesting.py
@@ -59,9 +59,11 @@ A strategy is implemented by subclassing `Strategy` and defining `init()` and `n
 ## Verification
 
 - **Source/license review:** completed; AGPL-3.0-or-later reviewed from upstream documentation and PyPI metadata.
-- **Installation/runtime:** not yet tested in AI-Toolbox CI.
+- **CI installation:** `backtesting==0.6.6` and its dependencies installed successfully on GitHub-hosted Ubuntu 26.04 / CPython 3.13.
+- **CI runtime:** deterministic synthetic OHLCV backtest passed; one trade was opened/closed and equity/trade outputs were validated with commission and spread configured.
+- **CI run:** https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45850977036
 - **Repeatable smoke test:** `python TESTS/smoke_crypto_research.py` (shared test covers ta.py and backtesting.py).
-- Status must remain `reviewed` until the isolated CI installation and deterministic synthetic-data backtest pass.
+- **Scope:** confirms a basic bar-based synthetic-data simulation only; it does not validate exchange fills, funding, liquidation, perpetual contract accounting, or profitability.
 
 ## Sources
 
