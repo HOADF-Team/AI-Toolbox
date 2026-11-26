@@ -2,7 +2,7 @@
 
 - **ID:** `ccxt`
 - **Category:** crypto
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Verification note:** promote to `tested` only after the multi-exchange CI smoke test passes.
 - **Publisher / maintainer:** CCXT project maintainers; independent open-source project
 - **Official website / documentation:** https://docs.ccxt.com/
@@ -96,6 +96,17 @@ finally:
 - Sandbox/demo support is venue-specific. Confirm the exact host and API-key environment before using it.
 - CCXT does not provide a trading strategy, profitability guarantee, portfolio risk model, tax report, or investment advice.
 - Do not treat an API response or a successful test as permission to trade real funds.
+
+## Verification
+
+- **CI installation:** pinned CCXT 4.5.94 installed successfully on GitHub-hosted Ubuntu 26.04 / CPython 3.13.
+- **BingX spot:** public markets and BTC/USDT ticker loaded; passed.
+- **BingX USDT-M swap:** BTC/USDT:USDT market metadata loaded; passed.
+- **OKX spot:** public markets and BTC/USDT ticker loaded; passed.
+- **Binance spot:** not verified in this runner; Binance returned HTTP 451 with a restricted-location response.
+- **Bybit spot:** not verified in this runner; CloudFront returned HTTP 403 due to runner-region blocking.
+- **CI run:** https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45846219453
+- No API keys were used and no private or order-writing methods were called.
 
 ## Verification plan
 
