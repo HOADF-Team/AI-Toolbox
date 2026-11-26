@@ -36,7 +36,7 @@ PROBES: dict[str, list[tuple[str, str]]] = {
     "schemathesis": [("commands", "schemathesis"), ("python_modules", "schemathesis")],
     "pandas": [("python_modules", "pandas")],
     "matplotlib": [("python_modules", "matplotlib")],
-    "bandit": [("commands", "bandit"), ("python_modules", "bandit")],
+    "bandit": [("commands", "bandit"), ("python_modules", "bandit")],\n    "gitleaks": [("commands", "gitleaks")],\n    "pip-audit": [("commands", "pip-audit"), ("python_modules", "pip_audit")],\n    "trivy": [("commands", "trivy")],\n    "age": [("commands", "age")],\n    "restic": [("commands", "restic")],
     "ccxt": [("commands", "ccxt"), ("python_modules", "ccxt")],
     "ta-py": [("python_modules", "ta")],
     "backtesting-py": [("python_modules", "backtesting")],
