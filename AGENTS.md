@@ -8,8 +8,11 @@ Maintain a practical collection of real tools that AI agents can discover, insta
 
 1. Search `CATALOG/tools.json` and existing `TOOLS/` records for an equivalent tool.
 2. Read the existing tool record and check whether its status and compatibility fit the current task.
-3. Prefer official upstream sources and documentation.
-4. Do not add a tool merely because it is popular. Explain the concrete capability or gap it addresses.
+3. Identify the actual execution target and run the read-only [environment discovery procedure](TESTS/ENVIRONMENT-DISCOVERY.md) when possible.
+4. Distinguish a catalog record, an executable/module in the current runtime, software on the user's device, and a connector/hosted service. These are not interchangeable.
+5. Reuse a suitable existing installation; do not reinstall solely because a catalog record exists.
+6. Prefer official upstream sources and documentation.
+7. Do not add a tool merely because it is popular. Explain the concrete capability or gap it addresses.
 
 ## Research and review requirements
 
