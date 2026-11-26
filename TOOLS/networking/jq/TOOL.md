@@ -87,7 +87,9 @@ jq -e '.status == "ok" and (.items | type == "array")' response.json
 
 - **Current isolated runtime:** Debian-based Linux x86_64; jq 1.7 available at `/usr/bin/jq`.
 - **Local functional test:** parsed JSON returned by a local HTTP fixture; extracted and joined array values; all assertions passed.
-- **CI test:** workflow reinstalls jq from the Ubuntu package repository and validates JSON received from a local HTTP fixture, including jq exit-status behavior for a boolean assertion.
+- **CI environment:** GitHub-hosted Ubuntu 26.04 runner; jq 1.8.1-4ubuntu2 installed from the Ubuntu package repository.
+- **CI test:** validated JSON received from a local HTTP fixture, extracted array values, and checked boolean assertions with jq's exit status. All passed.
+- **Result:** package reinstall and JSON-processing smoke tests passed. Run: https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45840891977
 - **Status scope:** these checks verify the tested Linux runtime and package only. They do not establish availability on the user's computer or verify every jq feature.
 
 ## Security and limitations
