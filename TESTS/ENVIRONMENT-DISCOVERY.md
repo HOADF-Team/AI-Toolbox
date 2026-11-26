@@ -34,3 +34,21 @@ A missing command means only that its name was not found on the current PATH. A 
 ## Current limitations
 
 Ruff and mypy are checked as both PATH commands and discoverable Python modules. Their presence does not mean that lint or type checks have been run.\n\nThe inventory is intentionally curated, not a complete software inventory. It does not inspect arbitrary directories, package managers, GUI applications, services, containers, remote hosts, other users' environments, or global Node.js package stores. Python module detection reports import discoverability, not successful imports or functional correctness. Node package resolution is relative to the current working directory and may not detect packages installed only in other projects. Version/help probes are best-effort and may return no output even when a command exists.
+
+
+## Match the inventory to the catalog
+
+Generate a local report and match it against the catalog:
+
+```bash
+python3 scripts/inventory.py --pretty > inventory.json
+python3 scripts/match_inventory.py --inventory inventory.json --pretty
+```
+
+The matcher reports each catalog tool as:
+
+- `available` — at least one configured executable, Python-module, or Node-package probe was detected;
+- `missing` — all configured probes were present in the report and none was detected;
+- `not_probed` — no usable probe is configured or the inventory report lacks the relevant probe data.
+
+Alternative interfaces are treated as OR conditions (for example, a tool exposed through either Python or Node.js). A result of `available` is discovery evidence only; it does not certify that the tool works for a particular task. Tools reported as `not_probed` must not be treated as missing.
