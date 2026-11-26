@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 from pathlib import Path
 
@@ -39,7 +40,7 @@ def mapped_skills(map_path: Path) -> list[str]:
     return result
 
 
-def validate(skills_root: Path, map_path: Path) -> list[str]:
+def validate(skills_root: Path, map_path: Path, tool_mapping_path: Path, catalog_path: Path) -> list[str]:
     errors: list[str] = []
     try:
         actual = discover_skills(skills_root)
@@ -65,18 +66,50 @@ def validate(skills_root: Path, map_path: Path) -> list[str]:
     if not actual:
         errors.append(f"No {SKILL_FILE} files found under {skills_root}")
 
-    return errors
+    try:
+        tool_mapping = json.loads(tool_mapping_path.read_text(encoding="utf-8"))
+        catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+        tool_skills = tool_mapping.get("skills", [])
+        tool_skill_ids = [item.get("id") for item in tool_skills if isinstance(item, dict)]
+        if len(tool_skill_ids) != len(set(tool_skill_ids)):
+            errors.append("Duplicate Skill IDs in machine-readable tool map")
+        if set(tool_skill_ids) != actual:
+            missing_tool_map = sorted(actual - set(tool_skill_ids))
+            extra_tool_map = sorted(set(tool_skill_ids) - actual)
+            if missing_tool_map:
+                errors.append("Skills missing from machine-readable tool map: " + ", ".join(missing_tool_map))
+            if extra_tool_map:
+                errors.append("Unknown Skills in machine-readable tool map: " + ", ".join(extra_tool_map))
+        catalog_ids = {item.get("id") for item in catalog.get("tools", []) if isinstance(item, dict)}
+        for skill in tool_skills:
+            if not isinstance(skill, dict):
+                errors.append("Invalid entry in machine-readable tool map")
+                continue
+            for group in skill.get("required_any", []):
+                for tool_id in group:
+                    if tool_id not in catalog_ids:
+                        errors.append(f"{skill.get('id')}: unknown required tool ID {tool_id}")
+            for tool_id in skill.get("recommended", []):
+                if tool_id not in catalog_ids:
+                    errors.append(f"{skill.get('id')}: unknown recommended tool ID {tool_id}")
+    except (OSError, UnicodeError, json.JSONDecodeError, AttributeError, TypeError) as exc:
+        errors.append(f"Cannot validate machine-readable Skill tool map: {exc}")
 
+    return errors
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--skills-root", type=Path, default=Path("Personal-AI-Library/skills"),
                         help="Path to Personal-AI-Library skills directory")
     parser.add_argument("--map", type=Path, default=Path("CATALOG/SKILL-MAP.md"),
-                        help="Path to the Skill-to-tool map")
+                        help="Path to the human-readable Skill-to-tool map")
+    parser.add_argument("--tool-mapping", type=Path, default=Path("CATALOG/skill-tools.json"),
+                        help="Path to the machine-readable Skill dependency map")
+    parser.add_argument("--catalog", type=Path, default=Path("CATALOG/tools.json"),
+                        help="Path to the tool catalog")
     args = parser.parse_args()
 
-    errors = validate(args.skills_root, args.map)
+    errors = validate(args.skills_root, args.map, args.tool_mapping, args.catalog)
     if errors:
         print("Skill map validation failed:")
         for error in errors:
