@@ -17,7 +17,7 @@
 |---|---|---|---|
 | Source control and repository operations | Git; GitHub CLI (`gh`) | GitHub portfolio, code review, deployment, releases, issue workflows | Git in catalog (`tested`); GitHub CLI remains a candidate; verify separately from GitHub connector capabilities |
 | General scripting/runtime | Python; Node.js | Python, audits, API clients, automation, browser tooling | Python and Node.js in catalog (`tested`); versions must still be selected per project |
-| HTTP/API diagnostics | `curl`; `jq`; Redocly CLI | API integrations, webhooks, OpenAPI linting and request-workflow checks | curl and jq in catalog (`tested`); Redocly CLI in catalog (`tested`); OpenAPI lint and Arazzo workflow checks passed |
+| HTTP/API diagnostics | `curl`; `jq`; Redocly CLI; Schemathesis | API integrations, webhooks, OpenAPI linting, explicit Arazzo workflows, and schema-driven property-based API testing | curl and jq (`tested`); Redocly CLI (`tested`) for lint/Arazzo; Schemathesis reviewed for generated edge-case testing, CI runtime test pending |
 | Containerized isolation | Docker / Podman | Disposable test environments and VPS deployment | Candidate; not required for every task |
 | Browser automation | Playwright | Website testing, browser workflows, screenshots | In catalog (`tested`); browser automation smoke test passed |
 | Performance / accessibility diagnostics | Lighthouse; axe-core | SEO and web quality checks | Both in catalog (`tested`); fixture audits passed; distinguish lab metrics from field data |
@@ -30,7 +30,7 @@
 | `code-audit` | Static inspection, syntax/AST checks, and Python security patterns | Existing Skill AST script; Ruff; Bandit; Semgrep only for broader multi-language/data-flow needs | Bandit in catalog (`tested`); B301/B602 findings detected and safe fixture clean; local AST script remains in Personal-AI-Library |
 | `web-development` | HTML/CSS/JS workflow, local server, browser testing, build tools | Playwright; Node.js/npm; Vite only when project needs a build step | Playwright in catalog (`tested`); Node.js in catalog (`tested`); Vite only when project needs a build step |
 | `devops-vps` | Remote Linux diagnostics, service/container/log inspection | OpenSSH, `ssh`, `journalctl`, systemd tools, Docker/Podman, `curl` | Mostly OS-native tools; avoid installing a second admin stack without need |
-| `automation-vps` | API clients, webhook testing, scheduling, state and retries | Python HTTP clients; `curl`; `jq`; Redocly CLI for OpenAPI/Arazzo workflows; n8n only for visual workflow needs | curl and jq in catalog (`tested`); Redocly CLI (`tested`); external API access and credentials require explicit scope |
+| `automation-vps` | API clients, webhook testing, scheduling, state and retries | Python HTTP clients; `curl`; `jq`; Redocly CLI for OpenAPI lint/Arazzo workflows; Schemathesis for generated contract/edge-case tests; n8n only for visual workflow needs | curl, jq, and Redocly CLI (`tested`); Schemathesis reviewed, local-fixture CI test pending; external API access and credentials require explicit scope |
 | `telegram-bots` | Telegram Bot API integration and webhook/polling | aiogram or python-telegram-bot (choose by existing project/version); Telegram Bot API | Candidate; never mix incompatible SDK major versions |
 | `max-bots` | MAX platform API integration | Official MAX Bot API/docs and an HTTP client or supported SDK if available | Needs current official API verification; do not assume Telegram compatibility |
 | `github-portfolio` | Git operations, repo metadata, Pages and release workflow | Git; GitHub CLI; GitHub Actions; existing GitHub connector | Git in catalog (`tested`); GitHub CLI remains a candidate; Actions and connector are hosted capabilities |
@@ -53,7 +53,7 @@
 
 ## Current coverage and remaining work
 
-The catalog now contains **32 tool records**: 28 `tested` and 4 `reviewed`. Hummingbot and Freqtrade are reviewed engine candidates only; neither has been installed or runtime-tested in AI-Toolbox. The new ta.py and backtesting.py records passed pinned installation and focused offline runtime checks in GitHub Actions; see each record for exact scope and limitations. CCXT installation passed; BingX spot/swap and OKX spot public data passed. Binance and Bybit were blocked by GitHub runner region restrictions and remain unverified at the endpoint level. Bandit passed pinned installation and safe/unsafe fixture scans in isolated CI. Redocly CLI passed pinned installation, OpenAPI lint, and Arazzo API workflow checks in isolated CI.
+The catalog now contains **31 tool records**: 28 `tested` and 3 `reviewed`. Hummingbot and Freqtrade are reviewed engine candidates only; neither has been installed or runtime-tested in AI-Toolbox. The new ta.py and backtesting.py records passed pinned installation and focused offline runtime checks in GitHub Actions; see each record for exact scope and limitations. CCXT installation passed; BingX spot/swap and OKX spot public data passed. Binance and Bybit were blocked by GitHub runner region restrictions and remain unverified at the endpoint level. Bandit passed pinned installation and safe/unsafe fixture scans in isolated CI. Redocly CLI passed pinned installation, OpenAPI lint, and Arazzo API workflow checks in isolated CI. Schemathesis is reviewed as the complementary property-based API testing tool; its isolated runtime check is pending.
 
 The catalog covers source control, Python development and quality checks, JavaScript runtime, browser testing and audits, document conversion/OCR, image processing and metadata, background removal, media processing, HTTP/JSON API utilities, OpenAPI workflow testing, Python data analysis/visualization, and Python security scanning, and multi-exchange cryptocurrency market-data access, technical indicators, and historical strategy simulation.
 
@@ -61,7 +61,7 @@ The catalog covers source control, Python development and quality checks, JavaSc
 
 Remaining research priorities:
 
-1. **API and automation utilities:** compare HTTP clients/testing tools and optional n8n against existing Python and OS-native capabilities.
+1. **API and automation utilities:** Schemathesis is selected to complement Redocly's spec linting and explicit Arazzo workflows with generated property-based API tests; consider additional HTTP clients or n8n only when a concrete workflow gap appears.
 2. **Crypto exchange integration:** CCXT is tested with BingX (primary) spot/swap and OKX spot; Binance and Bybit adapters are listed upstream but public API checks were geo-blocked from the GitHub runner.
 3. **Platform-specific SDKs:** choose Telegram SDK and MAX API tooling only when an actual project requires them.
 4. **VPS/container operations:** assess Docker/Podman and SSH diagnostics only against a concrete deployment or administration workflow.
