@@ -2,7 +2,7 @@
 
 - **ID:** `backtesting-py`
 - **Category:** crypto
-- **Status:** `reviewed` (runtime test pending)
+- **Status:** `reviewed`
 - **Publisher / maintainer:** kernc / backtesting.py contributors
 - **Official documentation:** https://kernc.github.io/backtesting.py/
 - **Source repository:** https://github.com/kernc/backtesting.py
