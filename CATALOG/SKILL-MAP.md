@@ -19,7 +19,7 @@
 | General scripting/runtime | Python; Node.js | Python, audits, API clients, automation, browser tooling | Python and Node.js in catalog (`tested`); versions must still be selected per project |
 | HTTP/API diagnostics | `curl`; `jq`; OpenAPI tooling | API integrations, webhooks, research, troubleshooting | curl and jq in catalog (`tested`); OpenAPI tooling remains a separate research item |
 | Containerized isolation | Docker / Podman | Disposable test environments and VPS deployment | Candidate; not required for every task |
-| Browser automation | Playwright | Website testing, browser workflows, screenshots | In catalog — `reviewed`; installation and runtime testing remain pending |
+| Browser automation | Playwright | Website testing, browser workflows, screenshots | In catalog (`tested`); browser automation smoke test passed |
 | Performance / accessibility diagnostics | Lighthouse; axe-core | SEO and web quality checks | Both in catalog (`tested`); fixture audits passed; distinguish lab metrics from field data |
 
 ## Per-Skill mapping
@@ -30,7 +30,7 @@
 | `code-audit` | Static inspection and syntax/AST checks | Existing Skill AST script; Ruff; Bandit; Semgrep | Candidate tools need separate review; local AST script is already in the Skill repo, not a toolbox software record |
 | `web-development` | HTML/CSS/JS workflow, local server, browser testing, build tools | Playwright; Node.js/npm; Vite only when project needs a build step | Playwright in catalog (`tested`); Node.js in catalog (`tested`); Vite only when project needs a build step |
 | `devops-vps` | Remote Linux diagnostics, service/container/log inspection | OpenSSH, `ssh`, `journalctl`, systemd tools, Docker/Podman, `curl` | Mostly OS-native tools; avoid installing a second admin stack without need |
-| `automation-vps` | API clients, webhook testing, scheduling, state and retries | Python HTTP clients; `curl`; Postman/Insomnia; n8n only for visual workflow needs | Candidate; external API access and credentials require explicit scope |
+| `automation-vps` | API clients, webhook testing, scheduling, state and retries | Python HTTP clients; `curl`; Postman/Insomnia; n8n only for visual workflow needs | curl and jq in catalog (`tested`); external API access and credentials require explicit scope |
 | `telegram-bots` | Telegram Bot API integration and webhook/polling | aiogram or python-telegram-bot (choose by existing project/version); Telegram Bot API | Candidate; never mix incompatible SDK major versions |
 | `max-bots` | MAX platform API integration | Official MAX Bot API/docs and an HTTP client or supported SDK if available | Needs current official API verification; do not assume Telegram compatibility |
 | `github-portfolio` | Git operations, repo metadata, Pages and release workflow | Git; GitHub CLI; GitHub Actions; existing GitHub connector | Git in catalog (`tested`); GitHub CLI remains a candidate; Actions and connector are hosted capabilities |
@@ -42,10 +42,10 @@
 | `trading-bot-audit` | Log/DB parsing, execution and PnL reconciliation | Python; SQLite tools; pandas; SQL client appropriate to actual DB | Candidate; read-only audit first, never enable order permissions |
 | `product-marketing` | Research, positioning and evidence-backed claims | Browser/search; spreadsheet; document editor | Mostly built-in capabilities; no dedicated software justified yet |
 | `marketing-copywriting` | Drafting, editing and factual review | Document editor; spell/style checker if needed | Mostly built-in; optional checker only after language and privacy review |
-| `seo-audit` | Crawl, metadata, performance and accessibility checks | Playwright; Lighthouse; Google Search Console; PageSpeed Insights; axe-core | Playwright (`reviewed`), Lighthouse (`reviewed`), and axe-core (`reviewed`) in catalog; Search Console and PageSpeed Insights are external services |
+| `seo-audit` | Crawl, metadata, performance and accessibility checks | Playwright; Lighthouse; Google Search Console; PageSpeed Insights; axe-core | Playwright, Lighthouse, and axe-core (`tested`) in catalog; Search Console and PageSpeed Insights are external services |
 | `business-kwork` | Requirements, estimation, deliverables and handover | Issue/project tracker; spreadsheet; document editor | Needs task-specific decision; avoid prescribing paid project-management software |
 | `research-fact-checking` | Source discovery, repository/license review and evidence capture | Browser/search; Git; GitHub API/CLI; license scanners such as ScanCode | Mostly built-in plus candidates; scanners require separate provenance/accuracy review |
-| `product-images` | Image inspection, batch conversion, background removal and metadata | GIMP; ImageMagick; ExifTool; rembg (where suitable) | ImageMagick, ExifTool, GIMP, and rembg in catalog (`tested`); GIMP and rembg remain candidates |
+| `product-images` | Image inspection, batch conversion, background removal and metadata | GIMP; ImageMagick; ExifTool; rembg (where suitable) | ImageMagick, ExifTool, GIMP, and rembg in catalog (`tested`) |
 | `marketplace-listings` | Image preparation, listing copy and structured product data | Image tools above; spreadsheet; native marketplace interfaces | ImageMagick, ExifTool, GIMP, and rembg (`tested`) in catalog; native marketplace interfaces remain service-specific; no universal uploader recommended |
 | `google-sheets` | Sheets API and Apps Script automation | Google Sheets / Apps Script; clasp for local Apps Script development | External service; OAuth scopes, quotas and account permissions matter |
 | `documents-office` | DOCX/XLSX/PPTX/PDF read/write, conversion, OCR and validation | LibreOffice; Pandoc; Poppler; Tesseract; format-specific Python libraries | LibreOffice, Pandoc, Poppler, and Tesseract in catalog (`tested`); choose per format; macro and formula fidelity still require task-specific tests |
