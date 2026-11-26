@@ -26,8 +26,9 @@ jobs:
     steps:
       - name: Check out AI-Toolbox
         uses: actions/checkout@v4
-      - name: Check out public Personal-AI-Library
-        run: git clone --depth 1 https://github.com/HOADF-Team/Personal-AI-Library.git Personal-AI-Library
+      - name: Check out public Personal-AI-Library integration branch
+        # Keep the two open integration PRs validated against the same Skill set.
+        run: git clone --depth 1 --branch integration/skills-toolbox-workflow https://github.com/HOADF-Team/Personal-AI-Library.git Personal-AI-Library
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
