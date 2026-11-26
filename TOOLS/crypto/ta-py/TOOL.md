@@ -2,7 +2,7 @@
 
 - **ID:** `ta-py`
 - **Category:** crypto
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** Nino Kroesen; upstream repository identifies a single maintainer
 - **PyPI package:** https://pypi.org/project/ta_py/
 - **Source repository:** https://github.com/Bitvested/ta.py
@@ -62,9 +62,11 @@ rsi_values = ta.rsi(df["close"].tolist(), 14)
 ## Verification
 
 - **Source/license review:** completed; MIT license and package metadata reviewed.
-- **Installation/runtime:** not yet tested in AI-Toolbox CI.
+- **CI installation:** `ta_py==2.1.0` installed successfully on GitHub-hosted Ubuntu 26.04 / CPython 3.13.
+- **CI runtime:** SMA(3) output and RSI finite-value assertions passed on deterministic input sequences.
+- **CI run:** https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45850977036
 - **Repeatable smoke test:** `python TESTS/smoke_crypto_research.py` (shared test covers ta.py and backtesting.py).
-- Status must remain `reviewed` until the isolated CI installation and indicator assertions pass.
+- **Scope:** confirms the pinned package install and selected SMA/RSI calls on Linux; it does not establish parity for all 151 functions or all platforms.
 
 ## Sources
 
