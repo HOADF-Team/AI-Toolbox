@@ -2,7 +2,7 @@
 
 - **ID:** `exiftool`
 - **Category:** image-tools
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** Phil Harvey
 - **Official website:** https://exiftool.sourceforge.net/
 - **Source repository:** https://github.com/exiftool/exiftool
@@ -49,13 +49,12 @@ The metadata-removal example is destructive to the target file. Use a copy, omit
 
 ## Verification
 
-- **Environment inspected:** Linux x86_64, current isolated execution container.
+- **CI environment:** GitHub-hosted Ubuntu 26.04 runner (resolute), package `libimage-exiftool-perl` version `13.50+dfsg-1`; ExifTool reported version 13.50.
 - **Date:** 2026-11-26.
-- **Checks performed:** reviewed official project description, download page, installation instructions, checksums availability, and upstream copyright/license statement.
-- **Availability:** `exiftool` was not found in PATH.
-- **Installation tested:** no.
-- **Runtime test:** not performed; no ExifTool binary or Perl package was installed.
-- **Status rationale:** reviewed, not tested.
+- **Installation:** ExifTool installed successfully from the Ubuntu package repository.
+- **Runtime:** generated a minimal local 1×1 PNG, verified file type and dimensions, wrote a PNG Comment tag, then read it back and compared the exact value.
+- **Result:** metadata read/write round-trip passed. Run: https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45835650585
+- **Scope:** confirms the packaged ExifTool 13.50 read/write path on this CI runner only. The upstream release page lists 13.64; the Ubuntu package used here is older. Other operating systems and additional file formats were not tested. This does not imply installation on the user's computer or in the assistant runtime.
 
 ## Security and limitations
 
