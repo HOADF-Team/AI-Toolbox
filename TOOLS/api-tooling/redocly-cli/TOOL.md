@@ -2,7 +2,7 @@
 
 - **ID:** `redocly-cli`
 - **Category:** api-tooling
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** Redocly, Inc.
 - **Official website:** https://redocly.com/docs/cli/
 - **Source repository:** https://github.com/Redocly/redocly-cli
@@ -103,10 +103,13 @@ Respect can validate response status codes, content types, and response schemas 
 
 - **Review date:** 2026-11-26.
 - **Sources reviewed:** official Redocly CLI documentation, installation requirements, command reference, Respect command reference, upstream repository, and MIT license.
-- **Installation test:** pending isolated CI run.
-- **Runtime test:** pending isolated CI run.
-- **Planned test scope:** install pinned CLI 2.83.0 on a GitHub-hosted Ubuntu runner; lint a local OpenAPI 3.1 fixture; run an Arazzo workflow against a loopback-only HTTP fixture and verify the response against the OpenAPI schema.
-- **Limitations:** the planned smoke test will not establish compatibility with every OpenAPI/Arazzo feature, every operating system, hosted Redocly services, or the user's computer.
+- **CI environment:** GitHub-hosted Ubuntu 26.04.1, Node.js 22.16.0, npm 10.9.2.
+- **Installation:** pinned `@redocly/cli@2.83.0` installed successfully in an ephemeral runner.
+- **OpenAPI validation:** the local OpenAPI 3.1 fixture passed `redocly lint --extends minimal` with no warnings after explicitly declaring the fixture unauthenticated.
+- **API runtime test:** an Arazzo 1.0.1 workflow called the loopback-only fixture and validated the HTTP status, content type, JSONPath success criteria, and response schema.
+- **Result:** 1 workflow passed, 1 step passed, 5 checks passed. Run: https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45842934404
+- **Additional validation:** catalog validator passed (run 45842934456); Ruff and mypy passed (run 45842934426).
+- **Scope:** verifies this pinned CLI path and the tested OpenAPI/Arazzo features on this CI runner only. It does not establish every CLI feature, every operating system, hosted Redocly services, or availability on the user's computer.
 
 ## Security and limitations
 
