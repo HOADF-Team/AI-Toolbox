@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "catalog_updated": "2026-11-26",
+  "catalog_updated": "2026-11-27",
   "tools": [
     {
       "id": "git",
@@ -793,6 +793,121 @@
         "installation_tested": true,
         "runtime_tested": true
       }
+    },
+    {
+      "id": "gitleaks",
+      "name": "Gitleaks",
+      "category": "security",
+      "description": "Scans Git history, repositories, files and stdin for exposed credentials and secret-like patterns.",
+      "status": "reviewed",
+      "record": "TOOLS/security/gitleaks/TOOL.md",
+      "official_url": "https://github.com/gitleaks/gitleaks",
+      "source_repository": "https://github.com/gitleaks/gitleaks",
+      "license": "MIT",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "last_reviewed": "2026-11-27",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
+    },
+    {
+      "id": "pip-audit",
+      "name": "pip-audit",
+      "category": "security",
+      "description": "Audits Python environments and dependency inputs for known published package vulnerabilities; can emit CycloneDX SBOMs.",
+      "status": "reviewed",
+      "record": "TOOLS/security/pip-audit/TOOL.md",
+      "official_url": "https://github.com/pypa/pip-audit",
+      "source_repository": "https://github.com/pypa/pip-audit",
+      "license": "Apache-2.0",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "last_reviewed": "2026-11-27",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
+    },
+    {
+      "id": "trivy",
+      "name": "Trivy",
+      "category": "security",
+      "description": "Scans container images, filesystems and repositories for known vulnerabilities, secrets, licenses and configured misconfigurations.",
+      "status": "reviewed",
+      "record": "TOOLS/security/trivy/TOOL.md",
+      "official_url": "https://trivy.dev/",
+      "source_repository": "https://github.com/aquasecurity/trivy",
+      "license": "Apache-2.0",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "last_reviewed": "2026-11-27",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
+    },
+    {
+      "id": "age",
+      "name": "age",
+      "category": "security",
+      "description": "Modern file encryption tool and format using explicit recipients or passphrases; not a secrets manager.",
+      "status": "reviewed",
+      "record": "TOOLS/security/age/TOOL.md",
+      "official_url": "https://github.com/FiloSottile/age",
+      "source_repository": "https://github.com/FiloSottile/age",
+      "license": "BSD-3-Clause",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "last_reviewed": "2026-11-27",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
+    },
+    {
+      "id": "restic",
+      "name": "restic",
+      "category": "security",
+      "description": "Backup utility storing versioned snapshots in encrypted repositories across local and remote backends.",
+      "status": "reviewed",
+      "record": "TOOLS/security/restic/TOOL.md",
+      "official_url": "https://restic.readthedocs.io/",
+      "source_repository": "https://github.com/restic/restic",
+      "license": "BSD-2-Clause",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "last_reviewed": "2026-11-27",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
     }
   ]
-}
+}\n
