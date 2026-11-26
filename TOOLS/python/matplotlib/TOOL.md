@@ -100,7 +100,10 @@ For reports, label axes with units, state the date range, distinguish missing da
 - **Installed Matplotlib version:** 3.10.8; no installation or upgrade was attempted in this runtime.
 - **Functional check:** rendered a bar chart with the Agg backend, saved it as PNG, reopened the file, and verified PNG format and dimensions (640 × 480). Passed.
 - **Related data preparation:** pandas 2.2.3 grouped and aggregated the input before plotting.
-- **Test scope:** confirms headless PNG rendering with Matplotlib 3.10.8 in the stated runtime. It does not verify GUI backends, interactive windows, animation writers, every output format, or Matplotlib 3.11.2.
+- **CI installation:** Matplotlib 3.11.2 installed successfully from a CPython 3.13 wheel on a GitHub-hosted Ubuntu 26.04 runner (CPython 3.13.18, NumPy 2.5.5).
+- **CI functional check:** the Agg backend rendered a PNG; the test verified PNG signature and 640 × 480 dimensions. Passed. Run: https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45843529918
+- **Additional local runtime check:** Matplotlib 3.10.8 passed the same headless PNG check on Debian GNU/Linux 13.3, CPython 3.13.5; no installation was performed there.
+- **Scope:** confirms headless PNG rendering with the listed versions on Linux. It does not verify GUI backends, interactive windows, animation writers, every output format, or other operating systems.
 - **Repeatable test:** `python TESTS/smoke_data_analysis.py` (shared smoke test also exercises pandas).
 
 ## Security and limitations
