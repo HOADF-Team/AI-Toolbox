@@ -545,7 +545,7 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
+        "installation_tested": true,
         "runtime_tested": true
       }
     },
@@ -568,7 +568,7 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
+        "installation_tested": true,
         "runtime_tested": true
       }
     }
