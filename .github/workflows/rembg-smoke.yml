@@ -1,0 +1,69 @@
+name: rembg smoke test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "TOOLS/image-tools/rembg/**"
+      - ".github/workflows/rembg-smoke.yml"
+  pull_request:
+    paths:
+      - "TOOLS/image-tools/rembg/**"
+      - ".github/workflows/rembg-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  rembg-smoke:
+    name: Install rembg CPU backend and run local inference
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install pinned rembg CPU backend
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "rembg[cpu,cli]==2.0.88"
+          rembg --help
+
+      - name: Generate a synthetic image fixture
+        run: |
+          python - <<'PY'
+          from PIL import Image, ImageDraw
+
+          image = Image.new("RGB", (160, 160), (245, 245, 245))
+          draw = ImageDraw.Draw(image)
+          draw.ellipse((38, 24, 122, 138), fill=(220, 35, 35))
+          draw.rectangle((72, 90, 88, 145), fill=(35, 35, 220))
+          image.save("rembg-fixture.png")
+          PY
+
+      - name: Download verified u2netp model and remove background
+        env:
+          OMP_NUM_THREADS: "2"
+        run: |
+          rembg i -m u2netp rembg-fixture.png rembg-output.png
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+
+          output_path = Path("rembg-output.png")
+          assert output_path.is_file() and output_path.stat().st_size > 0
+          with Image.open(output_path) as result:
+              assert result.format == "PNG", result.format
+              assert result.mode == "RGBA", result.mode
+              assert result.size == (160, 160), result.size
+              alpha = result.getchannel("A")
+              low, high = alpha.getextrema()
+              assert low < high, (low, high)
+          print("rembg CPU inference and alpha output: PASS")
+          PY

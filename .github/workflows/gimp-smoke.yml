@@ -1,0 +1,59 @@
+name: GIMP smoke test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "TOOLS/image-tools/gimp/**"
+      - ".github/workflows/gimp-smoke.yml"
+  pull_request:
+    paths:
+      - "TOOLS/image-tools/gimp/**"
+      - ".github/workflows/gimp-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  gimp-smoke:
+    name: Install GIMP and verify headless batch mode
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install GIMP
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes gimp
+          gimp --version
+          gimp --help | grep -- --batch-interpreter
+
+      - name: Generate a minimal PNG fixture
+        run: |
+          python3 - <<'PY'
+          import struct
+          import zlib
+
+          def chunk(kind: bytes, data: bytes) -> bytes:
+              payload = kind + data
+              return struct.pack(">I", len(data)) + payload + struct.pack(">I", zlib.crc32(payload) & 0xFFFFFFFF)
+
+          png = (
+              b"\x89PNG\r\n\x1a\n"
+              + chunk(b"IHDR", struct.pack(">IIBBBBB", 2, 2, 8, 2, 0, 0, 0))
+              + chunk(b"IDAT", zlib.compress(b"\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00"))
+              + chunk(b"IEND", b"")
+          )
+          with open("gimp-fixture.png", "wb") as image:
+              image.write(png)
+          PY
+
+      - name: Open fixture and execute a Script-Fu batch command
+        run: |
+          gimp --no-interface --no-splash --no-shm \
+            --batch-interpreter=plug-in-script-fu-eval \
+            --batch='(gimp-message "AI-Toolbox GIMP batch smoke test")' \
+            --quit gimp-fixture.png
