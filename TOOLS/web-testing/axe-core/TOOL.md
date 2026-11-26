@@ -62,7 +62,7 @@ The exact integration differs by Playwright language and fixture design. Report 
 
 ## Verification
 
-- **CI environment:** GitHub-hosted Ubuntu runner, Node.js 22.23.5, npm, Playwright Test 1.65.1, axe-core 4.14.1, Chromium 159.0.7559.6.
+- **CI environment:** GitHub-hosted Ubuntu runner, Node.js 22.23.5, npm, Playwright Test 1.65.1, axe-core 4.14.1, Chromium 159.0.8154.6.
 - **Date:** 2026-11-26.
 - **Installation:** pinned axe-core package installed successfully in an isolated temporary npm project.
 - **Runtime:** axe-core was injected into a locally served HTML fixture and executed through Playwright.
