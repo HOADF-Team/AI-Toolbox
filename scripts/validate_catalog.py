@@ -116,7 +116,7 @@ def validate(root: Path, catalog_path: Path) -> list[str]:
                                 )
                         if isinstance(status, str) and status in ALLOWED_STATUSES:
                             expected_status = re.compile(
-                                rf"^- \*\*Status:\*\* `{re.escape(status)}`\s*$",
+                                rf"^- \*\*(?:Status|Статус):\*\* `{re.escape(status)}`\s*$",
                                 re.MULTILINE,
                             )
                             if not expected_status.search(content):
