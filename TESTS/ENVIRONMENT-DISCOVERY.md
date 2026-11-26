@@ -52,3 +52,16 @@ The matcher reports each catalog tool as:
 - `not_probed` — no usable probe is configured or the inventory report lacks the relevant probe data.
 
 Alternative interfaces are treated as OR conditions (for example, a tool exposed through either Python or Node.js). A result of `available` is discovery evidence only; it does not certify that the tool works for a particular task. Tools reported as `not_probed` must not be treated as missing.
+
+
+## Check the selected Skills
+
+The machine-readable dependency map is [CATALOG/skill-tools.json](../CATALOG/skill-tools.json). After generating inventory and matches, run the preflight:
+
+```bash
+python3 scripts/inventory.py --pretty > inventory.json
+python3 scripts/match_inventory.py --inventory inventory.json --pretty > matches.json
+python3 scripts/check_skill_tools.py --skill web-development --skill seo-audit --matches matches.json --pretty
+```
+
+Use `--skill` repeatedly to check selected Skills; omit it to check all mapped Skills. `ready` means only that declared prerequisite groups have an available alternative. `blocked` means a required group has all alternatives explicitly missing. `unknown` means no alternative was confirmed and some probe evidence is absent. Recommended tools are advisory and do not block. This preflight does not replace reading the Skill or functional checks.
