@@ -1,5 +1,26 @@
 {
   "schema_version": "1.0",
   "catalog_updated": "2026-11-26",
-  "tools": []
+  "tools": [
+    {
+      "id": "playwright",
+      "name": "Playwright",
+      "category": "web-testing",
+      "description": "Browser automation and end-to-end testing for websites and web applications; supports Chromium, Firefox and WebKit.",
+      "status": "reviewed",
+      "record": "TOOLS/web-testing/playwright/TOOL.md",
+      "official_url": "https://playwright.dev/",
+      "source_repository": "https://github.com/microsoft/playwright",
+      "license": "Apache-2.0",
+      "platforms": ["Windows", "Linux", "macOS"],
+      "interfaces": ["Node.js", "Python", ".NET", "Java", "MCP"],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
+    }
+  ]
 }
