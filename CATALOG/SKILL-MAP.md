@@ -36,10 +36,10 @@
 | `github-portfolio` | Git operations, repo metadata, Pages and release workflow | Git; GitHub CLI; GitHub Actions; existing GitHub connector | Git in catalog (`tested`); GitHub CLI remains a candidate; Actions and connector are hosted capabilities |
 | `social-media` | Drafting and platform-specific publishing workflow | Native Telegram, X and GitHub interfaces/APIs | Built-in / service; drafts first, publishing only after approval; no third-party scheduler assumed |
 | `content-planning` | Calendar and editorial workflow | Spreadsheet (Google Sheets or LibreOffice Calc); calendar service | LibreOffice is in catalog (`tested`); calendar remains service/task-specific; no dedicated app needed for a simple calendar |
-| `crypto-research` | Market research, historical data, reproducible analysis | Exchange public APIs; CCXT for supported exchanges; Python/pandas | Candidate; use read-only/public endpoints, verify data provenance and terms |
-| `crypto-market-analysis` | Market data, charts, indicators and funding/open-interest inputs | Exchange public market APIs; CCXT; pandas; plotting library | Candidate; data-source coverage and timestamps must be explicit |
+| `crypto-research` | Market research, historical data, reproducible analysis | Exchange public APIs; Python/pandas; Matplotlib for charts; CCXT only for supported exchanges when selected | pandas and Matplotlib in catalog (`tested`); use read-only/public endpoints and verify data provenance and terms; CCXT remains deferred |
+| `crypto-market-analysis` | Market data, charts, indicators and funding/open-interest inputs | Exchange public market APIs; pandas; Matplotlib; CCXT only after the exchange and data requirements are defined | pandas and Matplotlib in catalog (`tested`); data-source coverage, units, and timestamps must be explicit; CCXT remains deferred |
 | `crypto-futures-risk` | Position sizing, leverage and liquidation/risk calculations | Python standard library / decimal; spreadsheet for independent cross-check | Built-in / lightweight; avoid paid trading terminals unless a concrete gap exists |
-| `trading-bot-audit` | Log/DB parsing, execution and PnL reconciliation | Python; SQLite tools; pandas; SQL client appropriate to actual DB | Candidate; read-only audit first, never enable order permissions |
+| `trading-bot-audit` | Log/DB parsing, execution and PnL reconciliation | Python; SQLite tools; pandas; Matplotlib for audit charts; SQL client appropriate to actual DB | pandas and Matplotlib in catalog (`tested`); read-only audit first, never enable order permissions |
 | `product-marketing` | Research, positioning and evidence-backed claims | Browser/search; spreadsheet; document editor | Mostly built-in capabilities; no dedicated software justified yet |
 | `marketing-copywriting` | Drafting, editing and factual review | Document editor; spell/style checker if needed | Mostly built-in; optional checker only after language and privacy review |
 | `seo-audit` | Crawl, metadata, performance and accessibility checks | Playwright; Lighthouse; Google Search Console; PageSpeed Insights; axe-core | Playwright, Lighthouse, and axe-core (`tested`) in catalog; Search Console and PageSpeed Insights are external services |
@@ -52,16 +52,16 @@
 
 ## Current coverage and remaining work
 
-The catalog now contains **22 tool records — all 22 are `tested`**. Redocly CLI passed pinned installation, OpenAPI lint, and Arazzo API workflow checks in isolated CI.
+The catalog now contains **24 tool records — all 24 are `tested`**. Redocly CLI passed pinned installation, OpenAPI lint, and Arazzo API workflow checks in isolated CI.
 
-The catalog covers source control, Python development and quality checks, JavaScript runtime, browser testing and audits, document conversion/OCR, image processing and metadata, background removal, media processing, HTTP/JSON API utilities, and OpenAPI workflow testing.
+The catalog covers source control, Python development and quality checks, JavaScript runtime, browser testing and audits, document conversion/OCR, image processing and metadata, background removal, media processing, HTTP/JSON API utilities, OpenAPI workflow testing, and Python data analysis/visualization.
 
 `tested` means a documented installation and/or runtime smoke test passed in the specific environment described in that tool's record. It does **not** mean the tool is installed on a user's computer, nor does a smoke test prove every feature or platform works. Check each record for the exact scope and limitations.
 
 Remaining research priorities:
 
 1. **API and automation utilities:** compare HTTP clients/testing tools and optional n8n against existing Python and OS-native capabilities.
-2. **Data analysis:** validate pandas and a plotting stack; investigate CCXT only after defining exchange and data requirements.
+2. **Data analysis:** pandas and Matplotlib are now cataloged and runtime-tested; investigate CCXT only after defining exchange and data requirements.
 3. **Platform-specific SDKs:** choose Telegram SDK and MAX API tooling only when an actual project requires them.
 4. **VPS/container operations:** assess Docker/Podman and SSH diagnostics only against a concrete deployment or administration workflow.
 5. **Security/code audit:** evaluate Bandit, Semgrep, and license scanners when a project requires deeper static or supply-chain analysis.
