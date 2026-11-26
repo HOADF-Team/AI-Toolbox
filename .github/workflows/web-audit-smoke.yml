@@ -85,12 +85,14 @@ jobs:
           echo $! > server.pid
           for attempt in $(seq 1 30); do
             if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
-              exit 0
+              break
             fi
             sleep 1
           done
-          cat server.log
-          exit 1
+          if ! curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+            cat server.log
+            exit 1
+          fi
           cat > tests/axe.spec.cjs <<'EOF'
           const { test, expect } = require('@playwright/test');
 
