@@ -121,13 +121,10 @@ jobs:
                   self.send_header("Content-Length", "0")
                   self.end_headers()
 
-              do_TRACE = method_not_allowed
-              do_POST = method_not_allowed
-              do_PUT = method_not_allowed
-              do_PATCH = method_not_allowed
-              do_DELETE = method_not_allowed
-              do_OPTIONS = method_not_allowed
-              do_HEAD = method_not_allowed
+              def __getattr__(self, name):
+                  if name.startswith("do_"):
+                      return self.method_not_allowed
+                  raise AttributeError(name)
 
               def log_message(self, *_):
                   pass
