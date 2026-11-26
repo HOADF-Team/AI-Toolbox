@@ -2,7 +2,7 @@
 
 - **ID:** `lighthouse`
 - **Category:** web-testing
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** Google Chrome team / Chromium project contributors
 - **Official website:** https://developer.chrome.com/docs/lighthouse/overview/
 - **Source repository:** https://github.com/GoogleChrome/lighthouse
