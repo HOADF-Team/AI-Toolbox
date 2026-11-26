@@ -1,5 +1,11 @@
 # Gitleaks
 
+- **ID:** `gitleaks`
+- **Category:** security
+- **Status:** `reviewed`
+- **Publisher / maintainer:** Truffle Security
+- **License:** MIT
+
 - **Purpose:** detect credentials, API tokens, passwords and other secret-like strings in Git history, repositories, directories and stdin.
 - **Upstream:** https://github.com/gitleaks/gitleaks
 - **Documentation:** https://github.com/gitleaks/gitleaks#readme
