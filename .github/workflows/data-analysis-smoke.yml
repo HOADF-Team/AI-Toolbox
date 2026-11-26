@@ -1,0 +1,45 @@
+name: pandas and Matplotlib data analysis smoke test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "TOOLS/python/pandas/**"
+      - "TOOLS/python/matplotlib/**"
+      - "TESTS/smoke_data_analysis.py"
+      - "scripts/inventory.py"
+      - ".github/workflows/data-analysis-smoke.yml"
+  pull_request:
+    paths:
+      - "TOOLS/python/pandas/**"
+      - "TOOLS/python/matplotlib/**"
+      - "TESTS/smoke_data_analysis.py"
+      - "scripts/inventory.py"
+      - ".github/workflows/data-analysis-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  data-analysis:
+    name: Install pinned pandas and Matplotlib; test data and chart output
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install pinned packages
+        run: |
+          python -m pip install --disable-pip-version-check --only-binary=:all: "pandas==3.1.1" "matplotlib==3.11.2"
+          python -c "import pandas, matplotlib; print('pandas', pandas.__version__); print('matplotlib', matplotlib.__version__)"
+
+      - name: Run offline data and rendering smoke test
+        run: python TESTS/smoke_data_analysis.py

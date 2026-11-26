@@ -46,7 +46,7 @@ COMMANDS = {
 
 PYTHON_MODULES = [
     "pytest", "ruff", "mypy", "playwright", "pandas", "PIL", "docx",
-    "openpyxl", "reportlab", "cv2", "rembg", "imageio",
+    "openpyxl", "reportlab", "cv2", "rembg", "imageio", "matplotlib",
 ]
 NODE_PACKAGES = ["playwright", "lighthouse", "axe-core", "@redocly/cli"]
 

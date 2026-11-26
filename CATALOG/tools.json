@@ -525,6 +525,52 @@
         "installation_tested": true,
         "runtime_tested": true
       }
+    },
+    {
+      "id": "pandas",
+      "name": "pandas",
+      "category": "python",
+      "description": "Python DataFrame and Series library for tabular data preparation, cleaning, joins, aggregation, time-series operations, and data export.",
+      "status": "tested",
+      "record": "TOOLS/python/pandas/TOOL.md",
+      "official_url": "https://pandas.pydata.org/",
+      "source_repository": "https://github.com/pandas-dev/pandas",
+      "license": "BSD-3-Clause",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": true,
+        "runtime_tested": true
+      }
+    },
+    {
+      "id": "matplotlib",
+      "name": "Matplotlib",
+      "category": "python",
+      "description": "Python plotting library for static, animated, and interactive charts with export to PNG, PDF, SVG, and other formats.",
+      "status": "tested",
+      "record": "TOOLS/python/matplotlib/TOOL.md",
+      "official_url": "https://matplotlib.org/",
+      "source_repository": "https://github.com/matplotlib/matplotlib",
+      "license": "Python Software Foundation License",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": true,
+        "runtime_tested": true
+      }
     }
   ]
 }
