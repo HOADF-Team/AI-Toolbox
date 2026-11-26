@@ -17,7 +17,7 @@
 |---|---|---|---|
 | Source control and repository operations | Git; GitHub CLI (`gh`) | GitHub portfolio, code review, deployment, releases, issue workflows | Git in catalog (`tested`); GitHub CLI remains a candidate; verify separately from GitHub connector capabilities |
 | General scripting/runtime | Python; Node.js | Python, audits, API clients, automation, browser tooling | Python and Node.js in catalog (`tested`); versions must still be selected per project |
-| HTTP/API diagnostics | `curl`; `jq`; OpenAPI tooling | API integrations, webhooks, research, troubleshooting | curl and jq in catalog (`tested`); OpenAPI tooling remains a separate research item |
+| HTTP/API diagnostics | `curl`; `jq`; Redocly CLI | API integrations, webhooks, OpenAPI linting and request-workflow checks | curl and jq in catalog (`tested`); Redocly CLI in catalog (`reviewed`) pending isolated CI verification |
 | Containerized isolation | Docker / Podman | Disposable test environments and VPS deployment | Candidate; not required for every task |
 | Browser automation | Playwright | Website testing, browser workflows, screenshots | In catalog (`tested`); browser automation smoke test passed |
 | Performance / accessibility diagnostics | Lighthouse; axe-core | SEO and web quality checks | Both in catalog (`tested`); fixture audits passed; distinguish lab metrics from field data |
@@ -30,7 +30,7 @@
 | `code-audit` | Static inspection and syntax/AST checks | Existing Skill AST script; Ruff; Bandit; Semgrep | Candidate tools need separate review; local AST script is already in the Skill repo, not a toolbox software record |
 | `web-development` | HTML/CSS/JS workflow, local server, browser testing, build tools | Playwright; Node.js/npm; Vite only when project needs a build step | Playwright in catalog (`tested`); Node.js in catalog (`tested`); Vite only when project needs a build step |
 | `devops-vps` | Remote Linux diagnostics, service/container/log inspection | OpenSSH, `ssh`, `journalctl`, systemd tools, Docker/Podman, `curl` | Mostly OS-native tools; avoid installing a second admin stack without need |
-| `automation-vps` | API clients, webhook testing, scheduling, state and retries | Python HTTP clients; `curl`; Postman/Insomnia; n8n only for visual workflow needs | curl and jq in catalog (`tested`); external API access and credentials require explicit scope |
+| `automation-vps` | API clients, webhook testing, scheduling, state and retries | Python HTTP clients; `curl`; `jq`; Redocly CLI for OpenAPI/Arazzo workflows; n8n only for visual workflow needs | curl and jq in catalog (`tested`); Redocly CLI (`reviewed`); external API access and credentials require explicit scope |
 | `telegram-bots` | Telegram Bot API integration and webhook/polling | aiogram or python-telegram-bot (choose by existing project/version); Telegram Bot API | Candidate; never mix incompatible SDK major versions |
 | `max-bots` | MAX platform API integration | Official MAX Bot API/docs and an HTTP client or supported SDK if available | Needs current official API verification; do not assume Telegram compatibility |
 | `github-portfolio` | Git operations, repo metadata, Pages and release workflow | Git; GitHub CLI; GitHub Actions; existing GitHub connector | Git in catalog (`tested`); GitHub CLI remains a candidate; Actions and connector are hosted capabilities |
@@ -52,9 +52,9 @@
 
 ## Current coverage and remaining work
 
-The catalog now contains **21 tool records — all 21 are `tested`**. There are currently no `reviewed` or `candidate` entries.
+The catalog now contains **22 tool records — 21 are `tested` and 1 is `reviewed`**. Redocly CLI is under review pending its isolated installation and API-workflow smoke test.
 
-The catalog covers source control, Python development and quality checks, JavaScript runtime, browser testing and audits, document conversion/OCR, image processing and metadata, background removal, media processing, and HTTP/JSON API utilities.
+The catalog covers source control, Python development and quality checks, JavaScript runtime, browser testing and audits, document conversion/OCR, image processing and metadata, background removal, media processing, HTTP/JSON API utilities, and OpenAPI workflow testing.
 
 `tested` means a documented installation and/or runtime smoke test passed in the specific environment described in that tool's record. It does **not** mean the tool is installed on a user's computer, nor does a smoke test prove every feature or platform works. Check each record for the exact scope and limitations.
 
