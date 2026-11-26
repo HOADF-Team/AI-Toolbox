@@ -2,7 +2,7 @@
 
 - **ID:** `rembg`
 - **Category:** image-tools
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** Daniel Gatis and contributors
 - **Official website:** https://github.com/danielgatis/rembg
 - **Source repository:** https://github.com/danielgatis/rembg
@@ -10,6 +10,7 @@
 - **License:** MIT for the rembg package. The selected `u2netp` model weights are covered by Apache-2.0 according to the U-2-Net maintainer; training dataset terms remain separate.
 - **Platforms:** Windows, Linux, macOS (subject to Python and ONNX Runtime wheel support)
 - **Version reviewed:** 2.0.88 (PyPI release, 2026-11-24)
+- **Version tested:** rembg 2.0.88 with ONNX Runtime 1.32.0
 - **Last reviewed:** 2026-11-26
 
 ## What it does
@@ -53,11 +54,13 @@ The `u2netp` weights are downloaded on first use. The upstream implementation pi
 
 ## Verification
 
-- **Environment:** not yet tested in AI-Toolbox CI.
+- **Environment:** GitHub Actions hosted runner, Ubuntu 26.04.1, CPython 3.13.18, CPU backend.
 - **Date:** 2026-11-26.
-- **Checks performed:** reviewed PyPI metadata for rembg 2.0.88, the official project README, the u2netp model loader and checksum, and the U-2-Net license plus maintainer's response about model-weight licensing.
-- **Result:** CPU installation and synthetic-image inference are suitable for an isolated CI smoke test; no installation or inference test has yet run.
-- **Not tested:** package installation, actual inference, GPU backends, Windows/macOS behavior, other model licenses, or quality on real-world photographs.
+- **Installed versions:** rembg 2.0.88; ONNX Runtime 1.32.0.
+- **Checks performed:** installed the pinned `rembg[cpu,cli]==2.0.88` package; generated a synthetic 160×160 RGB PNG; downloaded the `u2netp` model through the upstream loader; ran CLI background removal; verified PNG output, RGBA mode, dimensions, and a non-uniform alpha channel.
+- **Result:** package installation, model download, CPU inference, and alpha-output validation passed.
+- **Not tested:** GPU backends, Windows/macOS behavior, other model licenses, or output quality on real-world photographs.
+
 
 ## Security and limitations
 
