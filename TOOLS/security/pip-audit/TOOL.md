@@ -1,5 +1,11 @@
 # pip-audit
 
+- **ID:** `pip-audit`
+- **Category:** security
+- **Status:** `reviewed`
+- **Publisher / maintainer:** Python Packaging Authority (PyPA)
+- **License:** Apache-2.0
+
 - **Purpose:** audit Python environments and dependency requirement inputs for known published vulnerabilities; can emit CycloneDX SBOM output.
 - **Upstream:** https://github.com/pypa/pip-audit
 - **Documentation:** https://github.com/pypa/pip-audit#readme
