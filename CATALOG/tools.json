@@ -771,7 +771,7 @@
       "name": "Podman",
       "category": "container-runtime",
       "description": "Daemonless OCI container and pod engine with rootless execution, Docker-compatible CLI workflows, and Podman Machine support for Windows and macOS.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/container-runtime/podman/TOOL.md",
       "official_url": "https://podman.io/",
       "source_repository": "https://github.com/podman-container-tools/podman",
@@ -790,8 +790,8 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
+        "installation_tested": true,
+        "runtime_tested": true
       }
     }
   ]
