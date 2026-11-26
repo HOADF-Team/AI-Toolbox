@@ -88,7 +88,9 @@ curl --head --show-error https://example.com/
 
 - **Current isolated runtime:** Debian-based Linux x86_64; curl 8.10.1 available at `/usr/local/bin/curl`.
 - **Local functional test:** GET request to a local test HTTP server; JSON POST with content type; successful HTTP response handling. All passed.
-- **CI test:** workflow reinstalls curl from the Ubuntu package repository, then exercises GET and JSON POST against a local Python HTTP fixture. The workflow also checks `curl --fail` behavior on an HTTP 404 response.
+- **CI environment:** GitHub-hosted Ubuntu 26.04 runner; curl 8.18.0-1ubuntu2.8 installed from the Ubuntu package repository.
+- **CI test:** exercised GET and JSON POST against a local Python HTTP fixture; verified `curl --fail` rejects an HTTP 404 response. All passed.
+- **Result:** package reinstall and HTTP smoke tests passed. Run: https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45840891977
 - **Status scope:** these checks verify the tested Linux runtime and command behavior only. They do not establish availability on the user's computer or verify every supported protocol/build option.
 
 ## Security and limitations
