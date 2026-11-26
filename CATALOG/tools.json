@@ -230,6 +230,44 @@
         "installation_tested": false,
         "runtime_tested": true
       }
+    },
+    {
+      "id": "imagemagick",
+      "name": "ImageMagick",
+      "category": "image-tools",
+      "description": "Command-line image processing suite for creating, resizing, cropping, compositing, inspecting, and converting images.",
+      "status": "tested",
+      "record": "TOOLS/image-tools/imagemagick/TOOL.md",
+      "official_url": "https://imagemagick.org/",
+      "source_repository": "https://github.com/ImageMagick/ImageMagick",
+      "license": "ImageMagick License",
+      "platforms": ["Windows", "Linux", "macOS"],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": true
+      }
+    },
+    {
+      "id": "exiftool",
+      "name": "ExifTool",
+      "category": "image-tools",
+      "description": "Metadata reader and editor for EXIF, GPS, IPTC, XMP, camera maker notes, and metadata in many image, audio, and video formats.",
+      "status": "reviewed",
+      "record": "TOOLS/image-tools/exiftool/TOOL.md",
+      "official_url": "https://exiftool.sourceforge.net/",
+      "source_repository": "https://github.com/exiftool/exiftool",
+      "license": "Perl Artistic License OR GPL",
+      "platforms": ["Windows", "Linux", "macOS"],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
     }
   ]
 }
