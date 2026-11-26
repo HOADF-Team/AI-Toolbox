@@ -662,6 +662,52 @@
         "installation_tested": true,
         "runtime_tested": true
       }
+    },
+    {
+      "id": "hummingbot",
+      "name": "Hummingbot",
+      "category": "crypto-engines",
+      "description": "Open-source Python framework for automated trading strategies, market making, and execution across centralized and decentralized venues through maintained connectors.",
+      "status": "reviewed",
+      "record": "TOOLS/crypto-engines/hummingbot/TOOL.md",
+      "official_url": "https://hummingbot.org/",
+      "source_repository": "https://github.com/hummingbot/hummingbot",
+      "license": "Apache-2.0",
+      "platforms": [
+        "Linux",
+        "macOS",
+        "Windows via Docker or WSL (verify deployment path)"
+      ],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
+    },
+    {
+      "id": "freqtrade",
+      "name": "Freqtrade",
+      "category": "crypto-engines",
+      "description": "Python cryptocurrency trading bot with candle-based strategies, backtesting, hyperparameter optimization, dry-run, Telegram and web UI controls.",
+      "status": "reviewed",
+      "record": "TOOLS/crypto-engines/freqtrade/TOOL.md",
+      "official_url": "https://www.freqtrade.io/",
+      "source_repository": "https://github.com/freqtrade/freqtrade",
+      "license": "GPL-3.0-only",
+      "platforms": [
+        "Linux",
+        "macOS",
+        "Windows via Docker"
+      ],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
     }
   ]
 }
