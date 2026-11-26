@@ -376,6 +376,35 @@
         "installation_tested": true,
         "runtime_tested": true
       }
+    },
+    {
+      "id": "ffmpeg",
+      "name": "FFmpeg",
+      "category": "media",
+      "description": "Multimedia framework and command-line tools for decoding, encoding, transcoding, muxing, demuxing, filtering, and probing audio/video files.",
+      "status": "reviewed",
+      "record": "TOOLS/media/ffmpeg/TOOL.md",
+      "official_url": "https://ffmpeg.org/",
+      "source_repository": "https://github.com/FFmpeg/FFmpeg",
+      "license": "LGPL-2.1-or-later by default; GPL-2.0-or-later when GPL components are enabled; review build configuration",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "interfaces": [
+        "CLI",
+        "ffmpeg",
+        "ffprobe",
+        "ffplay"
+      ],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
     }
   ]
 }
