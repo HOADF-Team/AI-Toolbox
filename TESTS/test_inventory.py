@@ -55,7 +55,7 @@ class InventorySmokeTests(unittest.TestCase):
     def test_command_entries_are_consistent(self) -> None:
         commands = self.report["commands"]
         self.assertIsInstance(commands, dict)
-        self.assertIn("python", commands)
+        self.assertIn("python", commands)\n        for security_command in ("gitleaks", "trivy", "age", "restic"):\n            self.assertIn(security_command, commands)\n        self.assertIn("pip_audit", self.report["python_modules"])
 
         for name, item in commands.items():
             with self.subTest(command=name):
