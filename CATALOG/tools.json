@@ -599,7 +599,7 @@
       "name": "CCXT",
       "category": "crypto",
       "description": "Unified cryptocurrency exchange API library for public market data and private account/trading methods across supported venues, including BingX, Binance, Bybit, and OKX.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/crypto/ccxt/TOOL.md",
       "official_url": "https://docs.ccxt.com/",
       "source_repository": "https://github.com/ccxt/ccxt",
@@ -613,8 +613,8 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
+        "installation_tested": true,
+        "runtime_tested": true
       }
     }
   ]
