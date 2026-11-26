@@ -12,6 +12,8 @@ on:
     branches: [main]
     paths:
       - "scripts/**/*.py"
+      - "TESTS/**/*.py"
+      - "CATALOG/skill-tools.json"
       - "pyproject.toml"
       - "requirements-dev.txt"
       - ".github/workflows/python-quality.yml"
