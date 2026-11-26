@@ -102,7 +102,10 @@ For financial or operational analysis, preserve source timestamps, units, timezo
 - **Installed dependencies observed:** NumPy 2.3.5.
 - **Installed pandas version:** 2.2.3; no installation or upgrade was attempted in this runtime.
 - **Functional checks:** created a DataFrame; grouped and aggregated rows; checked expected average and total values; wrote and re-read CSV; wrote and re-read JSON. All assertions passed.
-- **Test scope:** confirms these operations with pandas 2.2.3 in the stated runtime. It does not verify pandas 3.1.1, every optional file engine, database connector, or every operating system.
+- **CI installation:** pandas 3.1.1 installed successfully from a CPython 3.13 wheel on a GitHub-hosted Ubuntu 26.04 runner (CPython 3.13.18, NumPy 2.5.5).
+- **CI functional checks:** DataFrame grouping/aggregation, expected values, CSV round-trip, and JSON round-trip all passed. Run: https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45843529918
+- **Additional local runtime check:** pandas 2.2.3 passed the same data operations on Debian GNU/Linux 13.3, CPython 3.13.5, NumPy 2.3.5; no installation was performed there.
+- **Scope:** confirms the listed versions and operations on Linux. It does not verify every optional file engine, database connector, or every operating system.
 - **Repeatable test:** `python TESTS/smoke_data_analysis.py` (shared smoke test also exercises Matplotlib).
 
 ## Security and limitations
