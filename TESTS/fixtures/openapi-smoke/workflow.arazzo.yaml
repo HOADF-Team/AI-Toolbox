@@ -1,0 +1,19 @@
+arazzo: 1.0.1
+info:
+  title: AI-Toolbox Redocly API smoke workflow
+  version: 1.0.0
+sourceDescriptions:
+  - name: items-api
+    type: openapi
+    url: ./openapi.yaml
+workflows:
+  - workflowId: list-items
+    summary: Fetch fixture items and validate the response
+    steps:
+      - stepId: fetch-items
+        operationId: listItems
+        successCriteria:
+          - condition: $statusCode == 200
+          - context: $response.body
+            condition: $.items[0].id
+            type: jsonpath
