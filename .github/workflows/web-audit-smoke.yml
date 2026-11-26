@@ -119,9 +119,8 @@ jobs:
       - name: Run Lighthouse audit against the local fixture
         working-directory: web-audit-smoke
         run: |
-          CHROME_PATH="$(node -e "process.stdout.write(require('playwright').chromium.executablePath())")"
+          export CHROME_PATH="$(node -e "process.stdout.write(require('playwright').chromium.executablePath())")"
           npx lighthouse http://127.0.0.1:4173/ \
-            --chrome-path="$CHROME_PATH" \
             --chrome-flags="--headless --no-sandbox" \
             --output=json \
             --output-path=./lighthouse-report.json \
