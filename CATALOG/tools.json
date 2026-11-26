@@ -152,7 +152,7 @@
       "name": "Lighthouse",
       "category": "web-testing",
       "description": "Automated web-page audits for performance, accessibility, SEO, and best practices; available in Chrome DevTools and as a Node.js CLI.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/web-testing/lighthouse/TOOL.md",
       "official_url": "https://developer.chrome.com/docs/lighthouse/overview/",
       "source_repository": "https://github.com/GoogleChrome/lighthouse",
@@ -166,8 +166,8 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
+        "installation_tested": true,
+        "runtime_tested": true
       }
     },
     {
@@ -175,7 +175,7 @@
       "name": "axe-core",
       "category": "web-testing",
       "description": "JavaScript accessibility testing engine for HTML interfaces; integrates with Playwright and other browser test frameworks.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/web-testing/axe-core/TOOL.md",
       "official_url": "https://www.deque.com/axe/",
       "source_repository": "https://github.com/dequelabs/axe-core",
@@ -189,8 +189,8 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
+        "installation_tested": true,
+        "runtime_tested": true
       }
     },
     {

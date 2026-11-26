@@ -2,7 +2,7 @@
 
 - **ID:** `lighthouse`
 - **Category:** web-testing
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** Google Chrome team / Chromium project contributors
 - **Official website:** https://developer.chrome.com/docs/lighthouse/overview/
 - **Source repository:** https://github.com/GoogleChrome/lighthouse
@@ -64,12 +64,13 @@ Review the full report, not just the category score. Scores are lab measurements
 
 ## Verification
 
-- **Environment inspected:** Debian GNU/Linux 13, Linux x86_64; Node.js 22.16.0, npm 10.9.2, Chromium 144.0.7559.96 were present.
+- **CI environment:** GitHub-hosted Ubuntu runner, Node.js 22.23.5, npm, Playwright Test 1.65.1, Lighthouse 13.6.0, Chromium 159.0.8154.6.
 - **Date:** 2026-11-26.
-- **Checks performed:** reviewed official project documentation, release information, npm metadata, and Apache-2.0 license; confirmed the CLI was not present in PATH.
-- **Installation attempt:** a temporary isolated npm installation was attempted with lifecycle scripts disabled; package retrieval did not complete before the environment command timed out.
-- **Runtime test:** not performed. No Lighthouse report was generated.
-- **Status rationale:** reviewed, not tested. The existing Node.js and Chromium are prerequisites, not evidence that Lighthouse itself is installed or working.
+- **Installation:** pinned Lighthouse package installed successfully in an isolated temporary npm project.
+- **Runtime:** Lighthouse CLI audited a self-contained page served on loopback; no external site was contacted.
+- **Result:** valid JSON report generated and all four expected category scores were present: performance 1.00, accessibility 1.00, best practices 0.96, SEO 1.00.
+- **Run:** https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45834945677
+- **Scope:** confirms the Node.js CLI path on this CI runner only. It does not establish installation in the assistant runtime or on the user's computer. Scores describe this minimal fixture and must not be interpreted as the quality of another website.
 
 ## Security and limitations
 

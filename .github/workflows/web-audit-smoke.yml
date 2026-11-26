@@ -1,0 +1,148 @@
+name: Lighthouse and axe-core smoke tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "TOOLS/web-testing/lighthouse/**"
+      - "TOOLS/web-testing/axe-core/**"
+      - ".github/workflows/web-audit-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  web-audit-smoke:
+    name: Install Lighthouse and axe-core and run local audits
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Create isolated audit project
+        run: |
+          mkdir web-audit-smoke
+          cd web-audit-smoke
+          npm init -y
+          npm install --save-dev @playwright/test@1.65.1 lighthouse@13.6.0 axe-core@4.14.1
+          node --version
+          npm ls --depth=0
+
+      - name: Install Chromium and system dependencies
+        working-directory: web-audit-smoke
+        run: npx playwright install --with-deps chromium
+
+      - name: Create accessible local test page and server
+        working-directory: web-audit-smoke
+        run: |
+          mkdir tests
+          cat > fixture.html <<'EOF'
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <meta name="description" content="A local fixture used to verify web auditing tools.">
+              <title>AI-Toolbox Web Audit Fixture</title>
+            </head>
+            <body>
+              <main>
+                <h1>Web audit tools are running</h1>
+                <p>This local page is used for automated browser and accessibility checks.</p>
+                <button type="button" id="action">Run interaction</button>
+                <output id="result">Not clicked</output>
+              </main>
+              <script>
+                document.querySelector('#action').addEventListener('click', () => {
+                  document.querySelector('#result').textContent = 'Interaction passed';
+                });
+              </script>
+            </body>
+          </html>
+          EOF
+          cat > server.cjs <<'EOF'
+          const http = require('node:http');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const file = path.join(__dirname, 'fixture.html');
+          http.createServer((req, res) => {
+            if (req.url !== '/' && req.url !== '/fixture.html') {
+              res.writeHead(404).end('Not found');
+              return;
+            }
+            res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+            fs.createReadStream(file).pipe(res);
+          }).listen(4173, '127.0.0.1');
+          EOF
+          node server.cjs >server.log 2>&1 &
+          echo $! > server.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          if ! curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+            cat server.log
+            exit 1
+          fi
+          cat > tests/axe.spec.cjs <<'EOF'
+          const { test, expect } = require('@playwright/test');
+
+          test('axe-core finds no WCAG A/AA violations on the local fixture', async ({ page }) => {
+            await page.goto('http://127.0.0.1:4173/');
+            await expect(page).toHaveTitle('AI-Toolbox Web Audit Fixture');
+            await page.addScriptTag({ path: require.resolve('axe-core/axe.min.js') });
+
+            const results = await page.evaluate(async () => axe.run(document, {
+              runOnly: {
+                type: 'tag',
+                values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
+              }
+            }));
+
+            expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+          });
+          EOF
+
+      - name: Run axe-core accessibility test
+        working-directory: web-audit-smoke
+        run: npx playwright test tests/axe.spec.cjs --reporter=list
+
+      - name: Run Lighthouse audit against the local fixture
+        working-directory: web-audit-smoke
+        run: |
+          export CHROME_PATH="$(node -e "process.stdout.write(require('playwright').chromium.executablePath())")"
+          npx lighthouse http://127.0.0.1:4173/ \
+            --chrome-flags="--headless --no-sandbox" \
+            --output=json \
+            --output-path=./lighthouse-report.json \
+            --quiet
+          node - <<'EOF'
+          const fs = require('node:fs');
+          const report = JSON.parse(fs.readFileSync('lighthouse-report.json', 'utf8'));
+          const required = ['performance', 'accessibility', 'best-practices', 'seo'];
+          for (const category of required) {
+            const score = report.categories?.[category]?.score;
+            if (typeof score !== 'number') {
+              throw new Error('Missing Lighthouse category score: ' + category);
+            }
+            process.stdout.write(category + ': ' + score + '\\n');
+          }
+          if (!report.finalDisplayedUrl.startsWith('http://127.0.0.1:4173/')) {
+            throw new Error('Lighthouse audited an unexpected URL: ' + report.finalDisplayedUrl);
+          }
+          EOF
+
+      - name: Stop local fixture server
+        if: always()
+        working-directory: web-audit-smoke
+        run: |
+          if [ -f server.pid ]; then kill "$(cat server.pid)" || true; fi
