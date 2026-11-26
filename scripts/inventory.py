@@ -22,6 +22,8 @@ COMMANDS = {
     "schemathesis": ["--version"],
     "bandit": ["--version"],
     "ccxt": ["--version"],
+    "hummingbot": ["--version"],
+    "freqtrade": ["--version"],
     "gh": ["--version"],
     "python": ["--version"],
     "python3": ["--version"],
@@ -51,7 +53,7 @@ COMMANDS = {
 
 PYTHON_MODULES = [
     "pytest", "ruff", "mypy", "playwright", "pandas", "PIL", "docx",
-    "openpyxl", "reportlab", "cv2", "rembg", "imageio", "matplotlib", "bandit", "ccxt", "schemathesis",
+    "openpyxl", "reportlab", "cv2", "rembg", "imageio", "matplotlib", "bandit", "ccxt", "schemathesis", "ta", "backtesting", "hummingbot", "freqtrade",
 ]
 NODE_PACKAGES = ["playwright", "lighthouse", "axe-core", "@redocly/cli"]
 
