@@ -2,7 +2,8 @@
 
 - **ID:** `ccxt`
 - **Category:** crypto
-- **Status:** `reviewed` (promote to `tested` only after the multi-exchange CI smoke test passes)
+- **Status:** `reviewed`
+- **Verification note:** promote to `tested` only after the multi-exchange CI smoke test passes.
 - **Publisher / maintainer:** CCXT project maintainers; independent open-source project
 - **Official website / documentation:** https://docs.ccxt.com/
 - **Source repository:** https://github.com/ccxt/ccxt
