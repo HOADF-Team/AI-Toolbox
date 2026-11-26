@@ -2,7 +2,7 @@
 
 - **ID:** `gimp`
 - **Category:** image-tools
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** The GIMP Team
 - **Official website:** https://www.gimp.org/
 - **Source repository:** https://gitlab.gnome.org/GNOME/gimp
@@ -10,6 +10,7 @@
 - **License:** GPL-3.0-or-later for GIMP; bundled plug-ins and third-party components may have separate notices
 - **Platforms:** GNU/Linux, Windows, macOS
 - **Version reviewed:** 3.2.8 (2026-11-02)
+- **Version tested:** 3.2.2 (Ubuntu 26.04 GitHub-hosted runner)
 - **Last reviewed:** 2026-11-26
 
 ## What it does
@@ -54,11 +55,13 @@ For file conversion or editing, use a tested GIMP 3 batch script and verify both
 
 ## Verification
 
-- **Environment:** not yet tested in AI-Toolbox CI.
+- **Environment:** GitHub Actions hosted runner, Ubuntu 26.04.1, x86_64.
 - **Date:** 2026-11-26.
-- **Checks performed:** reviewed the official GIMP 3.2.8 release information, official download page, and GIMP 3 command-line/batch documentation.
-- **Result:** batch mode is documented and appears suitable for headless CI testing; no installation or image-processing test has yet run.
-- **Not tested:** installation, actual batch processing, Windows/macOS behavior, plug-in compatibility, and packaged third-party components.
+- **Installed version:** GIMP 3.2.2 (distribution package on the hosted runner).
+- **Checks performed:** installed GIMP; confirmed the `--batch-interpreter` option; generated a synthetic PNG; opened it in headless mode and executed a Script-Fu batch command using `plug-in-script-fu-eval`.
+- **Result:** installation and headless batch execution passed. The command completed successfully.
+- **Not tested:** complex image editing/export workflows, Windows/macOS behavior, plug-in compatibility, and packaged third-party components.
+
 
 ## Security and limitations
 
