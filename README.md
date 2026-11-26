@@ -1,6 +1,6 @@
 # AI-Toolbox
 
-**A growing, tested collection of software tools that AI agents can discover, install, verify, and use.**
+**A growing, reviewed collection of software tools that AI agents can discover, install, verify, and use.**
 
 AI-Toolbox complements [Personal-AI-Library](https://github.com/HOADF-Team/Personal-AI-Library):
 
@@ -11,12 +11,13 @@ The goal is a practical, reusable toolbox maintained with the help of AI agents�
 
 ## How it works
 
-1. **Check first:** search the catalog and existing tool records.
-2. **Reuse:** if a suitable tool is recorded, check compatibility and whether it is installed, then use it.
-3. **Find a gap:** search for candidates from their original publishers.
-4. **Review safely:** check provenance, license, platform support, dependencies, permissions, security, and installation steps.
-5. **Test:** use an isolated or disposable environment where practical. Record exactly what was and was not tested.
-6. **Contribute:** prepare a tool record and submit it through a pull request. Never label an untested tool as verified.
+1. **Discover the target environment:** identify where the task will run and inspect available tools without installing anything. See the [read-only discovery procedure](TESTS/ENVIRONMENT-DISCOVERY.md).
+2. **Check first:** search the catalog and existing tool records.
+3. **Reuse:** if a suitable tool is recorded, check compatibility and whether it is available in the actual target environment, then use it.
+4. **Find a gap:** search for candidates from their original publishers.
+5. **Review safely:** check provenance, license, platform support, dependencies, permissions, security, and installation steps.
+6. **Test:** use an isolated or disposable environment where practical. Record exactly what was and was not tested.
+7. **Contribute:** prepare a tool record and submit it through a pull request. Never label an untested tool as verified.
 
 ## Verification status
 
@@ -46,6 +47,10 @@ AI-Toolbox/
 │       └── references/
 ├── REQUESTS/
 ├── TESTS/
+│   ├── ENVIRONMENT-DISCOVERY.md
+│   └── README.md
+├── scripts/
+│   └── inventory.py
 ├── TOOL-TEMPLATE.md
 ├── SECURITY.md
 └── LICENSE
@@ -72,7 +77,7 @@ AI agents may research and prepare contributions. Every new or changed record mu
 
 ## Relationship to Skills
 
-A Skill may tell an agent *when* to use a class of tools or *how* to complete a workflow. A Tool record tells the agent *which concrete tool* is suitable and how to obtain, configure, test, and invoke it. The repositories should link to each other rather than duplicate their contents.
+A Skill may tell an agent *when* to use a class of tools or *how* to complete a workflow. A Tool record tells an agent *which concrete tool* is suitable and how to obtain, configure, test, and invoke it. The repositories should link to each other rather than duplicate their contents.
 
 ## License
 
