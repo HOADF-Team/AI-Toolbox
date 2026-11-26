@@ -336,7 +336,7 @@
       "name": "Ruff",
       "category": "python",
       "description": "Fast Python linter and formatter for static checks, style diagnostics, and import organization.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/python/ruff/TOOL.md",
       "official_url": "https://docs.astral.sh/ruff/",
       "source_repository": "https://github.com/astral-sh/ruff",
@@ -350,8 +350,8 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
+        "installation_tested": true,
+        "runtime_tested": true
       }
     },
     {
@@ -359,7 +359,7 @@
       "name": "mypy",
       "category": "python",
       "description": "Static type checker for Python annotations and inferred types.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/python/mypy/TOOL.md",
       "official_url": "https://www.mypy-lang.org/",
       "source_repository": "https://github.com/python/mypy",
@@ -373,8 +373,8 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
+        "installation_tested": true,
+        "runtime_tested": true
       }
     }
   ]
