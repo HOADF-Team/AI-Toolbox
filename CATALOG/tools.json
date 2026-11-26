@@ -3,6 +3,101 @@
   "catalog_updated": "2026-11-26",
   "tools": [
     {
+      "id": "git",
+      "name": "Git",
+      "category": "version-control",
+      "description": "Distributed version control for local repositories, branches, commits, diffs, and remote synchronization.",
+      "status": "tested",
+      "record": "TOOLS/version-control/git/TOOL.md",
+      "official_url": "https://git-scm.com/",
+      "source_repository": "https://github.com/git/git",
+      "license": "GPL-2.0-only",
+      "platforms": ["Windows", "Linux", "macOS"],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": true
+      }
+    },
+    {
+      "id": "python",
+      "name": "Python",
+      "category": "python",
+      "description": "General-purpose programming language and runtime for scripting, automation, backend services, and data processing.",
+      "status": "tested",
+      "record": "TOOLS/python/python/TOOL.md",
+      "official_url": "https://www.python.org/",
+      "source_repository": "https://github.com/python/cpython",
+      "license": "PSF-2.0",
+      "platforms": ["Windows", "Linux", "macOS"],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": true
+      }
+    },
+    {
+      "id": "uv",
+      "name": "uv",
+      "category": "python",
+      "description": "Python package and project manager with virtual environment, dependency, lockfile, and Python-version management.",
+      "status": "tested",
+      "record": "TOOLS/python/uv/TOOL.md",
+      "official_url": "https://docs.astral.sh/uv/",
+      "source_repository": "https://github.com/astral-sh/uv",
+      "license": "MIT OR Apache-2.0",
+      "platforms": ["Windows", "Linux", "macOS"],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": true
+      }
+    },
+    {
+      "id": "pytest",
+      "name": "pytest",
+      "category": "python",
+      "description": "Python testing framework with fixtures, parametrization, assertion introspection, and plugin support.",
+      "status": "tested",
+      "record": "TOOLS/python/pytest/TOOL.md",
+      "official_url": "https://pytest.org/",
+      "source_repository": "https://github.com/pytest-dev/pytest",
+      "license": "MIT",
+      "platforms": ["Windows", "Linux", "macOS"],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": true
+      }
+    },
+    {
+      "id": "nodejs",
+      "name": "Node.js",
+      "category": "javascript",
+      "description": "JavaScript runtime for command-line tools, build systems, browser tooling, automation, and backend services; npm is distributed with standard installers.",
+      "status": "tested",
+      "record": "TOOLS/javascript/nodejs/TOOL.md",
+      "official_url": "https://nodejs.org/",
+      "source_repository": "https://github.com/nodejs/node",
+      "license": "MIT (third-party components may use other licenses)",
+      "platforms": ["Windows", "Linux", "macOS"],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": true
+      }
+    },
+    {
       "id": "playwright",
       "name": "Playwright",
       "category": "web-testing",
