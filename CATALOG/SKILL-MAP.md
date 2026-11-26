@@ -20,15 +20,15 @@
 | HTTP/API diagnostics | `curl`; `jq`; OpenAPI tooling | API integrations, webhooks, research, troubleshooting | Candidate; command-line utilities, no credentials in logs |
 | Containerized isolation | Docker / Podman | Disposable test environments and VPS deployment | Candidate; not required for every task |
 | Browser automation | Playwright | Website testing, browser workflows, screenshots | In catalog — `reviewed`; installation and runtime testing remain pending |
-| Performance / accessibility diagnostics | Lighthouse; axe-core | SEO and web quality checks | Both in catalog — `reviewed`; runtime tests pending; distinguish lab metrics from field data |
+| Performance / accessibility diagnostics | Lighthouse; axe-core | SEO and web quality checks | Both in catalog (`tested`); fixture audits passed; distinguish lab metrics from field data |
 
 ## Per-Skill mapping
 
 | Personal-AI-Library Skill | Required capability | Candidate tools / services to investigate | AI-Toolbox state / notes |
 |---|---|---|---|
-| `python-development` | Python runtime, isolated environments, linting, tests, debugging | Python, `venv`/uv, pytest, Ruff, mypy | Python, uv, and pytest in catalog (`tested`); Ruff and mypy remain candidates; prefer standard library where sufficient |
+| `python-development` | Python runtime, isolated environments, linting, tests, debugging | Python, `venv`/uv, pytest, Ruff, mypy | Python, uv, and pytest in catalog (`tested`); Ruff and mypy in catalog (`tested`); prefer standard library where sufficient |
 | `code-audit` | Static inspection and syntax/AST checks | Existing Skill AST script; Ruff; Bandit; Semgrep | Candidate tools need separate review; local AST script is already in the Skill repo, not a toolbox software record |
-| `web-development` | HTML/CSS/JS workflow, local server, browser testing, build tools | Playwright; Node.js/npm; Vite only when project needs a build step | Playwright in catalog (`reviewed`); Node.js in catalog (`tested`); Vite only when project needs a build step |
+| `web-development` | HTML/CSS/JS workflow, local server, browser testing, build tools | Playwright; Node.js/npm; Vite only when project needs a build step | Playwright in catalog (`tested`); Node.js in catalog (`tested`); Vite only when project needs a build step |
 | `devops-vps` | Remote Linux diagnostics, service/container/log inspection | OpenSSH, `ssh`, `journalctl`, systemd tools, Docker/Podman, `curl` | Mostly OS-native tools; avoid installing a second admin stack without need |
 | `automation-vps` | API clients, webhook testing, scheduling, state and retries | Python HTTP clients; `curl`; Postman/Insomnia; n8n only for visual workflow needs | Candidate; external API access and credentials require explicit scope |
 | `telegram-bots` | Telegram Bot API integration and webhook/polling | aiogram or python-telegram-bot (choose by existing project/version); Telegram Bot API | Candidate; never mix incompatible SDK major versions |
@@ -45,28 +45,26 @@
 | `seo-audit` | Crawl, metadata, performance and accessibility checks | Playwright; Lighthouse; Google Search Console; PageSpeed Insights; axe-core | Playwright (`reviewed`), Lighthouse (`reviewed`), and axe-core (`reviewed`) in catalog; Search Console and PageSpeed Insights are external services |
 | `business-kwork` | Requirements, estimation, deliverables and handover | Issue/project tracker; spreadsheet; document editor | Needs task-specific decision; avoid prescribing paid project-management software |
 | `research-fact-checking` | Source discovery, repository/license review and evidence capture | Browser/search; Git; GitHub API/CLI; license scanners such as ScanCode | Mostly built-in plus candidates; scanners require separate provenance/accuracy review |
-| `product-images` | Image inspection, batch conversion, background removal and metadata | GIMP; ImageMagick; ExifTool; rembg (where suitable) | ImageMagick in catalog (`tested`); ExifTool in catalog (`reviewed`); GIMP and rembg remain candidates |
-| `marketplace-listings` | Image preparation, listing copy and structured product data | Image tools above; spreadsheet; native marketplace interfaces | ImageMagick (`tested`) and ExifTool (`reviewed`) in catalog; native marketplace interfaces remain service-specific; no universal uploader recommended |
+| `product-images` | Image inspection, batch conversion, background removal and metadata | GIMP; ImageMagick; ExifTool; rembg (where suitable) | ImageMagick, ExifTool, GIMP, and rembg in catalog (`tested`); GIMP and rembg remain candidates |
+| `marketplace-listings` | Image preparation, listing copy and structured product data | Image tools above; spreadsheet; native marketplace interfaces | ImageMagick, ExifTool, GIMP, and rembg (`tested`) in catalog; native marketplace interfaces remain service-specific; no universal uploader recommended |
 | `google-sheets` | Sheets API and Apps Script automation | Google Sheets / Apps Script; clasp for local Apps Script development | External service; OAuth scopes, quotas and account permissions matter |
 | `documents-office` | DOCX/XLSX/PPTX/PDF read/write, conversion, OCR and validation | LibreOffice; Pandoc; Poppler; Tesseract; format-specific Python libraries | LibreOffice, Pandoc, Poppler, and Tesseract in catalog (`tested`); choose per format; macro and formula fidelity still require task-specific tests |
 
 ## Current coverage and remaining work
 
-The catalog now contains **14 tool records**:
+The catalog now contains **19 tool records — all 19 are `tested`**. There are currently no `reviewed` or `candidate` entries.
 
-- **10 tested:** Git, Python, uv, pytest, Node.js, LibreOffice, Pandoc, Poppler utilities, Tesseract, and ImageMagick.
-- **4 reviewed:** Playwright, Lighthouse, axe-core, and ExifTool.
+The catalog covers source control, Python development and quality checks, JavaScript runtime, browser testing and audits, document conversion/OCR, image processing and metadata, background removal, and media processing.
 
-`tested` means a documented runtime smoke test was run in the current isolated environment. It does **not** mean installation was tested or that the tool is installed on a user's computer. The per-tool record contains the exact scope and limitations.
+`tested` means a documented installation and/or runtime smoke test passed in the specific environment described in that tool's record. It does **not** mean the tool is installed on a user's computer, nor does a smoke test prove every feature or platform works. Check each record for the exact scope and limitations.
 
 Remaining research priorities:
 
-1. **Core quality tooling:** Ruff and mypy; only add if they fill a concrete linting/type-checking gap.
-2. **Browser quality stack:** obtain a controlled package-install path and run Lighthouse and axe-core smoke tests; Playwright itself also needs a real browser automation test.
-3. **Image workflows:** evaluate GIMP or rembg only when manual editing or background removal is actually needed; ExifTool runtime testing is pending.
-4. **API and automation utilities:** compare HTTP clients/testing tools and optional n8n against the existing Python and OS-native capabilities.
-5. **Data analysis:** validate pandas and a plotting stack; investigate CCXT only after defining exchange and data requirements.
-6. **Platform-specific SDKs:** choose Telegram SDK and MAX API tooling only when an actual project requires them.
+1. **API and automation utilities:** compare HTTP clients/testing tools and optional n8n against existing Python and OS-native capabilities.
+2. **Data analysis:** validate pandas and a plotting stack; investigate CCXT only after defining exchange and data requirements.
+3. **Platform-specific SDKs:** choose Telegram SDK and MAX API tooling only when an actual project requires them.
+4. **VPS/container operations:** assess Docker/Podman and SSH diagnostics only against a concrete deployment or administration workflow.
+5. **Security/code audit:** evaluate Bandit, Semgrep, and license scanners when a project requires deeper static or supply-chain analysis.
 
 This is a research queue, not an instruction to install every candidate. Reuse tools already available in the target environment and avoid redundant dependencies.
 
