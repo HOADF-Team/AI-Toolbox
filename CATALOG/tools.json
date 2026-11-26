@@ -527,6 +527,34 @@
       }
     },
     {
+      "id": "schemathesis",
+      "name": "Schemathesis",
+      "category": "api-tooling",
+      "description": "Property-based API testing tool that generates edge-case requests from OpenAPI, GraphQL, and gRPC schemas and validates live API responses.",
+      "status": "reviewed",
+      "record": "TOOLS/api-tooling/schemathesis/TOOL.md",
+      "official_url": "https://schemathesis.readthedocs.io/",
+      "source_repository": "https://github.com/schemathesis/schemathesis",
+      "license": "MIT",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "interfaces": [
+        "Python CLI",
+        "pytest",
+        "Python API"
+      ],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
+    },
+    {
       "id": "pandas",
       "name": "pandas",
       "category": "python",
