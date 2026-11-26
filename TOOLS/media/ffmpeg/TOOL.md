@@ -2,7 +2,7 @@
 
 - **ID:** `ffmpeg`
 - **Category:** media
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** FFmpeg Project
 - **Official website:** https://ffmpeg.org/
 - **Source repository:** https://github.com/FFmpeg/FFmpeg
@@ -89,8 +89,12 @@ ffmpeg -i input.mp4 -vn -c:a libmp3lame -q:a 2 output.mp3
 - **Local runtime inspected:** Debian GNU/Linux 13, Linux x86_64; FFmpeg and ffprobe 7.1.5 were available in PATH.
 - **Local smoke test:** generated a one-second MP4 with synthetic video and audio, inspected both streams with ffprobe, and decoded the file to a null output. All steps passed.
 - **Build configuration:** the inspected binary was built with `--enable-gpl`; treat that binary as GPL-licensed and review the bundled libraries' notices before redistribution.
-- **CI installation and repeatable test:** pending. The record remains `reviewed` until the repository's CI workflow confirms the install and smoke test.
-- **Scope:** a successful local smoke test does not imply installation on the user's computer or on another runtime.
+- **CI environment:** GitHub-hosted Ubuntu 26.04 runner; FFmpeg and ffprobe 8.0.1-3ubuntu2.
+- **CI installation:** installed successfully from the Ubuntu package repository.
+- **CI runtime test:** generated a one-second MP4 with synthetic video and audio; ffprobe confirmed video dimensions 160×90 and audio sample rate 44,100 Hz; FFmpeg decoded the file successfully.
+- **Result:** encode, probe, and decode smoke test passed. Run: https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45836085028
+- **Build configuration:** the CI binary includes `--enable-gpl`; treat that binary as GPL-licensed and review bundled library notices before redistribution.
+- **Scope:** CI verified only the tested Linux package and codecs. The current assistant runtime's FFmpeg 7.1.5 also passed a separate local encode/probe/decode test. Neither result implies installation on the user's computer.
 
 ## Security and limitations
 
