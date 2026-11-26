@@ -503,7 +503,7 @@
       "name": "Redocly CLI",
       "category": "api-tooling",
       "description": "OpenAPI linting, bundling, documentation generation, and Arazzo-based API workflow testing with response schema checks.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/api-tooling/redocly-cli/TOOL.md",
       "official_url": "https://redocly.com/docs/cli/",
       "source_repository": "https://github.com/Redocly/redocly-cli",
@@ -522,8 +522,8 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
+        "installation_tested": true,
+        "runtime_tested": true
       }
     }
   ]
