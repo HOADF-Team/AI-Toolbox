@@ -52,7 +52,7 @@ PYTHON_MODULES = [
     "pytest", "ruff", "mypy", "playwright", "pandas", "PIL", "docx",
     "openpyxl", "reportlab", "cv2", "rembg", "imageio", "matplotlib", "bandit", "ccxt", "schemathesis",
 ]
-NODE_PACKAGES = ["playwright", "lighthouse", "axe-core", "@redocly/cli", "@mockoon/cli"]
+NODE_PACKAGES = ["playwright", "lighthouse", "axe-core", "@redocly/cli"]
 
 
 def probe(args: list[str], timeout: int = 4) -> str | None:
