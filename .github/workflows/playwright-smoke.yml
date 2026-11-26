@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   playwright-smoke:
-    name: Install Chromium and run a browser test
+    name: Install Chromium and run a local browser test
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -30,24 +30,44 @@ jobs:
           mkdir playwright-smoke
           cd playwright-smoke
           npm init -y
-          npm install --save-dev @playwright/test
+          npm install --save-dev @playwright/test@1.65.1
           npx playwright --version
 
       - name: Install Chromium and system dependencies
         working-directory: playwright-smoke
         run: npx playwright install --with-deps chromium
 
-      - name: Create a minimal browser test
+      - name: Create a minimal local browser test
         working-directory: playwright-smoke
         run: |
           mkdir tests
           cat > tests/smoke.spec.js <<'EOF'
           const { test, expect } = require('@playwright/test');
 
-          test('Chromium opens a page and checks its title', async ({ page }) => {
-            await page.goto('https://example.com');
-            await expect(page).toHaveTitle('Example Domain');
-            await expect(page.locator('h1')).toHaveText('Example Domain');
+          test('Chromium renders a page and handles a user interaction', async ({ page }) => {
+            await page.setContent(`
+              <!doctype html>
+              <html lang="en">
+                <head><title>AI-Toolbox Playwright Smoke Test</title></head>
+                <body>
+                  <main>
+                    <h1>Browser is running</h1>
+                    <button type="button" id="action">Run interaction</button>
+                    <output id="result">Not clicked</output>
+                  </main>
+                  <script>
+                    document.querySelector('#action').addEventListener('click', () => {
+                      document.querySelector('#result').textContent = 'Interaction passed';
+                    });
+                  </script>
+                </body>
+              </html>
+            `);
+
+            await expect(page).toHaveTitle('AI-Toolbox Playwright Smoke Test');
+            await expect(page.getByRole('heading', { name: 'Browser is running' })).toBeVisible();
+            await page.getByRole('button', { name: 'Run interaction' }).click();
+            await expect(page.locator('#result')).toHaveText('Interaction passed');
           });
           EOF
 
