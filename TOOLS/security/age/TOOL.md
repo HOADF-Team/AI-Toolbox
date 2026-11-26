@@ -1,5 +1,11 @@
 # age
 
+- **ID:** `age`
+- **Category:** security
+- **Status:** `reviewed`
+- **Publisher / maintainer:** Filippo Valsorda and contributors
+- **License:** BSD-3-Clause
+
 - **Purpose:** simple file encryption/decryption with explicit recipients or passphrases.
 - **Upstream:** https://github.com/FiloSottile/age
 - **Documentation:** https://github.com/FiloSottile/age#readme
