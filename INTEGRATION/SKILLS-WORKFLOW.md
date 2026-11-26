@@ -4,7 +4,7 @@ This repository is the tool inventory and verification layer for the organizatio
 
 - Skills describe workflows and decision rules: [HOADF-Team/Personal-AI-Library](https://github.com/HOADF-Team/Personal-AI-Library).
 - Tool records describe concrete software, provenance, licenses, installation requirements, verification evidence and limitations.
-- The [Skill → Tool map](../CATALOG/SKILL-MAP.md) connects the 23 actual Skills to relevant tool capabilities.
+- The [Skill → Tool map](../CATALOG/SKILL-MAP.md) connects the 24 Skills on the integration branch (including crypto-security; PR #9 pending) to relevant tool capabilities.
 - The machine-readable [Skill dependency map](../CATALOG/skill-tools.json) and [preflight checker](../scripts/check_skill_tools.py) compare declared prerequisites with current-runtime inventory evidence.
 - The authoritative operating procedure is maintained in [Personal-AI-Library: AI agent workflow](https://github.com/HOADF-Team/Personal-AI-Library/blob/main/INTEGRATION/AI-AGENT-WORKFLOW.md).
 
