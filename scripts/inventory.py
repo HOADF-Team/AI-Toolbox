@@ -20,7 +20,7 @@ COMMANDS = {
     "mockoon-cli": ["--version"],
     "podman": ["--version"],
     "schemathesis": ["--version"],
-    "bandit": ["--version"],
+    "bandit": ["--version"],\n    "gitleaks": ["version"],\n    "trivy": ["--version"],\n    "age": ["--version"],\n    "restic": ["version"],
     "ccxt": ["--version"],
     "hummingbot": ["--version"],
     "freqtrade": ["--version"],
@@ -53,7 +53,7 @@ COMMANDS = {
 
 PYTHON_MODULES = [
     "pytest", "ruff", "mypy", "playwright", "pandas", "PIL", "docx",
-    "openpyxl", "reportlab", "cv2", "rembg", "imageio", "matplotlib", "bandit", "ccxt", "schemathesis", "ta", "backtesting", "hummingbot", "freqtrade",
+    "openpyxl", "reportlab", "cv2", "rembg", "imageio", "matplotlib", "bandit", "pip_audit", "ccxt", "schemathesis", "ta", "backtesting", "hummingbot", "freqtrade",
 ]
 NODE_PACKAGES = ["playwright", "lighthouse", "axe-core", "@redocly/cli"]
 
