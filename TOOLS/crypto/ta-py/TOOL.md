@@ -2,7 +2,7 @@
 
 - **ID:** `ta-py`
 - **Category:** crypto
-- **Status:** `reviewed` (runtime test pending)
+- **Status:** `reviewed`
 - **Publisher / maintainer:** Nino Kroesen; upstream repository identifies a single maintainer
 - **PyPI package:** https://pypi.org/project/ta_py/
 - **Source repository:** https://github.com/Bitvested/ta.py
