@@ -616,6 +616,52 @@
         "installation_tested": true,
         "runtime_tested": true
       }
+    },
+    {
+      "id": "ta-py",
+      "name": "ta.py (ta_py)",
+      "category": "crypto",
+      "description": "Pure-Python technical-analysis library with 151 indicators and statistical functions; no NumPy, pandas, TA-Lib, or native extensions required.",
+      "status": "tested",
+      "record": "TOOLS/crypto/ta-py/TOOL.md",
+      "official_url": "https://pypi.org/project/ta_py/",
+      "source_repository": "https://github.com/Bitvested/ta.py",
+      "license": "MIT",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": true,
+        "runtime_tested": true
+      }
+    },
+    {
+      "id": "backtesting-py",
+      "name": "backtesting.py",
+      "category": "crypto",
+      "description": "Python framework for event-driven backtesting of OHLCV strategies, including commissions, spread, trade statistics, and parameter optimization.",
+      "status": "tested",
+      "record": "TOOLS/crypto/backtesting-py/TOOL.md",
+      "official_url": "https://kernc.github.io/backtesting.py/",
+      "source_repository": "https://github.com/kernc/backtesting.py",
+      "license": "AGPL-3.0-or-later",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": true,
+        "runtime_tested": true
+      }
     }
   ]
 }
