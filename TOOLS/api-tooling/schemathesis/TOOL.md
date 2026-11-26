@@ -2,7 +2,7 @@
 
 - **ID:** `schemathesis`
 - **Category:** api-tooling
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** Schemathesis project; upstream repository maintained by the Schemathesis team
 - **Official website:** https://schemathesis.readthedocs.io/
 - **Source repository:** https://github.com/schemathesis/schemathesis
@@ -69,9 +69,13 @@ Typical workflow:
 
 - **Review date:** 2026-11-26.
 - **Source/license review:** upstream repository, project documentation, package metadata, and MIT license reviewed.
-- **Installation test:** pending isolated GitHub Actions run.
-- **Runtime test:** pending local HTTP fixture test in GitHub Actions.
-- **Status:** `reviewed`; do not treat as installed or runtime-tested until the workflow passes.
+- **CI environment:** GitHub-hosted Ubuntu runner, Python 3.13.
+- **Installation:** pinned `schemathesis==4.33.1` installed successfully using `uv tool install --python 3.13`; CLI reported version 4.33.1.
+- **Runtime test:** Schemathesis loaded the OpenAPI 3.1.0 fixture, tested one GET operation against a loopback-only Python HTTP server, and generated 30 test cases; all 30 passed across the enabled phases.
+- **Result:** no issues found; workflow run https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45855472447
+- **Additional validation:** catalog validator and Ruff/mypy passed on the same final PR head SHA `561b54b28f4263ece255f01865df4200a67a4b1e`.
+- **Scope:** confirms the pinned CLI installation and bounded local HTTP fixture test on this CI runner only. It does not establish all protocols, all CLI features, every platform, or availability on the user's computer.
+- **Status:** `tested`; the result is limited to the exact scope above.
 
 ## Sources
 
