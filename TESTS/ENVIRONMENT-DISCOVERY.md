@@ -6,7 +6,7 @@ Use [inventory.py](../scripts/inventory.py) before proposing an installation.
 python3 scripts/inventory.py --pretty
 ```
 
-The script uses the Python standard library only. It checks a curated set of command-line tools on `PATH`, probes versions or short help output where possible, checks selected Python modules with import discovery, and resolves selected Node.js packages from the current working directory. It emits JSON and does not install, update, remove, or configure anything. It makes no network requests.
+The script uses the Python standard library only. It checks a curated set of command-line tools on `PATH`, probes versions or short help output where possible, checks selected Python modules with import discovery (including Ruff and mypy), and resolves selected Node.js packages from the current working directory. It emits JSON and does not install, update, remove, or configure anything. It makes no network requests.
 
 ## Interpret the result correctly
 
@@ -33,4 +33,4 @@ A missing command means only that its name was not found on the current PATH. A 
 
 ## Current limitations
 
-The inventory is intentionally curated, not a complete software inventory. It does not inspect arbitrary directories, package managers, GUI applications, services, containers, remote hosts, other users' environments, or global Node.js package stores. Python module detection reports import discoverability, not successful imports or functional correctness. Node package resolution is relative to the current working directory and may not detect packages installed only in other projects. Version/help probes are best-effort and may return no output even when a command exists.
+Ruff and mypy are checked as both PATH commands and discoverable Python modules. Their presence does not mean that lint or type checks have been run.\n\nThe inventory is intentionally curated, not a complete software inventory. It does not inspect arbitrary directories, package managers, GUI applications, services, containers, remote hosts, other users' environments, or global Node.js package stores. Python module detection reports import discoverability, not successful imports or functional correctness. Node package resolution is relative to the current working directory and may not detect packages installed only in other projects. Version/help probes are best-effort and may return no output even when a command exists.
