@@ -27,7 +27,6 @@ class MatchInventoryTests(unittest.TestCase):
             "generated_at": "2026-11-27T00:00:00+00:00",
             "commands": {"git": {"installed": True}, "hummingbot": {"installed": False}, "gitleaks": {"installed": True}},
             "python_modules": {"playwright": {"available": False}, "pip_audit": {"available": True}},
-            "python_modules": {"playwright": {"available": False}},
             "node_packages": {"playwright": {"available": True}},
         }
 
@@ -57,7 +56,7 @@ class MatchInventoryTests(unittest.TestCase):
     def test_counts_and_scope_are_reported(self) -> None:
         result = match_catalog(self.catalog, self.report)
         self.assertEqual(result["catalog_match"]["counts"], {
-            "available": 2, "missing": 1, "not_probed": 1,
+            "available": 4, "missing": 1, "not_probed": 1,
         })
         self.assertEqual(result["inventory_scope"], "current_process_environment_only")
 
