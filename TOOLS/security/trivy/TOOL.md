@@ -1,5 +1,11 @@
 # Trivy
 
+- **ID:** `trivy`
+- **Category:** security
+- **Status:** `reviewed`
+- **Publisher / maintainer:** Aqua Security
+- **License:** Apache-2.0
+
 - **Purpose:** scan container images, filesystems and repositories for known vulnerabilities, secrets, licenses and (when enabled) configuration misconfigurations.
 - **Upstream:** https://github.com/aquasecurity/trivy
 - **Documentation:** https://trivy.dev/
