@@ -1,5 +1,11 @@
 # restic
 
+- **ID:** `restic`
+- **Category:** security
+- **Status:** `reviewed`
+- **Publisher / maintainer:** restic maintainers
+- **License:** BSD-2-Clause
+
 - **Purpose:** backup program for versioned snapshots in encrypted repositories across local and remote storage backends.
 - **Upstream:** https://github.com/restic/restic
 - **Documentation:** https://restic.readthedocs.io/
