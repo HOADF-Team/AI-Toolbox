@@ -1,0 +1,45 @@
+name: Bandit Python security smoke test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "TOOLS/security/bandit/**"
+      - "TESTS/fixtures/bandit/**"
+      - "TESTS/smoke_bandit.py"
+      - "scripts/inventory.py"
+      - ".github/workflows/bandit-smoke.yml"
+  pull_request:
+    paths:
+      - "TOOLS/security/bandit/**"
+      - "TESTS/fixtures/bandit/**"
+      - "TESTS/smoke_bandit.py"
+      - "scripts/inventory.py"
+      - ".github/workflows/bandit-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  bandit:
+    name: Install Bandit and verify security findings
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install pinned Bandit
+        run: |
+          python -m pip install --disable-pip-version-check "bandit==1.9.4"
+          bandit --version
+
+      - name: Scan safe and intentionally unsafe source fixtures
+        run: python TESTS/smoke_bandit.py

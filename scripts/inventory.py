@@ -17,6 +17,7 @@ COMMANDS = {
     "curl": ["--version"],
     "jq": ["--version"],
     "redocly": ["--version"],
+    "bandit": ["--version"],
     "gh": ["--version"],
     "python": ["--version"],
     "python3": ["--version"],
@@ -46,7 +47,7 @@ COMMANDS = {
 
 PYTHON_MODULES = [
     "pytest", "ruff", "mypy", "playwright", "pandas", "PIL", "docx",
-    "openpyxl", "reportlab", "cv2", "rembg", "imageio", "matplotlib",
+    "openpyxl", "reportlab", "cv2", "rembg", "imageio", "matplotlib", "bandit",
 ]
 NODE_PACKAGES = ["playwright", "lighthouse", "axe-core", "@redocly/cli"]
 
