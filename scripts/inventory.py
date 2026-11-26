@@ -18,6 +18,7 @@ COMMANDS = {
     "jq": ["--version"],
     "redocly": ["--version"],
     "mockoon-cli": ["--version"],
+    "podman": ["--version"],
     "schemathesis": ["--version"],
     "bandit": ["--version"],
     "ccxt": ["--version"],
