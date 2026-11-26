@@ -23,7 +23,7 @@ class MatchInventoryTests(unittest.TestCase):
         self.report: dict[str, Any] = {
             "scope": "current_process_environment_only",
             "generated_at": "2026-11-27T00:00:00+00:00",
-            "commands": {"git": {"installed": True}},
+            "commands": {"git": {"installed": True}, "hummingbot": {"installed": False}},
             "python_modules": {"playwright": {"available": False}},
             "node_packages": {"playwright": {"available": True}},
         }
