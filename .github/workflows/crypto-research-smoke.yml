@@ -39,4 +39,4 @@ jobs:
           python -c "import ta_py, backtesting, pandas; print('ta_py installed; backtesting installed; pandas', pandas.__version__)"
 
       - name: Run deterministic offline smoke tests
-        run: python TESTS/smoke_crypto_research.py
+        run: python -m pytest -q TESTS/smoke_crypto_research.py
