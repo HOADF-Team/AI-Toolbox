@@ -1,0 +1,108 @@
+name: curl and jq API utility smoke test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "TOOLS/networking/curl/**"
+      - "TOOLS/networking/jq/**"
+      - "scripts/inventory.py"
+      - ".github/workflows/curl-jq-smoke.yml"
+  pull_request:
+    paths:
+      - "TOOLS/networking/curl/**"
+      - "TOOLS/networking/jq/**"
+      - "scripts/inventory.py"
+      - ".github/workflows/curl-jq-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  curl-jq-smoke:
+    name: Install curl and jq; test HTTP and JSON processing
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install curl and jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --reinstall curl jq
+          curl --version | head -n 1
+          jq --version
+          python3 scripts/inventory.py --pretty > inventory.json
+          jq -e '.commands.curl.installed == true and .commands.jq.installed == true' inventory.json
+
+      - name: Exercise GET, POST, HTTP errors, and jq filters
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' > server.log 2>&1 &
+          import json
+          from http.server import BaseHTTPRequestHandler, HTTPServer
+
+          class Handler(BaseHTTPRequestHandler):
+              def do_GET(self):
+                  if self.path == "/missing":
+                      self.send_error(404, "fixture not found")
+                      return
+                  body = json.dumps({
+                      "ok": True,
+                      "service": "ai-toolbox-smoke",
+                      "items": ["curl", "jq"],
+                      "count": 2,
+                  }).encode()
+                  self.send_response(200)
+                  self.send_header("Content-Type", "application/json")
+                  self.send_header("Content-Length", str(len(body)))
+                  self.end_headers()
+                  self.wfile.write(body)
+
+              def do_POST(self):
+                  length = int(self.headers.get("Content-Length", "0"))
+                  received = json.loads(self.rfile.read(length) or b"{}")
+                  body = json.dumps({"received": received, "method": "POST"}).encode()
+                  self.send_response(200)
+                  self.send_header("Content-Type", "application/json")
+                  self.send_header("Content-Length", str(len(body)))
+                  self.end_headers()
+                  self.wfile.write(body)
+
+              def log_message(self, *_):
+                  pass
+
+          HTTPServer(("127.0.0.1", 8765), Handler).serve_forever()
+          PY
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+
+          for attempt in {1..10}; do
+            if curl --fail --silent http://127.0.0.1:8765/ >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          curl --fail --silent --show-error \
+            http://127.0.0.1:8765/api/items > response.json
+          jq -e '.ok == true and .count == 2 and (.items | length == 2)' response.json
+          test "$(jq -r '.items | join(",")' response.json)" = "curl,jq"
+
+          curl --fail --silent --show-error \
+            -H 'Content-Type: application/json' \
+            -d '{"task":"smoke","n":7}' \
+            http://127.0.0.1:8765/api/items > post-response.json
+          jq -e '.method == "POST" and .received.task == "smoke" and .received.n == 7' post-response.json
+
+          if curl --fail --silent --show-error \
+            http://127.0.0.1:8765/missing >/dev/null 2>&1; then
+            echo "curl --fail unexpectedly accepted HTTP 404" >&2
+            exit 1
+          fi
+
+          echo "curl GET/POST/HTTP-error and jq JSON smoke tests: PASS"

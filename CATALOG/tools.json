@@ -451,6 +451,52 @@
         "installation_tested": true,
         "runtime_tested": true
       }
+    },
+    {
+      "id": "curl",
+      "name": "curl",
+      "category": "networking",
+      "description": "Command-line data transfer tool for HTTP APIs, downloads, uploads, and protocol diagnostics.",
+      "status": "tested",
+      "record": "TOOLS/networking/curl/TOOL.md",
+      "official_url": "https://curl.se/",
+      "source_repository": "https://github.com/curl/curl",
+      "license": "curl license (MIT-like; SPDX identifier curl)",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": true,
+        "runtime_tested": true
+      }
+    },
+    {
+      "id": "jq",
+      "name": "jq",
+      "category": "networking",
+      "description": "Lightweight command-line JSON processor for filtering, querying, transforming, and validating JSON data.",
+      "status": "tested",
+      "record": "TOOLS/networking/jq/TOOL.md",
+      "official_url": "https://jqlang.org/",
+      "source_repository": "https://github.com/jqlang/jq",
+      "license": "MIT (jq code); documentation CC-BY-3.0; bundled decNumber component ICU 1.8.1",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": true,
+        "runtime_tested": true
+      }
     }
   ]
 }

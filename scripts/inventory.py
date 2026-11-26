@@ -14,6 +14,8 @@ from datetime import datetime, timezone
 
 COMMANDS = {
     "git": ["--version"],
+    "curl": ["--version"],
+    "jq": ["--version"],
     "gh": ["--version"],
     "python": ["--version"],
     "python3": ["--version"],
