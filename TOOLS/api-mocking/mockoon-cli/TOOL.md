@@ -2,7 +2,7 @@
 
 - **ID:** `mockoon-cli`
 - **Category:** api-mocking
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** Mockoon (1kB SARL-S)
 - **Official website:** https://mockoon.com/cli/
 - **Source repository:** https://github.com/mockoon/mockoon
@@ -26,7 +26,7 @@ The CLI includes an MCP server. Its MCP tools can list local Mockoon files, star
 - **Mockoon CLI** provides the mock API server itself, so developers and agents can test clients before a real backend exists.
 - **curl/jq** remain useful for direct HTTP calls and JSON inspection.
 
-Mockoon's OpenAPI import is intentionally partial. It imports API metadata, servers, routes, methods, response status codes, headers, descriptions, and sample response bodies/examples, but not every OpenAPI feature. For full Mockoon templating and response rules, use a native Mockoon data file. Do not treat a successful import as proof of complete OpenAPI fidelity.
+Mockoon's OpenAPI import is intentionally partial. It imports API metadata, servers, routes, methods, response status codes, headers, descriptions, and sample response bodies/examples, but not every OpenAPI feature. Generated mock values may not reproduce a media-type example exactly. For full Mockoon templating and response rules, use a native Mockoon data file. Do not treat a successful import as proof of complete OpenAPI fidelity.
 
 Prism is another OpenAPI-native mock server, but the reviewed Prism 5.16.0 CLI package currently declares Node.js >=26.13. Mockoon CLI 9.10.0 supports the Node.js 22 runtime already represented in this toolbox and also provides an MCP management interface, so Mockoon is the more practical candidate for this environment.
 
@@ -78,9 +78,15 @@ For an agent that needs to manage mocks through MCP, review the configured data 
 
 - **Review date:** 2026-11-26.
 - **Source/license review:** upstream CLI package metadata, README, OpenAPI compatibility documentation, official CLI documentation, and MIT license reviewed.
-- **Installation test:** pending pinned npm installation in GitHub Actions.
-- **Runtime test:** pending local mock-server test against a loopback-only OpenAPI fixture.
-- **Status:** `reviewed`; do not treat as installed or runtime-tested until the workflow passes.
+- **CI environment:** GitHub-hosted Ubuntu runner, Node.js 22.
+- **Installation:** pinned `@mockoon/cli@9.10.0` installed successfully through npm; CLI version command completed.
+- **Inventory:** `scripts/inventory.py` detected both the `mockoon-cli` executable and `@mockoon/cli` npm package.
+- **Import/validation:** OpenAPI 3.0 fixture imported into a native Mockoon data file; `mockoon-cli validate` reported the environment valid.
+- **Runtime:** Mockoon started a local HTTP mock bound to `127.0.0.1:8767`; GET `/hello` returned JSON with the schema-required string field.
+- **Result:** installation, inventory, import, validation, and loopback HTTP mock checks passed. Run: https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45856059607
+- **Additional validation:** catalog validator and Ruff/mypy passed on the same PR revision before the inventory assertion was added; they are rerun on the final PR head.
+- **Scope:** confirms the pinned CLI path and tested OpenAPI mock workflow on this CI runner only. MCP command behavior and other OpenAPI features were reviewed but not runtime-tested.
+- **Status:** `tested`; see scope and limitations above.
 
 ## Sources
 
