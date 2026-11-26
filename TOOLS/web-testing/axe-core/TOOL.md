@@ -2,7 +2,7 @@
 
 - **ID:** `axe-core`
 - **Category:** web-testing
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** Deque Systems, Inc. / Deque Labs
 - **Official website:** https://www.deque.com/axe/
 - **Source repository:** https://github.com/dequelabs/axe-core
