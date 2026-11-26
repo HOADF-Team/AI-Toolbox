@@ -38,6 +38,15 @@ jobs:
           mockoon-cli --version
           node --version
           python3 scripts/inventory.py --pretty > inventory.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          inventory = json.loads(Path("inventory.json").read_text())
+          assert inventory["commands"]["mockoon-cli"]["installed"] is True
+          assert inventory["node_packages"]["@mockoon/cli"]["available"] is True
+          print("Mockoon CLI and npm package inventory detection: PASS")
+          PY
 
       - name: Create a local OpenAPI fixture
         run: |
