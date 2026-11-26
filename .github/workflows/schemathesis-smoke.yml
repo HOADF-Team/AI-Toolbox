@@ -117,6 +117,7 @@ jobs:
 
               def method_not_allowed(self):
                   self.send_response(405)
+                  self.send_header("Allow", "GET")
                   self.send_header("Content-Length", "0")
                   self.end_headers()
 
