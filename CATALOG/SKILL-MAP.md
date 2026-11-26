@@ -27,7 +27,7 @@
 | Personal-AI-Library Skill | Required capability | Candidate tools / services to investigate | AI-Toolbox state / notes |
 |---|---|---|---|
 | `python-development` | Python runtime, isolated environments, linting, tests, debugging | Python, `venv`/uv, pytest, Ruff, mypy | Python, uv, and pytest in catalog (`tested`); Ruff and mypy in catalog (`tested`); prefer standard library where sufficient |
-| `code-audit` | Static inspection, syntax/AST checks, and Python security patterns | Existing Skill AST script; Ruff; Bandit; Semgrep only for broader multi-language/data-flow needs | Bandit in catalog (`reviewed`) pending isolated install and fixture scan; local AST script remains in Personal-AI-Library |
+| `code-audit` | Static inspection, syntax/AST checks, and Python security patterns | Existing Skill AST script; Ruff; Bandit; Semgrep only for broader multi-language/data-flow needs | Bandit in catalog (`tested`); B301/B602 findings detected and safe fixture clean; local AST script remains in Personal-AI-Library |
 | `web-development` | HTML/CSS/JS workflow, local server, browser testing, build tools | Playwright; Node.js/npm; Vite only when project needs a build step | Playwright in catalog (`tested`); Node.js in catalog (`tested`); Vite only when project needs a build step |
 | `devops-vps` | Remote Linux diagnostics, service/container/log inspection | OpenSSH, `ssh`, `journalctl`, systemd tools, Docker/Podman, `curl` | Mostly OS-native tools; avoid installing a second admin stack without need |
 | `automation-vps` | API clients, webhook testing, scheduling, state and retries | Python HTTP clients; `curl`; `jq`; Redocly CLI for OpenAPI/Arazzo workflows; n8n only for visual workflow needs | curl and jq in catalog (`tested`); Redocly CLI (`tested`); external API access and credentials require explicit scope |
@@ -52,7 +52,7 @@
 
 ## Current coverage and remaining work
 
-The catalog now contains **25 tool records — 24 are `tested` and 1 is `reviewed`**. Bandit is under isolated installation and fixture-scan verification. Redocly CLI passed pinned installation, OpenAPI lint, and Arazzo API workflow checks in isolated CI.
+The catalog now contains **25 tool records — all 25 are `tested`**. Bandit passed pinned installation and safe/unsafe fixture scans in isolated CI. Redocly CLI passed pinned installation, OpenAPI lint, and Arazzo API workflow checks in isolated CI.
 
 The catalog covers source control, Python development and quality checks, JavaScript runtime, browser testing and audits, document conversion/OCR, image processing and metadata, background removal, media processing, HTTP/JSON API utilities, OpenAPI workflow testing, Python data analysis/visualization, and Python security scanning.
 
@@ -64,7 +64,7 @@ Remaining research priorities:
 2. **Data analysis:** pandas and Matplotlib are now cataloged and runtime-tested; investigate CCXT only after defining exchange and data requirements.
 3. **Platform-specific SDKs:** choose Telegram SDK and MAX API tooling only when an actual project requires them.
 4. **VPS/container operations:** assess Docker/Podman and SSH diagnostics only against a concrete deployment or administration workflow.
-5. **Security/code audit:** Bandit is under review as a Python security-pattern scanner; consider Semgrep or license scanners only when a project needs broader multi-language or supply-chain analysis.
+5. **Security/code audit:** Bandit is tested as a Python security-pattern scanner; consider Semgrep or license scanners only when a project needs broader multi-language or supply-chain analysis.
 
 This is a research queue, not an instruction to install every candidate. Reuse tools already available in the target environment and avoid redundant dependencies.
 
