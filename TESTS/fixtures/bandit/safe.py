@@ -1,0 +1,6 @@
+"""Small safe source fixture expected to produce no Bandit findings."""
+from pathlib import Path
+
+
+def read_text_file(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
