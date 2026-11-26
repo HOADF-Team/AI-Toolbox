@@ -1,0 +1,110 @@
+name: Mockoon CLI API mocking smoke test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "TOOLS/api-mocking/mockoon-cli/**"
+      - "scripts/inventory.py"
+      - ".github/workflows/mockoon-smoke.yml"
+  pull_request:
+    paths:
+      - "TOOLS/api-mocking/mockoon-cli/**"
+      - "scripts/inventory.py"
+      - ".github/workflows/mockoon-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  mockoon-smoke:
+    name: Install Mockoon CLI and run a local OpenAPI mock
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Install pinned Mockoon CLI
+        run: |
+          npm install --global @mockoon/cli@9.10.0
+          mockoon-cli --version
+          node --version
+          python3 scripts/inventory.py --pretty > inventory.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          inventory = json.loads(Path("inventory.json").read_text())
+          assert inventory["commands"]["mockoon-cli"]["installed"] is True
+          print("Mockoon CLI executable inventory detection: PASS")
+          PY
+
+      - name: Create a local OpenAPI fixture
+        run: |
+          cat > openapi.yaml <<'YAML'
+          openapi: 3.0.0
+          info:
+            title: AI-Toolbox Mockoon smoke fixture
+            version: 1.0.0
+          servers:
+            - url: http://127.0.0.1:8767
+          paths:
+            /hello:
+              get:
+                operationId: getHello
+                responses:
+                  "200":
+                    description: Greeting
+                    content:
+                      application/json:
+                        schema:
+                          type: object
+                          required: [message]
+                          properties:
+                            message:
+                              type: string
+                        example:
+                          message: hello-from-mockoon
+          YAML
+
+      - name: Import and validate native Mockoon data
+        run: |
+          mockoon-cli import --input openapi.yaml --output mockoon-data.json --prettify
+          mockoon-cli validate --data mockoon-data.json
+
+      - name: Run mock server and verify HTTP response
+        shell: bash
+        run: |
+          set -euo pipefail
+          mockoon-cli start \
+            --data openapi.yaml \
+            --hostname 127.0.0.1 \
+            --port 8767 \
+            --disable-admin-api \
+            --disable-log-to-file > mockoon.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+
+          for attempt in {1..15}; do
+            if curl --fail --silent http://127.0.0.1:8767/hello > response.json; then
+              break
+            fi
+            sleep 1
+          done
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(Path("response.json").read_text())
+          assert isinstance(data.get("message"), str), data
+          print("Mockoon OpenAPI mock HTTP response schema: PASS")
+          PY

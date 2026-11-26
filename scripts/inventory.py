@@ -17,6 +17,7 @@ COMMANDS = {
     "curl": ["--version"],
     "jq": ["--version"],
     "redocly": ["--version"],
+    "mockoon-cli": ["--version"],
     "schemathesis": ["--version"],
     "bandit": ["--version"],
     "ccxt": ["--version"],
