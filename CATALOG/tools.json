@@ -230,7 +230,7 @@
         "installation_tested": false,
         "runtime_tested": true
       }
-    }
+    },
     {
       "id": "imagemagick",
       "name": "ImageMagick",
