@@ -2,7 +2,7 @@
 
 - **ID:** `ruff`
 - **Category:** python
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** Astral and contributors
 - **Official website / documentation:** https://docs.astral.sh/ruff/
 - **Source repository:** https://github.com/astral-sh/ruff
@@ -52,6 +52,15 @@ Use `ruff check --fix` or `ruff format` only after reviewing the proposed scope;
 - **Checks performed:** reviewed official project documentation, repository, PyPI release information, and license metadata.
 - **Result:** source and license reviewed; runtime execution and installation not tested.
 - **Status limitation:** this record does not claim Ruff is installed in the assistant runtime or on the user's computer.
+
+## Verification
+
+- **Environment:** GitHub Actions hosted runner, Ubuntu 26.04, x86_64, CPython 3.12.16.
+- **Date:** 2026-11-26.
+- **Pinned version:** Ruff 0.17.6.
+- **Installation:** installed successfully from the pinned `requirements-dev.txt` in a fresh CI job.
+- **Checks:** `ruff check scripts/` completed successfully against repository scripts.
+- **Result:** PASS. This verifies the configured repository scope only; it does not imply installation on the user's computer or in other runtimes.
 
 ## Security and limitations
 
