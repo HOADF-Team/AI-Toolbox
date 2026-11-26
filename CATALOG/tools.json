@@ -154,6 +154,82 @@
         "installation_tested": false,
         "runtime_tested": false
       }
+    },
+    {
+      "id": "libreoffice",
+      "name": "LibreOffice",
+      "category": "documents",
+      "description": "Office suite and headless document conversion for word-processing files, spreadsheets, presentations, and PDFs.",
+      "status": "tested",
+      "record": "TOOLS/documents/libreoffice/TOOL.md",
+      "official_url": "https://www.libreoffice.org/",
+      "source_repository": "https://git.libreoffice.org/core",
+      "license": "MPL-2.0 (bundled components use additional licenses)",
+      "platforms": ["Windows", "Linux", "macOS"],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": true
+      }
+    },
+    {
+      "id": "pandoc",
+      "name": "Pandoc",
+      "category": "documents",
+      "description": "Universal markup and document converter for Markdown, HTML, DOCX, ODT, EPUB, LaTeX, and other formats.",
+      "status": "tested",
+      "record": "TOOLS/documents/pandoc/TOOL.md",
+      "official_url": "https://pandoc.org/",
+      "source_repository": "https://github.com/jgm/pandoc",
+      "license": "GPL-2.0-or-later",
+      "platforms": ["Windows", "Linux", "macOS"],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": true
+      }
+    },
+    {
+      "id": "poppler-utils",
+      "name": "Poppler utilities",
+      "category": "documents",
+      "description": "PDF command-line utilities for metadata inspection, text extraction, and page rendering.",
+      "status": "tested",
+      "record": "TOOLS/documents/poppler-utils/TOOL.md",
+      "official_url": "https://poppler.freedesktop.org/",
+      "source_repository": "https://gitlab.freedesktop.org/poppler/poppler",
+      "license": "GPL (review exact package notices)",
+      "platforms": ["Windows", "Linux", "macOS"],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": true
+      }
+    },
+    {
+      "id": "tesseract",
+      "name": "Tesseract OCR",
+      "category": "documents",
+      "description": "Optical character recognition engine for extracting text from scanned images and image-only documents.",
+      "status": "tested",
+      "record": "TOOLS/documents/tesseract/TOOL.md",
+      "official_url": "https://tesseract-ocr.github.io/",
+      "source_repository": "https://github.com/tesseract-ocr/tesseract",
+      "license": "Apache-2.0",
+      "platforms": ["Windows", "Linux", "macOS"],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": true
+      }
     }
   ]
 }
