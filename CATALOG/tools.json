@@ -382,7 +382,7 @@
       "name": "FFmpeg",
       "category": "media",
       "description": "Multimedia framework and command-line tools for decoding, encoding, transcoding, muxing, demuxing, filtering, and probing audio/video files.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/media/ffmpeg/TOOL.md",
       "official_url": "https://ffmpeg.org/",
       "source_repository": "https://github.com/FFmpeg/FFmpeg",
@@ -402,8 +402,8 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
+        "installation_tested": true,
+        "runtime_tested": true
       }
     }
   ]
