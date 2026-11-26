@@ -62,12 +62,13 @@ The exact integration differs by Playwright language and fixture design. Report 
 
 ## Verification
 
-- **Environment inspected:** Debian GNU/Linux 13, Linux x86_64; Node.js 22.16.0, npm 10.9.2, Chromium 144.0.7559.96 and Python Playwright were present.
+- **CI environment:** GitHub-hosted Ubuntu runner, Node.js 22.23.5, npm, Playwright Test 1.65.1, axe-core 4.14.1, Chromium 159.0.7559.6.
 - **Date:** 2026-11-26.
-- **Checks performed:** reviewed the official axe-core repository, documentation, package metadata, release information, and MPL-2.0 license; confirmed the axe-core package was not available in the current runtime.
-- **Installation attempt:** a temporary isolated npm installation was attempted with lifecycle scripts disabled; package retrieval did not complete before the environment command timed out.
-- **Runtime test:** not performed. No axe-core scan was run.
-- **Status rationale:** reviewed, not tested. Playwright and Chromium availability does not mean axe-core is installed.
+- **Installation:** pinned axe-core package installed successfully in an isolated temporary npm project.
+- **Runtime:** axe-core was injected into a locally served HTML fixture and executed through Playwright.
+- **Result:** 1 passed; zero automated violations for the selected WCAG 2.0 A/AA, WCAG 2.1 A/AA, and WCAG 2.2 AA tags on this fixture.
+- **Run:** https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45834945677
+- **Scope:** verifies this axe-core + Playwright + Chromium integration on the CI runner only. It does not establish installation in the assistant runtime or on the user's computer. Automated checks do not establish full WCAG conformance; manual evaluation remains necessary.
 
 ## Security and limitations
 
