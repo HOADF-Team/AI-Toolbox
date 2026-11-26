@@ -1,0 +1,76 @@
+name: Playwright smoke test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "TOOLS/web-testing/playwright/**"
+      - ".github/workflows/playwright-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  playwright-smoke:
+    name: Install Chromium and run a local browser test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Create isolated test project
+        run: |
+          mkdir playwright-smoke
+          cd playwright-smoke
+          npm init -y
+          npm install --save-dev @playwright/test@1.65.1
+          npx playwright --version
+
+      - name: Install Chromium and system dependencies
+        working-directory: playwright-smoke
+        run: npx playwright install --with-deps chromium
+
+      - name: Create a minimal local browser test
+        working-directory: playwright-smoke
+        run: |
+          mkdir tests
+          cat > tests/smoke.spec.js <<'EOF'
+          const { test, expect } = require('@playwright/test');
+
+          test('Chromium renders a page and handles a user interaction', async ({ page }) => {
+            await page.setContent(`
+              <!doctype html>
+              <html lang="en">
+                <head><title>AI-Toolbox Playwright Smoke Test</title></head>
+                <body>
+                  <main>
+                    <h1>Browser is running</h1>
+                    <button type="button" id="action">Run interaction</button>
+                    <output id="result">Not clicked</output>
+                  </main>
+                  <script>
+                    document.querySelector('#action').addEventListener('click', () => {
+                      document.querySelector('#result').textContent = 'Interaction passed';
+                    });
+                  </script>
+                </body>
+              </html>
+            `);
+
+            await expect(page).toHaveTitle('AI-Toolbox Playwright Smoke Test');
+            await expect(page.getByRole('heading', { name: 'Browser is running' })).toBeVisible();
+            await page.getByRole('button', { name: 'Run interaction' }).click();
+            await expect(page.locator('#result')).toHaveText('Interaction passed');
+          });
+          EOF
+
+      - name: Run browser test
+        working-directory: playwright-smoke
+        run: npx playwright test --reporter=list
