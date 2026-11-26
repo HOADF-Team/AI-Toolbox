@@ -80,7 +80,7 @@ For an agent that needs to manage mocks through MCP, review the configured data 
 - **Source/license review:** upstream CLI package metadata, README, OpenAPI compatibility documentation, official CLI documentation, and MIT license reviewed.
 - **CI environment:** GitHub-hosted Ubuntu runner, Node.js 22.
 - **Installation:** pinned `@mockoon/cli@9.10.0` installed successfully through npm; CLI version command completed.
-- **Inventory:** `scripts/inventory.py` detected both the `mockoon-cli` executable and `@mockoon/cli` npm package.
+- **Inventory:** `scripts/inventory.py` detected the globally installed `mockoon-cli` executable. The read-only Node package probe intentionally checks project-local modules, not global npm package stores.
 - **Import/validation:** OpenAPI 3.0 fixture imported into a native Mockoon data file; `mockoon-cli validate` reported the environment valid.
 - **Runtime:** Mockoon started a local HTTP mock bound to `127.0.0.1:8767`; GET `/hello` returned JSON with the schema-required string field.
 - **Result:** installation, inventory, import, validation, and loopback HTTP mock checks passed. Run: https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45856059607
