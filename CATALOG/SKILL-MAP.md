@@ -15,52 +15,60 @@
 
 | Capability | Candidate tools / services | Why it is shared | Current decision |
 |---|---|---|---|
-| Source control and repository operations | Git; GitHub CLI (`gh`) | GitHub portfolio, code review, deployment, releases, issue workflows | Candidate; verify separately from GitHub connector capabilities |
-| General scripting/runtime | Python; Node.js | Python, audits, API clients, automation, browser tooling | Candidate; versions must be selected per project |
+| Source control and repository operations | Git; GitHub CLI (`gh`) | GitHub portfolio, code review, deployment, releases, issue workflows | Git in catalog (`tested`); GitHub CLI remains a candidate; verify separately from GitHub connector capabilities |
+| General scripting/runtime | Python; Node.js | Python, audits, API clients, automation, browser tooling | Python and Node.js in catalog (`tested`); versions must still be selected per project |
 | HTTP/API diagnostics | `curl`; `jq`; OpenAPI tooling | API integrations, webhooks, research, troubleshooting | Candidate; command-line utilities, no credentials in logs |
 | Containerized isolation | Docker / Podman | Disposable test environments and VPS deployment | Candidate; not required for every task |
-| Browser automation | Playwright | Website testing, browser workflows, screenshots | **In catalog** — `reviewed`; install and runtime not tested |
-| Performance / accessibility diagnostics | Lighthouse; axe-core | SEO and web quality checks | Candidate; distinguish lab metrics from field data |
+| Browser automation | Playwright | Website testing, browser workflows, screenshots | In catalog — `reviewed`; installation and runtime testing remain pending |
+| Performance / accessibility diagnostics | Lighthouse; axe-core | SEO and web quality checks | Both in catalog — `reviewed`; runtime tests pending; distinguish lab metrics from field data |
 
 ## Per-Skill mapping
 
 | Personal-AI-Library Skill | Required capability | Candidate tools / services to investigate | AI-Toolbox state / notes |
 |---|---|---|---|
-| `python-development` | Python runtime, isolated environments, linting, tests, debugging | Python, `venv`/uv, pytest, Ruff, mypy | Candidate; prefer standard library where sufficient |
+| `python-development` | Python runtime, isolated environments, linting, tests, debugging | Python, `venv`/uv, pytest, Ruff, mypy | Python, uv, and pytest in catalog (`tested`); Ruff and mypy remain candidates; prefer standard library where sufficient |
 | `code-audit` | Static inspection and syntax/AST checks | Existing Skill AST script; Ruff; Bandit; Semgrep | Candidate tools need separate review; local AST script is already in the Skill repo, not a toolbox software record |
-| `web-development` | HTML/CSS/JS workflow, local server, browser testing, build tools | Playwright; Node.js/npm; Vite only when project needs a build step | Playwright in catalog; other candidates not reviewed |
+| `web-development` | HTML/CSS/JS workflow, local server, browser testing, build tools | Playwright; Node.js/npm; Vite only when project needs a build step | Playwright in catalog (`reviewed`); Node.js in catalog (`tested`); Vite only when project needs a build step |
 | `devops-vps` | Remote Linux diagnostics, service/container/log inspection | OpenSSH, `ssh`, `journalctl`, systemd tools, Docker/Podman, `curl` | Mostly OS-native tools; avoid installing a second admin stack without need |
 | `automation-vps` | API clients, webhook testing, scheduling, state and retries | Python HTTP clients; `curl`; Postman/Insomnia; n8n only for visual workflow needs | Candidate; external API access and credentials require explicit scope |
 | `telegram-bots` | Telegram Bot API integration and webhook/polling | aiogram or python-telegram-bot (choose by existing project/version); Telegram Bot API | Candidate; never mix incompatible SDK major versions |
 | `max-bots` | MAX platform API integration | Official MAX Bot API/docs and an HTTP client or supported SDK if available | Needs current official API verification; do not assume Telegram compatibility |
-| `github-portfolio` | Git operations, repo metadata, Pages and release workflow | Git; GitHub CLI; GitHub Actions; existing GitHub connector | Candidate / built-in overlap; connector may already cover API actions |
+| `github-portfolio` | Git operations, repo metadata, Pages and release workflow | Git; GitHub CLI; GitHub Actions; existing GitHub connector | Git in catalog (`tested`); GitHub CLI remains a candidate; Actions and connector are hosted capabilities |
 | `social-media` | Drafting and platform-specific publishing workflow | Native Telegram, X and GitHub interfaces/APIs | Built-in / service; drafts first, publishing only after approval; no third-party scheduler assumed |
-| `content-planning` | Calendar and editorial workflow | Spreadsheet (Google Sheets or LibreOffice Calc); calendar service | Built-in / service; no dedicated app needed for a simple calendar |
+| `content-planning` | Calendar and editorial workflow | Spreadsheet (Google Sheets or LibreOffice Calc); calendar service | LibreOffice is in catalog (`tested`); calendar remains service/task-specific; no dedicated app needed for a simple calendar |
 | `crypto-research` | Market research, historical data, reproducible analysis | Exchange public APIs; CCXT for supported exchanges; Python/pandas | Candidate; use read-only/public endpoints, verify data provenance and terms |
 | `crypto-market-analysis` | Market data, charts, indicators and funding/open-interest inputs | Exchange public market APIs; CCXT; pandas; plotting library | Candidate; data-source coverage and timestamps must be explicit |
 | `crypto-futures-risk` | Position sizing, leverage and liquidation/risk calculations | Python standard library / decimal; spreadsheet for independent cross-check | Built-in / lightweight; avoid paid trading terminals unless a concrete gap exists |
 | `trading-bot-audit` | Log/DB parsing, execution and PnL reconciliation | Python; SQLite tools; pandas; SQL client appropriate to actual DB | Candidate; read-only audit first, never enable order permissions |
 | `product-marketing` | Research, positioning and evidence-backed claims | Browser/search; spreadsheet; document editor | Mostly built-in capabilities; no dedicated software justified yet |
 | `marketing-copywriting` | Drafting, editing and factual review | Document editor; spell/style checker if needed | Mostly built-in; optional checker only after language and privacy review |
-| `seo-audit` | Crawl, metadata, performance and accessibility checks | Playwright; Lighthouse; Google Search Console; PageSpeed Insights; axe-core | Playwright in catalog; others candidates/services with distinct scopes |
+| `seo-audit` | Crawl, metadata, performance and accessibility checks | Playwright; Lighthouse; Google Search Console; PageSpeed Insights; axe-core | Playwright (`reviewed`), Lighthouse (`reviewed`), and axe-core (`reviewed`) in catalog; Search Console and PageSpeed Insights are external services |
 | `business-kwork` | Requirements, estimation, deliverables and handover | Issue/project tracker; spreadsheet; document editor | Needs task-specific decision; avoid prescribing paid project-management software |
 | `research-fact-checking` | Source discovery, repository/license review and evidence capture | Browser/search; Git; GitHub API/CLI; license scanners such as ScanCode | Mostly built-in plus candidates; scanners require separate provenance/accuracy review |
-| `product-images` | Image inspection, batch conversion, background removal and metadata | GIMP; ImageMagick; ExifTool; rembg (where suitable) | Candidates; image tools have different functions and licensing/models |
-| `marketplace-listings` | Image preparation, listing copy and structured product data | Image tools above; spreadsheet; native marketplace interfaces | Mostly built-in / service; no universal marketplace uploader recommended |
+| `product-images` | Image inspection, batch conversion, background removal and metadata | GIMP; ImageMagick; ExifTool; rembg (where suitable) | ImageMagick in catalog (`tested`); ExifTool in catalog (`reviewed`); GIMP and rembg remain candidates |
+| `marketplace-listings` | Image preparation, listing copy and structured product data | Image tools above; spreadsheet; native marketplace interfaces | ImageMagick (`tested`) and ExifTool (`reviewed`) in catalog; native marketplace interfaces remain service-specific; no universal uploader recommended |
 | `google-sheets` | Sheets API and Apps Script automation | Google Sheets / Apps Script; clasp for local Apps Script development | External service; OAuth scopes, quotas and account permissions matter |
-| `documents-office` | DOCX/XLSX/PPTX/PDF read/write, conversion, OCR and validation | LibreOffice; Pandoc; Poppler; Tesseract; format-specific Python libraries | Candidates; choose per format; macro and formula fidelity must be tested |
+| `documents-office` | DOCX/XLSX/PPTX/PDF read/write, conversion, OCR and validation | LibreOffice; Pandoc; Poppler; Tesseract; format-specific Python libraries | LibreOffice, Pandoc, Poppler, and Tesseract in catalog (`tested`); choose per format; macro and formula fidelity still require task-specific tests |
 
-## Priority order for adding records
+## Current coverage and remaining work
 
-The order below is based on reuse across Skills and the likelihood of providing a concrete capability. It is a research queue, not an approval to install.
+The catalog now contains **14 tool records**:
 
-1. **Core developer utilities:** Git, Python environment tooling, pytest, Ruff, Node.js — document only those not already available in the execution environment.
-2. **Web quality stack:** Lighthouse and axe-core, complementing Playwright.
-3. **Document conversion and inspection:** LibreOffice, Pandoc, Poppler and Tesseract; evaluate separately because they solve different tasks.
-4. **Image utilities:** ImageMagick and ExifTool first; evaluate GIMP/rembg only for workflows that need them.
-5. **API and automation utilities:** HTTP client/testing tool and optional n8n; compare against simple Python scripts before adding.
-6. **Data analysis:** pandas and a plotting stack; CCXT only after defining supported exchange/data needs.
-7. **Platform-specific SDKs:** Telegram SDK choice and MAX API tooling only when an actual project requires them.
+- **10 tested:** Git, Python, uv, pytest, Node.js, LibreOffice, Pandoc, Poppler utilities, Tesseract, and ImageMagick.
+- **4 reviewed:** Playwright, Lighthouse, axe-core, and ExifTool.
+
+`tested` means a documented runtime smoke test was run in the current isolated environment. It does **not** mean installation was tested or that the tool is installed on a user's computer. The per-tool record contains the exact scope and limitations.
+
+Remaining research priorities:
+
+1. **Core quality tooling:** Ruff and mypy; only add if they fill a concrete linting/type-checking gap.
+2. **Browser quality stack:** obtain a controlled package-install path and run Lighthouse and axe-core smoke tests; Playwright itself also needs a real browser automation test.
+3. **Image workflows:** evaluate GIMP or rembg only when manual editing or background removal is actually needed; ExifTool runtime testing is pending.
+4. **API and automation utilities:** compare HTTP clients/testing tools and optional n8n against the existing Python and OS-native capabilities.
+5. **Data analysis:** validate pandas and a plotting stack; investigate CCXT only after defining exchange and data requirements.
+6. **Platform-specific SDKs:** choose Telegram SDK and MAX API tooling only when an actual project requires them.
+
+This is a research queue, not an instruction to install every candidate. Reuse tools already available in the target environment and avoid redundant dependencies.
 
 ## Do not add as standalone tools yet
 
