@@ -36,7 +36,13 @@ class CheckSkillToolsTests(unittest.TestCase):
             "required_any": [["nodejs", "playwright"]], "recommended": []}, self.matches)
         self.assertEqual(result["readiness"], "unknown")
 
-    def test_security_skill_can_run_without_optional_scanners(self) -> None:\n        result = check_skill({"id": "crypto-security", "required_any": [],\n            "recommended": ["bandit", "pip-audit", "gitleaks", "trivy", "age", "restic"]}, self.matches)\n        self.assertEqual(result["readiness"], "ready")\n        self.assertEqual(len(result["recommended_tools"]), 6)\n\n    def test_empty_prerequisites_are_ready(self) -> None:
+    def test_security_skill_can_run_without_optional_scanners(self) -> None:
+        result = check_skill({"id": "crypto-security", "required_any": [],
+            "recommended": ["bandit", "pip-audit", "gitleaks", "trivy", "age", "restic"]}, self.matches)
+        self.assertEqual(result["readiness"], "ready")
+        self.assertEqual(len(result["recommended_tools"]), 6)
+
+    def test_empty_prerequisites_are_ready(self) -> None:
         result = check_skill({"id": "writing", "required_any": [], "recommended": []}, self.matches)
         self.assertEqual(result["readiness"], "ready")
 
