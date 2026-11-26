@@ -17,7 +17,7 @@
 |---|---|---|---|
 | Source control and repository operations | Git; GitHub CLI (`gh`) | GitHub portfolio, code review, deployment, releases, issue workflows | Git in catalog (`tested`); GitHub CLI remains a candidate; verify separately from GitHub connector capabilities |
 | General scripting/runtime | Python; Node.js | Python, audits, API clients, automation, browser tooling | Python and Node.js in catalog (`tested`); versions must still be selected per project |
-| HTTP/API diagnostics | `curl`; `jq`; OpenAPI tooling | API integrations, webhooks, research, troubleshooting | Candidate; command-line utilities, no credentials in logs |
+| HTTP/API diagnostics | `curl`; `jq`; OpenAPI tooling | API integrations, webhooks, research, troubleshooting | curl and jq in catalog (`tested`); OpenAPI tooling remains a separate research item |
 | Containerized isolation | Docker / Podman | Disposable test environments and VPS deployment | Candidate; not required for every task |
 | Browser automation | Playwright | Website testing, browser workflows, screenshots | In catalog — `reviewed`; installation and runtime testing remain pending |
 | Performance / accessibility diagnostics | Lighthouse; axe-core | SEO and web quality checks | Both in catalog (`tested`); fixture audits passed; distinguish lab metrics from field data |
@@ -52,9 +52,9 @@
 
 ## Current coverage and remaining work
 
-The catalog now contains **19 tool records — all 19 are `tested`**. There are currently no `reviewed` or `candidate` entries.
+The catalog now contains **21 tool records — all 21 are `tested`**. There are currently no `reviewed` or `candidate` entries.
 
-The catalog covers source control, Python development and quality checks, JavaScript runtime, browser testing and audits, document conversion/OCR, image processing and metadata, background removal, and media processing.
+The catalog covers source control, Python development and quality checks, JavaScript runtime, browser testing and audits, document conversion/OCR, image processing and metadata, background removal, media processing, and HTTP/JSON API utilities.
 
 `tested` means a documented installation and/or runtime smoke test passed in the specific environment described in that tool's record. It does **not** mean the tool is installed on a user's computer, nor does a smoke test prove every feature or platform works. Check each record for the exact scope and limitations.
 
