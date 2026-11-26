@@ -116,7 +116,7 @@
         "installation_tested": false,
         "runtime_tested": false
       }
-    }
+    },
     {
       "id": "lighthouse",
       "name": "Lighthouse",
