@@ -115,6 +115,7 @@ def validate(root: Path, catalog_path: Path) -> list[str]:
                                     f"{record}: ID does not match catalog id {tool_id!r}."
                                 )
                         if isinstance(status, str) and status in ALLOWED_STATUSES:
+                            # Accept both English and Russian labels used by existing records.
                             expected_status = re.compile(
                                 rf"^- \*\*(?:Status|Статус):\*\* `{re.escape(status)}`\s*$",
                                 re.MULTILINE,
