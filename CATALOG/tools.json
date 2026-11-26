@@ -405,6 +405,52 @@
         "installation_tested": true,
         "runtime_tested": true
       }
+    },
+    {
+      "id": "gimp",
+      "name": "GIMP",
+      "category": "image-tools",
+      "description": "Open-source raster graphics editor for image retouching, compositing, layers, masks, and batch image processing.",
+      "status": "reviewed",
+      "record": "TOOLS/image-tools/gimp/TOOL.md",
+      "official_url": "https://www.gimp.org/",
+      "source_repository": "https://gitlab.gnome.org/GNOME/gimp",
+      "license": "GPL-3.0-or-later (verify bundled plug-ins and third-party components separately)",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
+    },
+    {
+      "id": "rembg",
+      "name": "rembg",
+      "category": "image-tools",
+      "description": "Python-based AI background removal tool with CLI, library, HTTP server, and local ONNX model inference.",
+      "status": "reviewed",
+      "record": "TOOLS/image-tools/rembg/TOOL.md",
+      "official_url": "https://github.com/danielgatis/rembg",
+      "source_repository": "https://github.com/danielgatis/rembg",
+      "license": "MIT (rembg); U2-Net/u2netp model weights Apache-2.0 per upstream maintainer; training-data terms are separate",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
     }
   ]
 }
