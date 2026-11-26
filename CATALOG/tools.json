@@ -12,7 +12,11 @@
       "official_url": "https://git-scm.com/",
       "source_repository": "https://github.com/git/git",
       "license": "GPL-2.0-only",
-      "platforms": ["Windows", "Linux", "macOS"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
@@ -31,7 +35,11 @@
       "official_url": "https://www.python.org/",
       "source_repository": "https://github.com/python/cpython",
       "license": "PSF-2.0",
-      "platforms": ["Windows", "Linux", "macOS"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
@@ -50,7 +58,11 @@
       "official_url": "https://docs.astral.sh/uv/",
       "source_repository": "https://github.com/astral-sh/uv",
       "license": "MIT OR Apache-2.0",
-      "platforms": ["Windows", "Linux", "macOS"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
@@ -69,7 +81,11 @@
       "official_url": "https://pytest.org/",
       "source_repository": "https://github.com/pytest-dev/pytest",
       "license": "MIT",
-      "platforms": ["Windows", "Linux", "macOS"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
@@ -88,7 +104,11 @@
       "official_url": "https://nodejs.org/",
       "source_repository": "https://github.com/nodejs/node",
       "license": "MIT (third-party components may use other licenses)",
-      "platforms": ["Windows", "Linux", "macOS"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
@@ -107,8 +127,64 @@
       "official_url": "https://playwright.dev/",
       "source_repository": "https://github.com/microsoft/playwright",
       "license": "Apache-2.0",
-      "platforms": ["Windows", "Linux", "macOS"],
-      "interfaces": ["Node.js", "Python", ".NET", "Java", "MCP"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "interfaces": [
+        "Node.js",
+        "Python",
+        ".NET",
+        "Java",
+        "MCP"
+      ],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
+    },
+    {
+      "id": "lighthouse",
+      "name": "Lighthouse",
+      "category": "web-testing",
+      "description": "Automated web-page audits for performance, accessibility, SEO, and best practices; available in Chrome DevTools and as a Node.js CLI.",
+      "status": "reviewed",
+      "record": "TOOLS/web-testing/lighthouse/TOOL.md",
+      "official_url": "https://developer.chrome.com/docs/lighthouse/overview/",
+      "source_repository": "https://github.com/GoogleChrome/lighthouse",
+      "license": "Apache-2.0",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
+    },
+    {
+      "id": "axe-core",
+      "name": "axe-core",
+      "category": "web-testing",
+      "description": "JavaScript accessibility testing engine for HTML interfaces; integrates with Playwright and other browser test frameworks.",
+      "status": "reviewed",
+      "record": "TOOLS/web-testing/axe-core/TOOL.md",
+      "official_url": "https://www.deque.com/axe/",
+      "source_repository": "https://github.com/dequelabs/axe-core",
+      "license": "MPL-2.0",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
