@@ -1,0 +1,62 @@
+name: ExifTool smoke test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "TOOLS/image-tools/exiftool/**"
+      - ".github/workflows/exiftool-smoke.yml"
+  pull_request:
+    paths:
+      - "TOOLS/image-tools/exiftool/**"
+      - ".github/workflows/exiftool-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  exiftool-smoke:
+    name: Install ExifTool and verify metadata read/write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install ExifTool from Ubuntu repositories
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes libimage-exiftool-perl
+          exiftool -ver
+          command -v exiftool
+
+      - name: Generate a minimal PNG fixture
+        run: |
+          python3 - <<'PY'
+          import struct
+          import zlib
+
+          def chunk(kind: bytes, data: bytes) -> bytes:
+              payload = kind + data
+              return struct.pack(">I", len(data)) + payload + struct.pack(">I", zlib.crc32(payload) & 0xFFFFFFFF)
+
+          png = (
+              b"\x89PNG\r\n\x1a\n"
+              + chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0))
+              + chunk(b"IDAT", zlib.compress(b"\x00\xff\xff\xff"))
+              + chunk(b"IEND", b"")
+          )
+          with open("exiftool-fixture.png", "wb") as image:
+              image.write(png)
+          PY
+          file exiftool-fixture.png
+
+      - name: Verify metadata inspection and round-trip write
+        run: |
+          exiftool -s -FileType -ImageWidth -ImageHeight exiftool-fixture.png
+          exiftool -overwrite_original -Comment="AI-Toolbox ExifTool smoke test" exiftool-fixture.png
+          ACTUAL="$(exiftool -s3 -Comment exiftool-fixture.png)"
+          test "$ACTUAL" = "AI-Toolbox ExifTool smoke test"
+          echo "ExifTool metadata round-trip: PASS"
