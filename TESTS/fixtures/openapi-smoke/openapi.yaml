@@ -1,0 +1,33 @@
+openapi: 3.1.0
+info:
+  title: AI-Toolbox Redocly smoke fixture
+  version: 1.0.0
+servers:
+  - url: http://127.0.0.1:8765
+paths:
+  /items:
+    get:
+      operationId: listItems
+      summary: Return a small list of fixture items
+      responses:
+        "200":
+          description: A list of items
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - id
+                        - name
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
