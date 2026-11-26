@@ -12,7 +12,11 @@
       "official_url": "https://git-scm.com/",
       "source_repository": "https://github.com/git/git",
       "license": "GPL-2.0-only",
-      "platforms": ["Windows", "Linux", "macOS"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
@@ -31,7 +35,11 @@
       "official_url": "https://www.python.org/",
       "source_repository": "https://github.com/python/cpython",
       "license": "PSF-2.0",
-      "platforms": ["Windows", "Linux", "macOS"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
@@ -50,7 +58,11 @@
       "official_url": "https://docs.astral.sh/uv/",
       "source_repository": "https://github.com/astral-sh/uv",
       "license": "MIT OR Apache-2.0",
-      "platforms": ["Windows", "Linux", "macOS"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
@@ -69,7 +81,11 @@
       "official_url": "https://pytest.org/",
       "source_repository": "https://github.com/pytest-dev/pytest",
       "license": "MIT",
-      "platforms": ["Windows", "Linux", "macOS"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
@@ -88,7 +104,11 @@
       "official_url": "https://nodejs.org/",
       "source_repository": "https://github.com/nodejs/node",
       "license": "MIT (third-party components may use other licenses)",
-      "platforms": ["Windows", "Linux", "macOS"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
@@ -107,8 +127,18 @@
       "official_url": "https://playwright.dev/",
       "source_repository": "https://github.com/microsoft/playwright",
       "license": "Apache-2.0",
-      "platforms": ["Windows", "Linux", "macOS"],
-      "interfaces": ["Node.js", "Python", ".NET", "Java", "MCP"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "interfaces": [
+        "Node.js",
+        "Python",
+        ".NET",
+        "Java",
+        "MCP"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
@@ -127,7 +157,11 @@
       "official_url": "https://developer.chrome.com/docs/lighthouse/overview/",
       "source_repository": "https://github.com/GoogleChrome/lighthouse",
       "license": "Apache-2.0",
-      "platforms": ["Windows", "Linux", "macOS"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
@@ -146,7 +180,11 @@
       "official_url": "https://www.deque.com/axe/",
       "source_repository": "https://github.com/dequelabs/axe-core",
       "license": "MPL-2.0",
-      "platforms": ["Windows", "Linux", "macOS"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
@@ -165,7 +203,11 @@
       "official_url": "https://www.libreoffice.org/",
       "source_repository": "https://git.libreoffice.org/core",
       "license": "MPL-2.0 (bundled components use additional licenses)",
-      "platforms": ["Windows", "Linux", "macOS"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
@@ -184,7 +226,11 @@
       "official_url": "https://pandoc.org/",
       "source_repository": "https://github.com/jgm/pandoc",
       "license": "GPL-2.0-or-later",
-      "platforms": ["Windows", "Linux", "macOS"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
@@ -203,7 +249,11 @@
       "official_url": "https://poppler.freedesktop.org/",
       "source_repository": "https://gitlab.freedesktop.org/poppler/poppler",
       "license": "GPL (review exact package notices)",
-      "platforms": ["Windows", "Linux", "macOS"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
@@ -222,7 +272,11 @@
       "official_url": "https://tesseract-ocr.github.io/",
       "source_repository": "https://github.com/tesseract-ocr/tesseract",
       "license": "Apache-2.0",
-      "platforms": ["Windows", "Linux", "macOS"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
@@ -241,7 +295,11 @@
       "official_url": "https://imagemagick.org/",
       "source_repository": "https://github.com/ImageMagick/ImageMagick",
       "license": "ImageMagick License",
-      "platforms": ["Windows", "Linux", "macOS"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
@@ -260,7 +318,57 @@
       "official_url": "https://exiftool.sourceforge.net/",
       "source_repository": "https://github.com/exiftool/exiftool",
       "license": "Perl Artistic License OR GPL",
-      "platforms": ["Windows", "Linux", "macOS"],
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
+    },
+    {
+      "id": "ruff",
+      "name": "Ruff",
+      "category": "python",
+      "description": "Fast Python linter and formatter for static checks, style diagnostics, and import organization.",
+      "status": "reviewed",
+      "record": "TOOLS/python/ruff/TOOL.md",
+      "official_url": "https://docs.astral.sh/ruff/",
+      "source_repository": "https://github.com/astral-sh/ruff",
+      "license": "MIT",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "last_reviewed": "2026-11-26",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
+    },
+    {
+      "id": "mypy",
+      "name": "mypy",
+      "category": "python",
+      "description": "Static type checker for Python annotations and inferred types.",
+      "status": "reviewed",
+      "record": "TOOLS/python/mypy/TOOL.md",
+      "official_url": "https://www.mypy-lang.org/",
+      "source_repository": "https://github.com/python/mypy",
+      "license": "MIT (some bundled portions use separate licenses)",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
       "last_reviewed": "2026-11-26",
       "verification": {
         "source_reviewed": true,
