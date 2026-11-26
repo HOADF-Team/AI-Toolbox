@@ -16,6 +16,7 @@ COMMANDS = {
     "git": ["--version"],
     "curl": ["--version"],
     "jq": ["--version"],
+    "redocly": ["--version"],
     "gh": ["--version"],
     "python": ["--version"],
     "python3": ["--version"],
@@ -47,7 +48,7 @@ PYTHON_MODULES = [
     "pytest", "ruff", "mypy", "playwright", "pandas", "PIL", "docx",
     "openpyxl", "reportlab", "cv2", "rembg", "imageio",
 ]
-NODE_PACKAGES = ["playwright", "lighthouse", "axe-core"]
+NODE_PACKAGES = ["playwright", "lighthouse", "axe-core", "@redocly/cli"]
 
 
 def probe(args: list[str], timeout: int = 4) -> str | None:
