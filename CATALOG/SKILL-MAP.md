@@ -36,8 +36,8 @@
 | `github-portfolio` | Git operations, repo metadata, Pages and release workflow | Git; GitHub CLI; GitHub Actions; existing GitHub connector | Git in catalog (`tested`); GitHub CLI remains a candidate; Actions and connector are hosted capabilities |
 | `social-media` | Drafting and platform-specific publishing workflow | Native Telegram, X and GitHub interfaces/APIs | Built-in / service; drafts first, publishing only after approval; no third-party scheduler assumed |
 | `content-planning` | Calendar and editorial workflow | Spreadsheet (Google Sheets or LibreOffice Calc); calendar service | LibreOffice is in catalog (`tested`); calendar remains service/task-specific; no dedicated app needed for a simple calendar |
-| `crypto-research` | Market research, historical data, reproducible analysis | CCXT unified public APIs for BingX (primary), Binance, Bybit and OKX; Python/pandas; Matplotlib | CCXT in catalog (`reviewed` pending public API smoke test); pandas/Matplotlib `tested`; store venue, market type, symbol and retrieval timestamp |
-| `crypto-market-analysis` | Market data, charts, indicators and funding/open-interest inputs | CCXT for BingX (primary), Binance, Bybit and OKX; pandas; Matplotlib | CCXT `reviewed` pending per-venue public endpoint checks; document spot/swap support separately, with explicit units and timestamps |
+| `crypto-research` | Market research, historical data, reproducible analysis | CCXT unified public APIs for BingX (primary), Binance, Bybit and OKX; Python/pandas; Matplotlib | CCXT in catalog (`tested`): BingX spot/swap and OKX spot passed; Binance and Bybit listed but public CI requests were region-blocked; pandas/Matplotlib `tested` |
+| `crypto-market-analysis` | Market data, charts, indicators and funding/open-interest inputs | CCXT for BingX (primary), Binance, Bybit and OKX; pandas; Matplotlib | CCXT `tested` for BingX spot/swap and OKX spot; Binance/Bybit runtime connectivity remains unverified due to CI runner geo-blocks; document spot/swap support separately, with explicit units and timestamps |
 | `crypto-futures-risk` | Position sizing, leverage and liquidation/risk calculations | Python standard library / decimal; spreadsheet for independent cross-check | Built-in / lightweight; avoid paid trading terminals unless a concrete gap exists |
 | `trading-bot-audit` | Log/DB parsing, execution and PnL reconciliation | Python; SQLite (Python standard library); pandas; Matplotlib; CCXT for venue-specific reconciliation where required | pandas/Matplotlib `tested`; CCXT `reviewed`; read-only audit first, no order permissions |
 | `product-marketing` | Research, positioning and evidence-backed claims | Browser/search; spreadsheet; document editor | Mostly built-in capabilities; no dedicated software justified yet |
@@ -52,7 +52,7 @@
 
 ## Current coverage and remaining work
 
-The catalog now contains **26 tool records — 25 are `tested` and CCXT is `reviewed` pending public API verification**. Bandit passed pinned installation and safe/unsafe fixture scans in isolated CI. Redocly CLI passed pinned installation, OpenAPI lint, and Arazzo API workflow checks in isolated CI.
+The catalog now contains **26 tool records — all 26 are `tested`**. CCXT installation passed; BingX spot/swap and OKX spot public data passed. Binance and Bybit were blocked by GitHub runner region restrictions and remain unverified at the endpoint level. Bandit passed pinned installation and safe/unsafe fixture scans in isolated CI. Redocly CLI passed pinned installation, OpenAPI lint, and Arazzo API workflow checks in isolated CI.
 
 The catalog covers source control, Python development and quality checks, JavaScript runtime, browser testing and audits, document conversion/OCR, image processing and metadata, background removal, media processing, HTTP/JSON API utilities, OpenAPI workflow testing, Python data analysis/visualization, and Python security scanning, and multi-exchange cryptocurrency market-data access.
 
@@ -61,7 +61,7 @@ The catalog covers source control, Python development and quality checks, JavaSc
 Remaining research priorities:
 
 1. **API and automation utilities:** compare HTTP clients/testing tools and optional n8n against existing Python and OS-native capabilities.
-2. **Crypto exchange integration:** CCXT has been selected for BingX (primary), Binance, Bybit and OKX; run public-only tests per venue before promoting its status.
+2. **Crypto exchange integration:** CCXT is tested with BingX (primary) spot/swap and OKX spot; Binance and Bybit adapters are listed upstream but public API checks were geo-blocked from the GitHub runner.
 3. **Platform-specific SDKs:** choose Telegram SDK and MAX API tooling only when an actual project requires them.
 4. **VPS/container operations:** assess Docker/Podman and SSH diagnostics only against a concrete deployment or administration workflow.
 5. **Security/code audit:** Bandit is tested as a Python security-pattern scanner; consider Semgrep or license scanners only when a project needs broader multi-language or supply-chain analysis.
