@@ -313,7 +313,7 @@
       "name": "ExifTool",
       "category": "image-tools",
       "description": "Metadata reader and editor for EXIF, GPS, IPTC, XMP, camera maker notes, and metadata in many image, audio, and video formats.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/image-tools/exiftool/TOOL.md",
       "official_url": "https://exiftool.sourceforge.net/",
       "source_repository": "https://github.com/exiftool/exiftool",
@@ -327,8 +327,8 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
+        "installation_tested": true,
+        "runtime_tested": true
       }
     },
     {
