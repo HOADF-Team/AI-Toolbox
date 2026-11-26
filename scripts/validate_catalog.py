@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import sys
 from pathlib import Path
 
 ALLOWED_STATUSES = {
@@ -108,7 +107,7 @@ def validate(root: Path, catalog_path: Path) -> list[str]:
                     else:
                         if isinstance(tool_id, str) and tool_id.strip():
                             expected_id = re.compile(
-                                rf"^- \\*\\*ID:\\*\\* `{re.escape(tool_id)}`\\s*$",
+                                rf"^- \*\*ID:\*\* `{re.escape(tool_id)}`\s*$",
                                 re.MULTILINE,
                             )
                             if not expected_id.search(content):
@@ -117,7 +116,7 @@ def validate(root: Path, catalog_path: Path) -> list[str]:
                                 )
                         if isinstance(status, str) and status in ALLOWED_STATUSES:
                             expected_status = re.compile(
-                                rf"^- \\*\\*Status:\\*\\* `{re.escape(status)}`\\s*$",
+                                rf"^- \*\*Status:\*\* `{re.escape(status)}`\s*$",
                                 re.MULTILINE,
                             )
                             if not expected_status.search(content):
