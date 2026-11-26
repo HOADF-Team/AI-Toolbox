@@ -742,7 +742,7 @@
       "name": "Mockoon CLI",
       "category": "api-mocking",
       "description": "Local mock API server and CLI for running, importing, exporting, and validating Mockoon environments or OpenAPI specifications; includes an MCP server for AI-assisted mock management.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/api-mocking/mockoon-cli/TOOL.md",
       "official_url": "https://mockoon.com/cli/",
       "source_repository": "https://github.com/mockoon/mockoon",
@@ -762,8 +762,8 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
+        "installation_tested": true,
+        "runtime_tested": true
       }
     }
   ]
