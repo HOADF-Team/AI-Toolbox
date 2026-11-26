@@ -2,7 +2,7 @@
 
 - **ID:** `mypy`
 - **Category:** python
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** Python/mypy maintainers and contributors
 - **Official website / documentation:** https://www.mypy-lang.org/
 - **Source repository:** https://github.com/python/mypy
@@ -53,6 +53,15 @@ Configure target Python version, checked files, and strictness in `pyproject.tom
 - **Checks performed:** reviewed official project information, Python compatibility, current release, and license notices.
 - **Result:** source and license reviewed; runtime execution and installation not tested.
 - **Status limitation:** this record does not claim mypy is installed in the assistant runtime or on the user's computer.
+
+## Verification
+
+- **Environment:** GitHub Actions hosted runner, Ubuntu 26.04, x86_64, CPython 3.12.16.
+- **Date:** 2026-11-26.
+- **Pinned version:** mypy 2.4.1.
+- **Installation:** installed successfully from the pinned `requirements-dev.txt` in a fresh CI job.
+- **Checks:** `mypy scripts/` completed successfully against repository scripts.
+- **Result:** PASS. This verifies the configured repository scope only; it does not imply installation on the user's computer or in other runtimes.
 
 ## Security and limitations
 
