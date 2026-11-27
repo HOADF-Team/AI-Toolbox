@@ -2,9 +2,13 @@
 
 - **ID:** `restic`
 - **Category:** security
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** restic maintainers
 - **License:** BSD-2-Clause
+
+- **Tested version:** 0.20.0
+- **CI verification:** GitHub-hosted Ubuntu Linux x86_64; Verified encrypted local repository initialization, backup, integrity check and restore round trip after verifying the official release binary SHA-256.
+- **CI record:** `TESTS/SECURITY-TOOL-SMOKE.md`
 
 - **Purpose:** backup program for versioned snapshots in encrypted repositories across local and remote storage backends.
 - **Upstream:** https://github.com/restic/restic
