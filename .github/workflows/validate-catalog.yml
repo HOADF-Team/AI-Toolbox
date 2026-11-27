@@ -37,3 +37,5 @@ jobs:
         run: python scripts/validate_catalog.py
       - name: Validate Skills against the canonical Skill map
         run: python scripts/validate_skill_map.py --skills-root Personal-AI-Library/skills
+      - name: Validate crypto-security Skill safety contract
+        run: python scripts/validate_crypto_security_skill.py --skill Personal-AI-Library/skills/crypto-security/SKILL.md
