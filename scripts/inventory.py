@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only inventory of selected developer tools in the current runtime."""
+"""Non-mutating inventory; executes fixed version/help probes for detected tools."""
 from __future__ import annotations
 
 import argparse
@@ -141,12 +141,18 @@ def main() -> int:
         "node_packages": node_packages,
         "safety": {
             "read_only": True,
+            "commands_executed": True,
+            "trusted_path_required": True,
             "network_access": False,
             "installation_attempted": False,
             "note": (
-                "Checks PATH, Python import discovery, and Node.js module "
-                "resolution from the current working directory. It does not "
-                "scan other hosts, user devices, or global package stores."
+                "No installation or configuration change is requested, and this script "
+                "does not itself make network requests. It DOES execute detected PATH "
+                "binaries with fixed version/help arguments; those binaries are not "
+                "sandboxed and may have their own side effects or network behavior. "
+                "Run only with a trusted PATH. Python modules are checked with find_spec; "
+                "Node packages are resolved with require.resolve without loading package code. "
+                "Other hosts, user devices, and global package stores are not scanned."
             ),
         },
     }
