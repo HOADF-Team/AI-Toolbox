@@ -15,7 +15,6 @@
 - **Documentation:** https://github.com/gitleaks/gitleaks#readme
 - **License:** MIT
 - **Platforms:** Windows, Linux, macOS (verify the selected release binary)
-- **Catalog status:** reviewed; installation and runtime are not yet tested in AI-Toolbox.
 
 ## Safe use
 
