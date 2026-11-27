@@ -26,10 +26,9 @@ class MatchInventoryTests(unittest.TestCase):
         self.report: dict[str, Any] = {
             "scope": "current_process_environment_only",
             "generated_at": "2026-11-27T00:00:00+00:00",
-            "commands": {"git": {"installed": True}, "hummingbot": {"installed": False}, "gitleaks": {"installed": True}},
+            "commands": {"git": {"installed": True}, "hummingbot": {"installed": False}, "gitleaks": {"installed": True}, "ssh": {"installed": True}},
             "python_modules": {"playwright": {"available": False}, "pip_audit": {"available": True}},
             "node_packages": {"playwright": {"available": True}},
-            "commands": {"ssh": {"installed": True}},
         }
 
     def test_matches_detected_tool(self) -> None:
