@@ -88,24 +88,38 @@ jobs:
       - name: Scan repository dependencies, secrets and configuration
         run: trivy fs --scanners vuln,secret,misconfig --skip-dirs .git --exit-code 1 .
 
-      - name: Set up Go for pinned age and restic releases
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.27.0"
-          cache: false
-
-      - name: Install pinned age and restic releases
+      - name: Install pinned age and restic official release binaries
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p "$HOME/.local/bin"
-          GOBIN="$HOME/.local/bin" go install filippo.io/age/cmd/age@v1.3.2
-          GOBIN="$HOME/.local/bin" go install filippo.io/age/cmd/age-keygen@v1.3.2
-          GOBIN="$HOME/.local/bin" go install github.com/restic/restic/cmd/restic@v0.20.0
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          "$HOME/.local/bin/age" --version
-          "$HOME/.local/bin/age-keygen" --version
-          "$HOME/.local/bin/restic" version
+          tmp="$(mktemp -d)"
+          cd "$tmp"
+
+          age_archive="age-v1.3.2-linux-amd64.tar.gz"
+          curl --fail --silent --show-error --location \
+            "https://github.com/FiloSottile/age/releases/download/v1.3.2/${age_archive}" \
+            -o "$age_archive"
+          echo "cbe24006683f8eb669266162894b9a522a1af52f2665fbc63a4bb032ed26ac10  ${age_archive}" | sha256sum --check -
+          mkdir age-release
+          tar -xzf "$age_archive" -C age-release
+          age_binary="$(find age-release -type f -name age -print -quit)"
+          age_keygen_binary="$(find age-release -type f -name age-keygen -print -quit)"
+          test -n "$age_binary"
+          test -n "$age_keygen_binary"
+          sudo install -m 0755 "$age_binary" /usr/local/bin/age
+          sudo install -m 0755 "$age_keygen_binary" /usr/local/bin/age-keygen
+
+          restic_archive="restic_0.20.0_linux_amd64.bz2"
+          curl --fail --silent --show-error --location \
+            "https://github.com/restic/restic/releases/download/v0.20.0/${restic_archive}" \
+            -o "$restic_archive"
+          echo "0ccd9fa7885074a24603b051e01bf9bd8b5e45d6a1791e9d9887e9e9372107f7  ${restic_archive}" | sha256sum --check -
+          bunzip2 -c "$restic_archive" > restic
+          sudo install -m 0755 restic /usr/local/bin/restic
+
+          age --version
+          age-keygen --version
+          restic version
 
       - name: Verify age encryption and decryption round trip
         shell: bash
