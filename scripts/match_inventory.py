@@ -31,6 +31,7 @@ PROBES: dict[str, list[tuple[str, str]]] = {
     "gimp": [("commands", "gimp")],
     "rembg": [("commands", "rembg"), ("python_modules", "rembg")],
     "curl": [("commands", "curl")],
+    "openssh-client": [("commands", "ssh")],
     "jq": [("commands", "jq")],
     "redocly-cli": [("commands", "redocly"), ("node_packages", "@redocly/cli")],
     "schemathesis": [("commands", "schemathesis"), ("python_modules", "schemathesis")],
