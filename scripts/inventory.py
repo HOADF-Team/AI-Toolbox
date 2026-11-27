@@ -25,6 +25,7 @@ COMMANDS = {
     "gitleaks": ["version"],
     "trivy": ["--version"],
     "syft": ["version"],
+    "cosign": ["version"],
     "age": ["--version"],
     "restic": ["version"],
     "ccxt": ["--version"],
