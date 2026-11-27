@@ -115,6 +115,54 @@ jobs:
           print(f"Syft generated CycloneDX SBOM with {len(components)} component(s)")
           PY
 
+      - name: Install pinned Cosign and verify a signed artifact with an ephemeral key pair
+        uses: sigstore/cosign-installer@v4.1.4
+        with:
+          cosign-release: 'v3.1.5'
+
+      - name: Verify Cosign signing and tamper detection
+        shell: bash
+        env:
+          COSIGN_PASSWORD: ""
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "$tmp"' EXIT
+          cosign version
+
+          # No Fulcio, OIDC, Rekor or TSA services are configured for this
+          # local key-based smoke test. No production identity or secret is used.
+          cosign signing-config create \
+            --no-default-fulcio \
+            --no-default-oidc \
+            --no-default-rekor \
+            --no-default-tsa \
+            --out "$tmp/signing-config.json"
+
+          printf 'AI-Toolbox Cosign signing smoke test\\n' > "$tmp/artifact.txt"
+          cosign generate-key-pair --output-key-prefix "$tmp/ephemeral"
+          cosign sign-blob \
+            --key "$tmp/ephemeral.key" \
+            --signing-config "$tmp/signing-config.json" \
+            --bundle "$tmp/artifact.sigstore.json" \
+            --yes \
+            "$tmp/artifact.txt"
+          cosign verify-blob \
+            --key "$tmp/ephemeral.pub" \
+            --bundle "$tmp/artifact.sigstore.json" \
+            "$tmp/artifact.txt"
+
+          printf 'tampered\\n' >> "$tmp/artifact.txt"
+          if cosign verify-blob \
+            --key "$tmp/ephemeral.pub" \
+            --bundle "$tmp/artifact.sigstore.json" \
+            "$tmp/artifact.txt"; then
+            echo "Cosign unexpectedly accepted a tampered artifact" >&2
+            exit 1
+          else
+            echo "Cosign correctly rejected the tampered artifact"
+          fi
+
       - name: Scan repository for exposed secrets
         run: gitleaks dir --redact --exit-code 1 .
 
