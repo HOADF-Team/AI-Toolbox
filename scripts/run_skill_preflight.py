@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the read-only inventory, catalog match, and Skill preflight as one command."""
+"""Run the non-mutating inventory, catalog match, and Skill preflight as one command."""
 from __future__ import annotations
 
 import argparse
