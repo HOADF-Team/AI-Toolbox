@@ -2,14 +2,17 @@
 
 This repository is the tool inventory and verification layer for the organization's Skills.
 
-- Skills describe workflows and decision rules: [HOADF-Team/Personal-AI-Library](https://github.com/HOADF-Team/Personal-AI-Library).
+- Skills describe workflows and decision rules: [HOADF-Team/Personal-AI-Library](https://github.com/HOADF-Team/Personal-AI-Library) (**25 Skills on main**).
 - Tool records describe concrete software, provenance, licenses, installation requirements, verification evidence and limitations.
-- The [Skill → Tool map](../CATALOG/SKILL-MAP.md) connects the 24 Skills on the integration branch (including crypto-security; PR #9 pending) to relevant tool capabilities.
+- The [Skill → Tool map](../CATALOG/SKILL-MAP.md) connects Skills to relevant tool capabilities.
 - The machine-readable [Skill dependency map](../CATALOG/skill-tools.json) and [preflight checker](../scripts/check_skill_tools.py) compare declared prerequisites with current-runtime inventory evidence.
-- The authoritative operating procedure is maintained in [Personal-AI-Library: AI agent workflow](https://github.com/HOADF-Team/Personal-AI-Library/blob/main/INTEGRATION/AI-AGENT-WORKFLOW.md).
+- Run the complete read-only pipeline with one command: `python scripts/run_skill_preflight.py --skill crypto-security --pretty`. Repeat `--skill` to select multiple Skills; omit it to check all mapped Skills. Use `--output report.json` to save a report.
+- The authoritative detailed operating procedure is maintained in [Personal-AI-Library: AI agent workflow](https://github.com/HOADF-Team/Personal-AI-Library/blob/main/INTEGRATION/AI-AGENT-WORKFLOW.md).
 
 ## Required behavior
 
-For each task, select only relevant Skills and inspect their instructions. Run read-only inventory in the actual execution target, match the report to catalog IDs, then use the Skill preflight to identify declared prerequisites as ready, blocked, or unknown. Treat recommended tools as advisory. Inspect matching Toolbox records, verify version/platform compatibility, and perform task-specific checks before relying on a tool. A catalog status or CI result does not prove availability on the user's device. Reuse suitable installations; review source/license/security before adding dependencies; obtain approval for paid or externally visible actions; and record evidence honestly.
+For each task, select only relevant Skills and inspect their instructions. Run the one-command preflight in the actual execution target, then review the report's inventory evidence, catalog matches, and required prerequisite groups. Treat recommended tools as advisory. Inspect matching Toolbox records, verify version/platform compatibility, and perform task-specific checks before relying on a tool. A catalog status or CI result does not prove availability on the user's device. Reuse suitable installations; review source/license/security before adding dependencies; obtain approval for paid or externally visible actions; and record evidence honestly.
+
+The one-command preflight is read-only: it does not install software, make network requests, scan remote hosts, or execute Skill workflows. It reports only the process environment in which it runs. A detected executable/module is not proof of functional correctness, credentials, or external service access.
 
 Do not store credentials, customer data, proprietary product source code or private project assets in this public repository. Keep this repository focused on reusable tool metadata and approved generic test procedures.
