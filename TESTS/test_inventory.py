@@ -93,7 +93,7 @@ class InventorySmokeTests(unittest.TestCase):
                     item["available"], item["resolved_path"] is not None
                 )
 
-    def test_inventory_is_read_only_and_offline(self) -> None:
+    def test_inventory_is_non_mutating_offline_and_reports_command_probes(self) -> None:
         safety = self.report["safety"]
         self.assertIs(safety["read_only"], True)
         self.assertIsInstance(safety["commands_executed"], bool)
