@@ -82,6 +82,39 @@ jobs:
           sudo install -m 0755 trivy /usr/local/bin/trivy
           trivy --version
 
+      - name: Install pinned Syft release and verify its SBOM output
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          cd "$tmp"
+          syft_version="1.57.1"
+          syft_archive="syft_${syft_version}_linux_amd64.tar.gz"
+          checksums_file="syft_${syft_version}_checksums.txt"
+          curl --fail --silent --show-error --location \
+            "https://github.com/anchore/syft/releases/download/v${syft_version}/${syft_archive}" \
+            -o "$syft_archive"
+          curl --fail --silent --show-error --location \
+            "https://github.com/anchore/syft/releases/download/v${syft_version}/${checksums_file}" \
+            -o "$checksums_file"
+          echo "92466b2b1a4695ee908f8a1567f4ff074e0fbb4f34da28463927a2630901fe2c  ${checksums_file}" | sha256sum --check -
+          grep "  ${syft_archive}$" "$checksums_file" | sha256sum --check -
+          mkdir syft-release
+          tar -xzf "$syft_archive" -C syft-release syft
+          sudo install -m 0755 syft-release/syft /usr/local/bin/syft
+          syft version
+          syft dir:"$GITHUB_WORKSPACE" -o cyclonedx-json="$tmp/ai-toolbox-sbom.cdx.json"
+          python - "$tmp/ai-toolbox-sbom.cdx.json" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          document = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          components = document.get("components")
+          assert isinstance(components, list) and components, "Syft produced an empty or invalid CycloneDX SBOM"
+          print(f"Syft generated CycloneDX SBOM with {len(components)} component(s)")
+          PY
+
       - name: Scan repository for exposed secrets
         run: gitleaks dir --redact --exit-code 1 .
 
