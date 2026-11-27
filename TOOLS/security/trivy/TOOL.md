@@ -2,9 +2,13 @@
 
 - **ID:** `trivy`
 - **Category:** security
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** Aqua Security
 - **License:** Apache-2.0
+
+- **Tested version:** 0.76.2
+- **CI verification:** GitHub-hosted Ubuntu Linux x86_64; Scanned repository dependencies, secrets and misconfigurations after verifying the official release archive SHA-256.
+- **CI record:** `TESTS/SECURITY-TOOL-SMOKE.md`
 
 - **Purpose:** scan container images, filesystems and repositories for known vulnerabilities, secrets, licenses and (when enabled) configuration misconfigurations.
 - **Upstream:** https://github.com/aquasecurity/trivy
