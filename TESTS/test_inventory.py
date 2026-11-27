@@ -57,6 +57,7 @@ class InventorySmokeTests(unittest.TestCase):
         self.assertIsInstance(commands, dict)
         self.assertIn("python", commands)
         for security_command in ("gitleaks", "pip-audit", "trivy", "age", "restic"):
+            self.assertIn("ssh", commands)
             self.assertIn(security_command, commands)
         self.assertIn("pip_audit", self.report["python_modules"])
 
