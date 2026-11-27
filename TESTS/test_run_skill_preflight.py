@@ -23,6 +23,35 @@ class RunSkillPreflightTests(unittest.TestCase):
         self.assertFalse(report["safety"]["network_access"])
         self.assertFalse(report["safety"]["installation_attempted"])
 
+    def test_four_skill_pilot_returns_evidence_for_each_direction(self) -> None:
+        skill_ids = [
+            "crypto-security",
+            "devops-vps",
+            "code-audit",
+            "python-development",
+        ]
+        report = run_preflight(skill_ids)
+        self.assertEqual(report["summary"]["skills_total"], len(skill_ids))
+        self.assertEqual([item["skill"] for item in report["skills"]], skill_ids)
+        for item in report["skills"]:
+            self.assertIn(item["readiness"], {"ready", "blocked", "unknown"})
+            self.assertIsInstance(item["required_groups"], list)
+            self.assertIsInstance(item["recommended_tools"], list)
+
+    def test_all_mapped_skills_complete_preflight(self) -> None:
+        report = run_preflight()
+        self.assertEqual(report["summary"]["skills_total"], 25)
+        skill_ids = [item["skill"] for item in report["skills"]]
+        self.assertEqual(len(skill_ids), len(set(skill_ids)))
+        self.assertEqual(
+            sum(report["summary"]["readiness"].values()),
+            report["summary"]["skills_total"],
+        )
+        self.assertEqual(
+            set(report["summary"]["readiness"]),
+            {"ready", "blocked", "unknown"},
+        )
+
     def test_unknown_skill_is_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "Unknown Skill ID"):
             run_preflight(["not-a-real-skill"])
