@@ -1,6 +1,6 @@
 # SBOM attestation and build provenance
 
-**Status:** implemented in `.github/workflows/sbom-attestation.yml`; awaiting trusted-branch execution and end-to-end verification.  
+**Status:** end-to-end verified on `main` on 2026-11-27. Both CycloneDX SBOM and SLSA provenance attestations were created and verified.  
 **Scope:** public `HOADF-Team/AI-Toolbox` source archive and CycloneDX SBOM only.
 
 ## Workflow behavior
@@ -33,7 +33,7 @@ The workflow verifies:
 - SLSA provenance predicate type;
 - CycloneDX SBOM predicate type.
 
-A successful first run on `main` is required before catalog entries can claim that signed SBOM and provenance have been tested. Until then, the workflow is implemented but the end-to-end capability remains pending.
+The first trusted-branch run passed all steps. Run: [45952752644](https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45952752644). Source commit: `bc78db91caf3bb640a2f6aa9715138d4fa4600c7`. Both predicate types were verified with `gh attestation verify`, requiring the repository and exact signer workflow identity. The Syft catalog record now reflects this scoped result.
 
 ## Security limits
 
