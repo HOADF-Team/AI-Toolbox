@@ -53,6 +53,22 @@
       ]
     },
     {
+      "id": "server-security",
+      "required_any": [],
+      "recommended": [
+        "curl",
+        "jq",
+        "pip-audit",
+        "gitleaks",
+        "trivy",
+        "age",
+        "restic",
+        "podman",
+        "syft",
+        "cosign"
+      ]
+    },
+    {
       "id": "automation-vps",
       "required_any": [
         [
