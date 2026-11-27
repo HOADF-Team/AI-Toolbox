@@ -27,9 +27,9 @@ Cosign signs and verifies software artifacts and OCI container images. It suppor
 
 ## CI verification plan
 
-The AI-Toolbox workflow pins Cosign 3.1.5 and uses the official `sigstore/cosign-installer` action, which verifies release integrity during installation. The smoke test creates an ephemeral local key pair, signs a synthetic file using a signing configuration with external Fulcio/OIDC/Rekor/TSA services disabled, verifies the signature, then modifies the file and expects verification to fail.
+The AI-Toolbox workflow pins Cosign 3.1.5 and uses the official `sigstore/cosign-installer` action, which verifies release integrity during installation. The smoke test creates an ephemeral local key pair, signs a synthetic file in Cosign v3 detached-signature compatibility mode with transparency-log upload and signing-config use explicitly disabled, verifies the signature, then modifies the file and expects verification to fail.
 
-This deliberately does not use GitHub OIDC, production credentials, real keys, public transparency-log publication or an OCI registry. The test remains pending until the workflow passes.
+This deliberately does not use GitHub OIDC, production credentials, real keys, public transparency-log publication or an OCI registry. The compatibility flags are deprecated for a future Cosign major release; the test validates the current pinned v3 behavior only. Production workflows should adopt Sigstore bundles/keyless signing with explicit identity and trust-root policy when those services and publication are intentionally in scope. The test remains pending until the workflow passes.
 
 ## Limitations
 
