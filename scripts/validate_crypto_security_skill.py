@@ -44,7 +44,7 @@ CONTROL_PATTERNS: dict[str, tuple[str, ...]] = {
         r"restore drill",
     ),
     "warn_about_dependency_build_execution": (
-        r"могут запускать установку/build-процессы",
+        r"может запускать установку/build-процессы",
         r"may execute package build processes",
     ),
     "configure_trivy_exit_code_for_ci_gate": (
