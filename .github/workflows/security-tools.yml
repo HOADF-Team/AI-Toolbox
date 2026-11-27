@@ -145,6 +145,7 @@ jobs:
           cosign verify-blob \
             --key "$tmp/ephemeral.pub" \
             --signature "$tmp/artifact.sig" \
+            --insecure-ignore-tlog \
             "$tmp/artifact.txt"
 
           printf 'tampered\n' >> "$tmp/artifact.txt"
