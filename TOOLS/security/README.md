@@ -8,7 +8,7 @@ Security is a first-class capability of AI-Toolbox. This directory contains revi
 |---|---|---|---|
 | Python static application security testing (SAST) | [Bandit](bandit/TOOL.md) | Common Python security patterns and unsafe APIs | Python-focused; findings require review |
 | Dependency vulnerability auditing | [pip-audit](pip-audit/TOOL.md) | Known vulnerabilities in installed/resolved Python packages | Python ecosystem only; not a full dependency policy or malware detector |
-| SBOM generation | [Syft](syft/TOOL.md) | Software Bill of Materials in SPDX/CycloneDX for directories and images | Pinned release and non-empty CycloneDX SBOM generation tested in Linux CI |\n| Artifact signing and verification | [Cosign](cosign/TOOL.md) | Cryptographic signatures and verification for blobs and OCI images; supports key-based and keyless Sigstore workflows | Reviewed; pinned key-based signature and tamper-detection smoke test pending |
+| SBOM generation | [Syft](syft/TOOL.md) | Software Bill of Materials in SPDX/CycloneDX for directories and images | Pinned release and non-empty CycloneDX SBOM generation tested in Linux CI |\n| Artifact signing and verification | [Cosign](cosign/TOOL.md) | Cryptographic signatures and verification for blobs and OCI images; supports key-based and keyless Sigstore workflows | Pinned Cosign 3.1.5 installation, local signature verification and tamper-detection smoke test passed in Linux CI |
 | Secret detection | [Gitleaks](gitleaks/TOOL.md) | Credential-like strings in files and Git content | Detection is heuristic; rotate any exposed credential, do not merely delete it |
 | Filesystem, dependency, container and configuration scanning | [Trivy](trivy/TOOL.md) | Known vulnerabilities, secrets and selected misconfigurations | Coverage depends on target type, scanners and database freshness |
 | File encryption | [age](age/TOOL.md) | Authenticated file encryption/decryption | Not a key-management service; protect and recover identities separately |
@@ -18,7 +18,7 @@ Security is a first-class capability of AI-Toolbox. This directory contains revi
 
 ## Verification status
 
-The eight security CLI tools above (Bandit, pip-audit, Gitleaks, Trivy, Syft, Cosign, age and restic) have pinned, scoped smoke tests in [security-tools.yml](../../.github/workflows/security-tools.yml). The tests run in GitHub-hosted Ubuntu Linux x86_64 and exercise representative behavior; see each `TOOL.md` for exact versions and test scope.
+The eight security CLI tools above (Bandit, pip-audit, Gitleaks, Trivy, Syft, Cosign, age and restic) have pinned, scoped smoke tests in [security-tools.yml](../../.github/workflows/security-tools.yml); all eight passed their current CI checks. The tests run in GitHub-hosted Ubuntu Linux x86_64 and exercise representative behavior; see each `TOOL.md` for exact versions and test scope.
 
 A `tested` catalog status is evidence for that recorded environment only. It does not mean the tool is installed or available on a user's PC, in another AI runtime, or on a production host. A passing scanner run is not a security certification and cannot prove the absence of vulnerabilities.
 
@@ -38,7 +38,7 @@ A `tested` catalog status is evidence for that recorded environment only. It doe
 The current set is a practical baseline, not a complete security platform. Candidates for later evaluation:
 
 - Multi-language SAST and data-flow analysis (for example, Semgrep or CodeQL); select only after source, license, usage and CI constraints are reviewed.
-- Artifact signing and build provenance (Cosign/Sigstore); Syft SBOM generation is tested in CI; Cosign signing and verification are reviewed and pending the CI smoke test.
+- Artifact signing and build provenance beyond the current local Cosign smoke test: SBOM attestation/signing, keyless OIDC identity policy, OCI registry signing and verifiable build provenance.
 - Secret-manager/KMS integrations and automated credential rotation workflows.
 - Host configuration auditing and compliance benchmarks.
 - Centralized security event collection, alerting and incident-response automation.
