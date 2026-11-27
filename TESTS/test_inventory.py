@@ -101,6 +101,8 @@ class InventorySmokeTests(unittest.TestCase):
         self.assertEqual(safety["commands_executed"], safety["command_probe_count"] > 0)
         self.assertIs(safety["trusted_path_required"], True)
         self.assertIs(safety["network_access"], False)
+        self.assertEqual(safety["external_command_network_access"], "not_controlled")
+        self.assertEqual(safety["external_command_side_effects"], "not_controlled")
         self.assertIs(safety["installation_attempted"], False)
         self.assertIn("not sandboxed", safety["note"])
 
