@@ -2,9 +2,13 @@
 
 - **ID:** `pip-audit`
 - **Category:** security
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** Python Packaging Authority (PyPA)
 - **License:** Apache-2.0
+
+- **Tested version:** 2.10.1
+- **CI verification:** GitHub-hosted Ubuntu Linux x86_64; Installed the pinned CLI and audited requirements-dev.txt against the current advisory database.
+- **CI record:** `TESTS/SECURITY-TOOL-SMOKE.md`
 
 - **Purpose:** audit Python environments and dependency requirement inputs for known published vulnerabilities; can emit CycloneDX SBOM output.
 - **Upstream:** https://github.com/pypa/pip-audit
