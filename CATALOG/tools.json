@@ -980,6 +980,29 @@
       },
       "tested_environment": "GitHub-hosted Ubuntu Linux x86_64 CI; ephemeral local key pair; detached-signature compatibility mode; signing and verification with transparency log disabled; tamper detection",
       "tested_version": "3.1.5"
+    },
+    {
+      "id": "openssh-client",
+      "name": "OpenSSH client",
+      "category": "remote-access",
+      "description": "SSH client for encrypted remote login and command execution; local presence does not prove host reachability or authorization.",
+      "status": "reviewed",
+      "record": "TOOLS/networking/openssh-client/TOOL.md",
+      "official_url": "https://www.openssh.com/",
+      "source_repository": "https://github.com/openssh/openssh-portable",
+      "license": "BSD-style; verify notices for the exact distribution build",
+      "platforms": [
+        "Linux",
+        "macOS",
+        "Windows"
+      ],
+      "last_reviewed": "2026-11-27",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
     }
   ]
 }

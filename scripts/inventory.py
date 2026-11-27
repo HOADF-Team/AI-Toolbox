@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 COMMANDS = {
     "git": ["--version"],
     "curl": ["--version"],
+    "ssh": ["-V"],
     "jq": ["--version"],
     "redocly": ["--version"],
     "mockoon-cli": ["--version"],
