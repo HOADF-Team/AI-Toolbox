@@ -947,7 +947,7 @@
       "name": "Cosign",
       "category": "security",
       "description": "Signs and verifies software artifacts and OCI container images; supports local key pairs, keyless Sigstore identities, KMS and transparency-backed bundles.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/security/cosign/TOOL.md",
       "official_url": "https://github.com/sigstore/cosign",
       "source_repository": "https://github.com/sigstore/cosign",
@@ -961,11 +961,11 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
+        "installation_tested": true,
+        "runtime_tested": true
       },
-      "reviewed_version": "3.1.5",
-      "tested_environment": "Pending pinned GitHub Actions smoke test"
+      "tested_environment": "GitHub-hosted Ubuntu Linux x86_64 CI; ephemeral local key pair; detached-signature compatibility mode; signing and verification with transparency log disabled; tamper detection",
+      "tested_version": "3.1.5"
     }
   ]
 }
