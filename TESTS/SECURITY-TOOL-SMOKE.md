@@ -9,8 +9,8 @@ The `Security tools smoke tests` workflow exercises the five security tools adde
 | pip-audit 2.10.1 | Installs the pinned CLI and audits `requirements-dev.txt` against current advisory data | No coverage of OS packages, production lockfiles, unknown vulnerabilities or malicious packages |
 | Gitleaks 8.30.1 | Verifies the official release archive checksum, runs a redacted scan of the repository working tree | No guarantee that every secret format is detected; this workflow does not scan deleted Git history |
 | Trivy 0.76.2 | Verifies the official release archive checksum and scans repository files for vulnerabilities, secrets and misconfigurations | Coverage depends on supported ecosystems and fresh databases; not a penetration test or VPS audit |
-| age 1.3.2 | Installs the pinned Go module release and verifies encrypt/decrypt round trip with a temporary identity | Does not test production key custody, disk/DB encryption or recovery procedures |
-| restic 0.20.0 | Installs the pinned Go module release and verifies local encrypted repository init, backup, check and restore | Does not test remote storage, immutability, offsite isolation, retention policy or disaster recovery |
+| age 1.3.2 | Downloads the official Linux release binary, verifies its pinned SHA-256 digest, and verifies encrypt/decrypt round trip with a temporary identity | Does not test production key custody, disk/DB encryption or recovery procedures |
+| restic 0.20.0 | Downloads the official Linux release binary, verifies its pinned SHA-256 digest, and verifies local encrypted repository init, backup, check and restore | Does not test remote storage, immutability, offsite isolation, retention policy or disaster recovery |
 
 ## Supply-chain and safety controls
 
