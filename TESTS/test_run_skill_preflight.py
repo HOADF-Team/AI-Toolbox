@@ -20,7 +20,12 @@ class RunSkillPreflightTests(unittest.TestCase):
         self.assertIn("commands", report["inventory"])
         self.assertIn("tools", report["tool_matches"])
         self.assertTrue(report["safety"]["read_only"])
+        self.assertIsInstance(report["safety"]["commands_executed"], bool)
+        self.assertIsInstance(report["safety"]["command_probe_count"], int)
+        self.assertTrue(report["safety"]["trusted_path_required"])
         self.assertFalse(report["safety"]["network_access"])
+        self.assertEqual(report["safety"]["external_command_network_access"], "not_controlled")
+        self.assertEqual(report["safety"]["external_command_side_effects"], "not_controlled")
         self.assertFalse(report["safety"]["installation_attempted"])
 
     def test_four_skill_pilot_returns_evidence_for_each_direction(self) -> None:

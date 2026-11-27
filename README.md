@@ -11,7 +11,7 @@ The goal is a practical, reusable toolbox maintained with the help of AI agentsâ
 
 ## How it works
 
-1. **Discover the target environment:** identify where the task will run and inspect available tools without installing anything. See the [read-only discovery procedure](TESTS/ENVIRONMENT-DISCOVERY.md).
+1. **Discover the target environment:** identify where the task will run and inspect available tools without installing anything. See the [non-mutating discovery procedure](TESTS/ENVIRONMENT-DISCOVERY.md); it executes fixed version/help probes for detected binaries, so use a trusted `PATH`.
 2. **Check first:** search the catalog and existing tool records.
 3. **Reuse:** if a suitable tool is recorded, check compatibility and whether it is available in the actual target environment, then use it.
 4. **Find a gap:** search for candidates from their original publishers.

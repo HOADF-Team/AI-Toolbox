@@ -6,11 +6,13 @@ Use [inventory.py](../scripts/inventory.py) before proposing an installation.
 python3 scripts/inventory.py --pretty
 ```
 
-The script uses the Python standard library only. It checks a curated set of command-line tools on `PATH`, probes versions or short help output where possible, checks selected Python modules with import discovery (including Ruff and mypy), and resolves selected Node.js packages from the current working directory. It emits JSON and does not install, update, remove, or configure anything. It makes no network requests.
+The script uses the Python standard library only. It checks a curated set of command-line tools on `PATH`, probes versions or short help output where possible, checks selected Python modules with import discovery (including Ruff and mypy), and resolves selected Node.js packages from the current working directory. It does not install, update, remove, or intentionally configure anything.
+
+**Important: this is not a passive file scan.** For every detected executable, the script runs that binary with a fixed version/help argument. Those binaries are not sandboxed: a malicious or replaced executable earlier on `PATH` can run arbitrary code, and a legitimate tool may have tool-specific startup side effects or network behavior. Run discovery only in a trusted environment with a trusted `PATH`; do not use it to probe an untrusted host or unknown executables. The script itself makes no network requests. Python packages are checked with `find_spec` without importing them; Node.js uses `require.resolve` and does not load the resolved package.
 
 ## Interpret the result correctly
 
-The report's `scope` is always `current_process_environment_only`. It describes only the environment in which the script ran.
+The report's `scope` is always `current_process_environment_only`. It describes only the environment in which the script ran. The `safety.read_only` field means that the inventory does not request installations or configuration changes; it does not mean that no process is executed. See the command-probe warning above.
 
 Keep these facts separate:
 

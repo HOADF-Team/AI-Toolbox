@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only inventory of selected developer tools in the current runtime."""
+"""Non-mutating inventory; executes fixed version/help probes for detected tools."""
 from __future__ import annotations
 
 import argparse
@@ -104,8 +104,11 @@ def main() -> int:
     args = parser.parse_args()
 
     commands = {}
+    command_probe_count = 0
     for name, version_args in COMMANDS.items():
         path = shutil.which(name)
+        if path:
+            command_probe_count += 1
         commands[name] = {
             "installed": path is not None,
             "path": path,
@@ -120,9 +123,12 @@ def main() -> int:
         except (ImportError, ValueError, ModuleNotFoundError):
             python_modules[name] = {"available": False}
 
+    node_path = shutil.which("node")
     node_packages = {
         name: probe_node_package(name) for name in NODE_PACKAGES
     }
+    if node_path:
+        command_probe_count += len(NODE_PACKAGES)
 
     report = {
         "schema_version": "1.1",
@@ -141,12 +147,21 @@ def main() -> int:
         "node_packages": node_packages,
         "safety": {
             "read_only": True,
+            "commands_executed": command_probe_count > 0,
+            "command_probe_count": command_probe_count,
+            "trusted_path_required": True,
             "network_access": False,
+            "external_command_network_access": "not_controlled",
+            "external_command_side_effects": "not_controlled",
             "installation_attempted": False,
             "note": (
-                "Checks PATH, Python import discovery, and Node.js module "
-                "resolution from the current working directory. It does not "
-                "scan other hosts, user devices, or global package stores."
+                "No installation or configuration change is requested, and this script "
+                "does not itself make network requests. It DOES execute detected PATH "
+                "binaries with fixed version/help arguments; those binaries are not "
+                "sandboxed and may have their own side effects or network behavior. "
+                "Run only with a trusted PATH. Python modules are checked with find_spec; "
+                "Node packages are resolved with require.resolve without loading package code. "
+                "Other hosts, user devices, and global package stores are not scanned."
             ),
         },
     }

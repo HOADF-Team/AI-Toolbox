@@ -93,11 +93,18 @@ class InventorySmokeTests(unittest.TestCase):
                     item["available"], item["resolved_path"] is not None
                 )
 
-    def test_inventory_is_read_only_and_offline(self) -> None:
+    def test_inventory_is_non_mutating_offline_and_reports_command_probes(self) -> None:
         safety = self.report["safety"]
         self.assertIs(safety["read_only"], True)
+        self.assertIsInstance(safety["commands_executed"], bool)
+        self.assertIsInstance(safety["command_probe_count"], int)
+        self.assertEqual(safety["commands_executed"], safety["command_probe_count"] > 0)
+        self.assertIs(safety["trusted_path_required"], True)
         self.assertIs(safety["network_access"], False)
+        self.assertEqual(safety["external_command_network_access"], "not_controlled")
+        self.assertEqual(safety["external_command_side_effects"], "not_controlled")
         self.assertIs(safety["installation_attempted"], False)
+        self.assertIn("not sandboxed", safety["note"])
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the read-only inventory, catalog match, and Skill preflight as one command."""
+"""Run the non-mutating inventory, catalog match, and Skill preflight as one command."""
 from __future__ import annotations
 
 import argparse
@@ -69,7 +69,8 @@ def run_preflight(
             "This report covers only the environment where this command was run.",
             "Detected availability is not a functional test or proof of credentials/service access.",
             "Preflight checks declared prerequisites; it does not execute Skill workflows.",
-            "No installation, network request, remote-host scan, or system modification is performed.",
+            "No installation, network request by the inventory itself, remote-host scan, or system modification is requested.",
+            "Detected PATH binaries are executed with fixed version/help arguments; they are not sandboxed and may have tool-specific side effects.",
         ],
     }
 
