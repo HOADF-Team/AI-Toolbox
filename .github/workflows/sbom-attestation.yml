@@ -3,6 +3,12 @@ name: SBOM and build provenance attestations
 on:
   push:
     branches: [main]
+    paths:
+      - "scripts/**"
+      - "TESTS/**"
+      - "requirements*.txt"
+      - ".github/workflows/**"
+      - "pyproject.toml"
   workflow_dispatch:
 
 permissions:
@@ -10,7 +16,7 @@ permissions:
 
 concurrency:
   group: sbom-attestation-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   attest:
