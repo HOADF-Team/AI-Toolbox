@@ -1,6 +1,6 @@
 # Skill → Tool dependency map
 
-**Source:** `HOADF-Team/Personal-AI-Library` — 24 `SKILL.md` files on `main` (PR #9 merged).
+**Source:** `HOADF-Team/Personal-AI-Library` — 25 `SKILL.md` files on `main` (PR #9 merged).
 **Inventory date:** 2026-11-27.
 **Purpose:** map workflow instructions to concrete software capabilities. This is a discovery and planning document, not a claim that every candidate is installed, reviewed, or tested.
 
@@ -31,6 +31,7 @@
 | `code-audit` | Static inspection, syntax/AST checks, and Python security patterns | Existing Skill AST script; Ruff; Bandit; Semgrep only for broader multi-language/data-flow needs | Bandit in catalog (`tested`); B301/B602 findings detected and safe fixture clean; local AST script remains in Personal-AI-Library |
 | `web-development` | HTML/CSS/JS workflow, local server, browser testing, build tools | Playwright; Node.js/npm; Vite only when project needs a build step | Playwright in catalog (`tested`); Node.js in catalog (`tested`); Vite only when project needs a build step |
 | `devops-vps` | Remote Linux diagnostics, service/container/log inspection | OpenSSH, `ssh`, `journalctl`, systemd tools, Docker/Podman, `curl` | Mostly OS-native tools; avoid installing a second admin stack without need |
+| `server-security` | Linux server/VPS security audit, SSH/network/firewall, encryption, backups, monitoring and incident response | OS-native SSH/firewall/systemd tools; Trivy; Gitleaks; age; restic; Podman; Syft; Cosign; curl/jq | OS-native controls remain target-specific; Trivy/Gitleaks and encryption/backup tools are tested in isolated CI; GitHub OIDC SBOM/provenance attestations are verified for AI-Toolbox, not for a user's server |
 | `automation-vps` | API clients, webhook testing, scheduling, state and retries | Python HTTP clients; `curl`; `jq`; Redocly CLI for OpenAPI lint/Arazzo workflows; Schemathesis for generated contract/edge-case tests; Mockoon CLI for local mock APIs and optional MCP control; n8n only for visual workflow needs | curl, jq, Redocly CLI, and Schemathesis (`tested`); Mockoon CLI (`tested`); pinned install, import/validation, inventory detection, and local mock HTTP checks passed; external API access and credentials require explicit scope |
 | `telegram-bots` | Telegram Bot API integration and webhook/polling | aiogram or python-telegram-bot (choose by existing project/version); Telegram Bot API | Candidate; never mix incompatible SDK major versions |
 | `max-bots` | MAX platform API integration | Official MAX Bot API/docs and an HTTP client or supported SDK if available | Needs current official API verification; do not assume Telegram compatibility |
