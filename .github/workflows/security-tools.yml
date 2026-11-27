@@ -134,4 +134,6 @@ jobs:
           restic backup "$tmp/source"
           restic check
           restic restore latest --target "$tmp/restore"
-          cmp "$tmp/source/payload.txt" "$tmp/restore/tmp/source/payload.txt"
+          restored_file="$(find "$tmp/restore" -type f -name payload.txt -print -quit)"
+          test -n "$restored_file"
+          cmp "$tmp/source/payload.txt" "$restored_file"
