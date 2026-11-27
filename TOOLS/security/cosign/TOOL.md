@@ -2,14 +2,14 @@
 
 - **ID:** `cosign`
 - **Category:** security
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** Sigstore project
 - **License:** Apache-2.0
-- **Reviewed version:** 3.1.5
+- **Tested version:** 3.1.5
 - **Upstream:** https://github.com/sigstore/cosign
 - **Documentation:** https://docs.sigstore.dev/cosign/overview/
 - **Platforms:** Linux, macOS, Windows (verify the selected release and installer for the target platform)
-- **Catalog status:** reviewed; pinned installation and functional runtime test are pending CI.
+- **Catalog status:** tested in the narrowly documented GitHub-hosted Ubuntu Linux x86_64 CI scope below.
 
 ## Purpose
 
@@ -25,11 +25,11 @@ Cosign signs and verifies software artifacts and OCI container images. It suppor
 - Do not grant `id-token: write` unless a workflow intentionally performs keyless signing and its identity policy has been reviewed.
 - Do not publish private SBOMs, signatures or metadata without checking whether they disclose internal dependency information.
 
-## CI verification plan
+## CI verification
 
 The AI-Toolbox workflow pins Cosign 3.1.5 and uses the official `sigstore/cosign-installer` action, which verifies release integrity during installation. The smoke test creates an ephemeral local key pair, signs a synthetic file in Cosign v3 detached-signature compatibility mode with transparency-log upload and signing-config use explicitly disabled, verifies the signature, then modifies the file and expects verification to fail.
 
-This deliberately does not use GitHub OIDC, production credentials, real keys, public transparency-log publication or an OCI registry. The compatibility flags are deprecated for a future Cosign major release; the test validates the current pinned v3 behavior only. Production workflows should adopt Sigstore bundles/keyless signing with explicit identity and trust-root policy when those services and publication are intentionally in scope. The test remains pending until the workflow passes.
+This deliberately does not use GitHub OIDC, production credentials, real keys, public transparency-log publication or an OCI registry. The compatibility flags are deprecated for a future Cosign major release; the test validates the current pinned v3 behavior only. Production workflows should adopt Sigstore bundles/keyless signing with explicit identity and trust-root policy when those services and publication are intentionally in scope. The pinned installation and functional smoke test passed in GitHub Actions on 2026-11-27. The successful run verified both acceptance of the original signed file and rejection after tampering. This is a scoped smoke test, not full validation of all Cosign features.
 
 ## Limitations
 
