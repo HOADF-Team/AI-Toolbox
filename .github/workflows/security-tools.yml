@@ -139,7 +139,7 @@ jobs:
             --no-default-tsa \
             --out "$tmp/signing-config.json"
 
-          printf 'AI-Toolbox Cosign signing smoke test\\n' > "$tmp/artifact.txt"
+          printf 'AI-Toolbox Cosign signing smoke test\n' > "$tmp/artifact.txt"
           cosign generate-key-pair --output-key-prefix "$tmp/ephemeral"
           cosign sign-blob \
             --key "$tmp/ephemeral.key" \
@@ -152,7 +152,7 @@ jobs:
             --bundle "$tmp/artifact.sigstore.json" \
             "$tmp/artifact.txt"
 
-          printf 'tampered\\n' >> "$tmp/artifact.txt"
+          printf 'tampered\n' >> "$tmp/artifact.txt"
           if cosign verify-blob \
             --key "$tmp/ephemeral.pub" \
             --bundle "$tmp/artifact.sigstore.json" \
