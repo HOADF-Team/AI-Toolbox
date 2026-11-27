@@ -2,9 +2,13 @@
 
 - **ID:** `gitleaks`
 - **Category:** security
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** Truffle Security
 - **License:** MIT
+
+- **Tested version:** 8.30.1
+- **CI verification:** GitHub-hosted Ubuntu Linux x86_64; Scanned the repository working tree with redacted output after verifying the official release archive SHA-256.
+- **CI record:** `TESTS/SECURITY-TOOL-SMOKE.md`
 
 - **Purpose:** detect credentials, API tokens, passwords and other secret-like strings in Git history, repositories, directories and stdin.
 - **Upstream:** https://github.com/gitleaks/gitleaks
