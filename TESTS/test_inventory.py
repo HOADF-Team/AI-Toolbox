@@ -96,7 +96,9 @@ class InventorySmokeTests(unittest.TestCase):
     def test_inventory_is_read_only_and_offline(self) -> None:
         safety = self.report["safety"]
         self.assertIs(safety["read_only"], True)
-        self.assertIs(safety["commands_executed"], True)
+        self.assertIsInstance(safety["commands_executed"], bool)
+        self.assertIsInstance(safety["command_probe_count"], int)
+        self.assertEqual(safety["commands_executed"], safety["command_probe_count"] > 0)
         self.assertIs(safety["trusted_path_required"], True)
         self.assertIs(safety["network_access"], False)
         self.assertIs(safety["installation_attempted"], False)
