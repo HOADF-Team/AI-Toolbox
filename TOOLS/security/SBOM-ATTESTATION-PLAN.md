@@ -5,7 +5,7 @@
 
 ## Workflow behavior
 
-- Runs on pushes to `main` and manual dispatch. The job has an explicit `refs/heads/main` guard, so pull requests, forks, tags and dispatches from other branches cannot mint attestations.
+- Runs on source/CI changes pushed to `main` and on manual dispatch. The job has an explicit `refs/heads/main` guard, so pull requests, forks, tags and dispatches from other branches cannot mint attestations. Documentation-only and catalog-metadata-only commits do not trigger redundant attestations.
 - Checks out the exact source commit with `actions/checkout` pinned to full commit SHA `11bd71901bbe5b1630ceea73d27597364c9af683`, with persisted Git credentials disabled.
 - Installs Syft 1.57.1 from the official release archive and verifies both the checksum manifest and binary archive SHA-256.
 - Generates and validates a non-empty CycloneDX JSON SBOM from that checkout.
@@ -33,7 +33,7 @@ The workflow verifies:
 - SLSA provenance predicate type;
 - CycloneDX SBOM predicate type.
 
-The first trusted-branch run passed all steps. Run: [45952752644](https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45952752644). Source commit: `bc78db91caf3bb640a2f6aa9715138d4fa4600c7`. Both predicate types were verified with `gh attestation verify`, requiring the repository and exact signer workflow identity. The Syft catalog record now reflects this scoped result.
+The latest trusted-branch run passed all steps. Run: [45952959296](https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45952959296). Source commit: `ddb0a79789af8ab4f868b3f7edba2c390a89c8e6`. Both predicate types were verified with `gh attestation verify`, requiring the repository and exact signer workflow identity. The Syft catalog record now reflects this scoped result.
 
 ## Security limits
 
