@@ -21,6 +21,7 @@ class MatchInventoryTests(unittest.TestCase):
             {"id": "future-tool", "name": "Future tool", "record": "TOOLS/future.md"},
             {"id": "gitleaks", "name": "Gitleaks", "record": "TOOLS/gitleaks.md"},
             {"id": "pip-audit", "name": "pip-audit", "record": "TOOLS/pip-audit.md"},
+            {"id": "openssh-client", "name": "OpenSSH client", "record": "TOOLS/openssh-client.md"},
         ]}
         self.report: dict[str, Any] = {
             "scope": "current_process_environment_only",
@@ -28,6 +29,7 @@ class MatchInventoryTests(unittest.TestCase):
             "commands": {"git": {"installed": True}, "hummingbot": {"installed": False}, "gitleaks": {"installed": True}},
             "python_modules": {"playwright": {"available": False}, "pip_audit": {"available": True}},
             "node_packages": {"playwright": {"available": True}},
+            "commands": {"ssh": {"installed": True}},
         }
 
     def test_matches_detected_tool(self) -> None:
@@ -52,6 +54,15 @@ class MatchInventoryTests(unittest.TestCase):
         by_id = {item["id"]: item for item in result["tools"]}
         self.assertEqual(by_id["gitleaks"]["availability"], "available")
         self.assertEqual(by_id["pip-audit"]["availability"], "available")
+
+    def test_openssh_client_is_matched_from_local_ssh_probe(self) -> None:
+        result = match_catalog(self.catalog, self.report)
+        by_id = {item["id"]: item for item in result["tools"]}
+        self.assertEqual(by_id["openssh-client"]["availability"], "available")
+        self.assertEqual(
+            by_id["openssh-client"]["evidence"],
+            [{"source": "commands", "key": "ssh", "available": True}],
+        )
 
     def test_counts_and_scope_are_reported(self) -> None:
         result = match_catalog(self.catalog, self.report)
