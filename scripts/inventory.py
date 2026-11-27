@@ -24,6 +24,7 @@ COMMANDS = {
     "pip-audit": ["--version"],
     "gitleaks": ["version"],
     "trivy": ["--version"],
+    "syft": ["version"],
     "age": ["--version"],
     "restic": ["version"],
     "ccxt": ["--version"],
