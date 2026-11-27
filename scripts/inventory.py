@@ -151,6 +151,8 @@ def main() -> int:
             "command_probe_count": command_probe_count,
             "trusted_path_required": True,
             "network_access": False,
+            "external_command_network_access": "not_controlled",
+            "external_command_side_effects": "not_controlled",
             "installation_attempted": False,
             "note": (
                 "No installation or configuration change is requested, and this script "
