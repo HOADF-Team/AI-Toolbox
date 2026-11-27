@@ -950,8 +950,8 @@
           "https://slsa.dev/provenance/v1"
         ],
         "signer_workflow": ".github/workflows/sbom-attestation.yml",
-        "tested_commit": "bc78db91caf3bb640a2f6aa9715138d4fa4600c7",
-        "workflow_run": "https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45952752644"
+        "tested_commit": "ddb0a79789af8ab4f868b3f7edba2c390a89c8e6",
+        "workflow_run": "https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45952959296"
       },
       "tested_version": "1.57.1",
       "tested_environment": "GitHub-hosted Ubuntu Linux x86_64 CI; pinned Syft release and verified checksums; non-empty CycloneDX SBOM; GitHub Artifact Attestations with Sigstore OIDC; verified CycloneDX SBOM and SLSA provenance predicates against the exact signer workflow"
