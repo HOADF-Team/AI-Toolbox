@@ -152,6 +152,7 @@ jobs:
           if cosign verify-blob \
             --key "$tmp/ephemeral.pub" \
             --signature "$tmp/artifact.sig" \
+            --insecure-ignore-tlog \
             "$tmp/artifact.txt"; then
             echo "Cosign unexpectedly accepted a tampered artifact" >&2
             exit 1
