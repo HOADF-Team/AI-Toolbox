@@ -66,7 +66,7 @@ class MatchInventoryTests(unittest.TestCase):
     def test_counts_and_scope_are_reported(self) -> None:
         result = match_catalog(self.catalog, self.report)
         self.assertEqual(result["catalog_match"]["counts"], {
-            "available": 4, "missing": 1, "not_probed": 1,
+            "available": 5, "missing": 1, "not_probed": 1,
         })
         self.assertEqual(result["inventory_scope"], "current_process_environment_only")
 
