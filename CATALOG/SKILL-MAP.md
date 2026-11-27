@@ -1,7 +1,7 @@
 # Skill → Tool dependency map
 
-**Source:** `HOADF-Team/Personal-AI-Library` — 23 `SKILL.md` files in `main`.
-**Inventory date:** 2026-11-26.
+**Source:** `HOADF-Team/Personal-AI-Library` — 24 `SKILL.md` files on `integration/skills-toolbox-workflow` (PR #9 pending).
+**Inventory date:** 2026-11-27.
 **Purpose:** map workflow instructions to concrete software capabilities. This is a discovery and planning document, not a claim that every candidate is installed, reviewed, or tested.
 
 ## Status legend
@@ -15,10 +15,11 @@
 
 | Capability | Candidate tools / services | Why it is shared | Current decision |
 |---|---|---|---|
+| Security and data protection | Bandit; pip-audit; Gitleaks; Trivy; Syft; Cosign; age; restic; OS-native SSH/firewall/TLS controls | Protect code, credentials, runtime, stored data and recovery copies | Bandit, Gitleaks, pip-audit, Trivy, Syft, Cosign, age and restic `tested` in isolated Linux CI; Cosign scope is local key-based detached-signature verification and tamper detection; SSH/firewall/TLS and production controls still require target-host inspection |
 | Source control and repository operations | Git; GitHub CLI (`gh`) | GitHub portfolio, code review, deployment, releases, issue workflows | Git in catalog (`tested`); GitHub CLI remains a candidate; verify separately from GitHub connector capabilities |
 | General scripting/runtime | Python; Node.js | Python, audits, API clients, automation, browser tooling | Python and Node.js in catalog (`tested`); versions must still be selected per project |
 | HTTP/API diagnostics | `curl`; `jq`; Redocly CLI; Schemathesis; Mockoon CLI | API integrations, webhooks, OpenAPI linting, explicit Arazzo workflows, property-based API testing, and local mock APIs | curl, jq, Redocly CLI, Schemathesis, and Mockoon CLI (`tested`); Mockoon local OpenAPI import/validation and loopback HTTP checks passed |
-| Containerized isolation | Docker / Podman | Disposable test environments and VPS deployment | Candidate; not required for every task |
+| Containerized isolation | Podman; Docker only if a compatibility gap appears | Disposable test environments and VPS deployment | Podman `tested` for rootless container smoke checks; Docker remains a candidate; not required for every task |
 | Browser automation | Playwright | Website testing, browser workflows, screenshots | In catalog (`tested`); browser automation smoke test passed |
 | Performance / accessibility diagnostics | Lighthouse; axe-core | SEO and web quality checks | Both in catalog (`tested`); fixture audits passed; distinguish lab metrics from field data |
 
@@ -39,7 +40,8 @@
 | `crypto-research` | Market research, historical data, reproducible analysis and strategy simulation | CCXT for BingX (primary), Binance, Bybit and OKX; pandas; Matplotlib; ta.py; backtesting.py | CCXT `tested` within documented scope; Binance/Bybit remain supported adapter targets but were geo-blocked in CI; ta.py and backtesting.py `tested` for selected indicators and synthetic OHLCV backtest; backtesting.py is AGPL-3.0-or-later |
 | `crypto-market-analysis` | Market data, charts, indicators and funding/open-interest inputs | CCXT for BingX (primary), Binance, Bybit and OKX; pandas; Matplotlib; ta.py for technical indicators | CCXT `tested` for BingX spot/swap and OKX spot; Binance/Bybit adapters remain in scope but endpoint connectivity is unverified due to CI runner geo-blocks; ta.py `tested` for selected SMA/RSI calls; document spot/swap support separately, with explicit units and timestamps |
 | `crypto-futures-risk` | Position sizing, leverage and liquidation/risk calculations | Python standard library / decimal; spreadsheet for independent cross-check | Built-in / lightweight; avoid paid trading terminals unless a concrete gap exists |
-| `crypto-bot-runtime` | Strategy execution, paper trading, order lifecycle, operator controls and persistence | Hummingbot; Freqtrade; CCXT plus a dedicated execution/risk layer | Hummingbot and Freqtrade reviewed, not installed/tested; compatibility matrix at `TOOLS/crypto-engines/ENGINE-COMPATIBILITY.md`; neither currently lists BingX USDT-M perpetual support |
+| **Future capability (not a Personal-AI-Library Skill)** | Strategy execution, paper trading, order lifecycle, operator controls and persistence | Hummingbot; Freqtrade; CCXT plus a dedicated execution/risk layer | Hummingbot and Freqtrade reviewed, not installed/tested; compatibility matrix at `TOOLS/crypto-engines/ENGINE-COMPATIBILITY.md`; neither currently lists BingX USDT-M perpetual support |
+| `crypto-security` | Threat modeling, secrets and credential lifecycle, encryption, secure development, dependency/container scanning, CI/CD, host/network controls, monitoring, backup/recovery and incident response | Bandit; pip-audit; Gitleaks; Trivy; Syft; Cosign; age; restic; Podman; OS-native SSH/firewall/TLS controls | Bandit, pip-audit, Gitleaks, Trivy, age and restic `tested` in pinned GitHub Actions Linux CI (see each record for scope); Syft `tested` with pinned release verification and non-empty CycloneDX SBOM generation in Linux CI; Cosign 3.1.5 `tested` for pinned installation, ephemeral-key local signature verification and tamper detection in Linux CI; Podman is rootless-runtime tested separately; host controls, secret-manager integration and production deployments remain unverified |
 | `trading-bot-audit` | Log/DB parsing, execution and PnL reconciliation | Python; SQLite (Python standard library); pandas; Matplotlib; CCXT for venue-specific reconciliation where required | pandas/Matplotlib and CCXT `tested` within documented scope; BingX spot/swap and OKX spot passed public checks; read-only audit first, no order permissions |
 | `product-marketing` | Research, positioning and evidence-backed claims | Browser/search; spreadsheet; document editor | Mostly built-in capabilities; no dedicated software justified yet |
 | `marketing-copywriting` | Drafting, editing and factual review | Document editor; spell/style checker if needed | Mostly built-in; optional checker only after language and privacy review |
@@ -53,9 +55,9 @@
 
 ## Current coverage and remaining work
 
-The catalog now contains **33 tool records**: 31 `tested` and 2 `reviewed`. Hummingbot and Freqtrade are reviewed engine candidates only; neither has been installed or runtime-tested in AI-Toolbox. The new ta.py and backtesting.py records passed pinned installation and focused offline runtime checks in GitHub Actions; see each record for exact scope and limitations. CCXT installation passed; BingX spot/swap and OKX spot public data passed. Binance and Bybit were blocked by GitHub runner region restrictions and remain unverified at the endpoint level. Bandit passed pinned installation and safe/unsafe fixture scans in isolated CI. Redocly CLI passed pinned installation, OpenAPI lint, and Arazzo API workflow checks in isolated CI. Schemathesis passed pinned installation and a bounded property-based test against a loopback API fixture; 30 generated cases passed. Mockoon CLI passed pinned installation, inventory detection, OpenAPI import/validation, and a loopback HTTP mock test; its MCP server interface is documented but not runtime-tested. Podman is reviewed as the preferred rootless container runtime candidate; its isolated container smoke test is pending.
+The catalog now contains **40 tool records**: 38 `tested` and 2 `reviewed`.  Security is a first-class Toolbox capability under `TOOLS/security/`, with its own smoke-test workflow and a coverage index at `TOOLS/security/README.md`. Hummingbot and Freqtrade are reviewed engine candidates only; neither has been installed or runtime-tested in AI-Toolbox. The new ta.py and backtesting.py records passed pinned installation and focused offline runtime checks in GitHub Actions; see each record for exact scope and limitations. CCXT installation passed; BingX spot/swap and OKX spot public data passed. Binance and Bybit were blocked by GitHub runner region restrictions and remain unverified at the endpoint level. Bandit passed pinned installation and safe/unsafe fixture scans in isolated CI. Redocly CLI passed pinned installation, OpenAPI lint, and Arazzo API workflow checks in isolated CI. Schemathesis passed pinned installation and a bounded property-based test against a loopback API fixture; 30 generated cases passed. Mockoon CLI passed pinned installation, inventory detection, OpenAPI import/validation, and a loopback HTTP mock test; its MCP server interface is documented but not runtime-tested. Podman passed a rootless container smoke test and is marked `tested`; see `TOOLS/container-runtime/podman/TOOL.md` for the exact environment and scope.
 
-The catalog covers source control, Python development and quality checks, JavaScript runtime, browser testing and audits, document conversion/OCR, image processing and metadata, background removal, media processing, HTTP/JSON API utilities, OpenAPI workflow testing, Python data analysis/visualization, and Python security scanning, and multi-exchange cryptocurrency market-data access, technical indicators, and historical strategy simulation.
+The catalog covers source control, Python development and quality checks, JavaScript runtime, browser testing and audits, document conversion/OCR, image processing and metadata, background removal, media processing, HTTP/JSON API utilities, OpenAPI workflow testing, Python data analysis/visualization, and Python/security scanning, file encryption and encrypted backup tooling, and multi-exchange cryptocurrency market-data access, technical indicators, and historical strategy simulation.
 
 `tested` means a documented installation and/or runtime smoke test passed in the specific environment described in that tool's record. It does **not** mean the tool is installed on a user's computer, nor does a smoke test prove every feature or platform works. Check each record for the exact scope and limitations.
 
@@ -65,7 +67,7 @@ Remaining research priorities:
 2. **Crypto exchange integration:** CCXT is tested with BingX (primary) spot/swap and OKX spot; Binance and Bybit adapters are listed upstream but public API checks were geo-blocked from the GitHub runner.
 3. **Platform-specific SDKs:** choose Telegram SDK and MAX API tooling only when an actual project requires them.
 4. **VPS/container operations:** assess Docker/Podman and SSH diagnostics only against a concrete deployment or administration workflow.
-5. **Security/code audit:** Bandit is tested as a Python security-pattern scanner; consider Semgrep or license scanners only when a project needs broader multi-language or supply-chain analysis.
+5. **Security engineering:** Bandit, pip-audit, Gitleaks, Trivy, age and restic have passed scoped Linux CI tests. Syft 1.57.1 passed pinned installation, official checksum verification and non-empty CycloneDX SBOM generation in GitHub-hosted Ubuntu Linux x86_64 CI. Cosign 3.1.5 passed pinned installation, ephemeral-key local detached-signature verification and tamper-detection tests in GitHub-hosted Ubuntu Linux x86_64 CI. Coverage includes Python SAST, dependency vulnerability checks, secret scanning, filesystem/container/misconfiguration scanning, file encryption and encrypted backup/restore. Remaining work includes evaluating a general-purpose multi-language SAST tool, SBOM generation/signing and provenance, secret-manager integrations, host auditing and security event monitoring. These are research candidates, not yet verified capabilities. CI tests do not mean tools are installed on a user's computer or production host; scanners do not replace secure design, key management, hardening or incident response.
 
 This is a research queue, not an instruction to install every candidate. Reuse tools already available in the target environment and avoid redundant dependencies.
 
@@ -91,6 +93,7 @@ For each candidate promoted from this map:
 ## Source links
 
 - [Personal-AI-Library](https://github.com/HOADF-Team/Personal-AI-Library)
+- [Unified Skills + Toolbox operating workflow](../INTEGRATION/SKILLS-WORKFLOW.md)
 - [Skills catalog](https://github.com/HOADF-Team/Personal-AI-Library/blob/main/CATALOG.md)
 - [AI-Toolbox verification and contribution rules](../AGENTS.md)
 - [AI-Toolbox tool catalog](tools.json)

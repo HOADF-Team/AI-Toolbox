@@ -1,0 +1,273 @@
+{
+  "schema_version": "1.0",
+  "source": "CATALOG/SKILL-MAP.md",
+  "semantics": "required_any is a list of capability groups; every group must have at least one available tool. Empty groups mean no external prerequisite is asserted. Recommended tools are advisory only.",
+  "skills": [
+    {
+      "id": "python-development",
+      "required_any": [
+        [
+          "python"
+        ]
+      ],
+      "recommended": [
+        "uv",
+        "pytest",
+        "ruff",
+        "mypy"
+      ]
+    },
+    {
+      "id": "code-audit",
+      "required_any": [
+        [
+          "python"
+        ]
+      ],
+      "recommended": [
+        "ruff",
+        "bandit"
+      ]
+    },
+    {
+      "id": "web-development",
+      "required_any": [
+        [
+          "nodejs",
+          "python"
+        ]
+      ],
+      "recommended": [
+        "playwright",
+        "lighthouse",
+        "axe-core"
+      ]
+    },
+    {
+      "id": "devops-vps",
+      "required_any": [],
+      "recommended": [
+        "git",
+        "podman",
+        "curl"
+      ]
+    },
+    {
+      "id": "automation-vps",
+      "required_any": [
+        [
+          "python"
+        ]
+      ],
+      "recommended": [
+        "curl",
+        "jq",
+        "redocly-cli",
+        "schemathesis",
+        "mockoon-cli"
+      ]
+    },
+    {
+      "id": "telegram-bots",
+      "required_any": [
+        [
+          "python"
+        ]
+      ],
+      "recommended": []
+    },
+    {
+      "id": "max-bots",
+      "required_any": [
+        [
+          "python"
+        ]
+      ],
+      "recommended": [
+        "curl"
+      ]
+    },
+    {
+      "id": "github-portfolio",
+      "required_any": [
+        [
+          "git"
+        ]
+      ],
+      "recommended": [
+        "nodejs",
+        "playwright"
+      ]
+    },
+    {
+      "id": "social-media",
+      "required_any": [],
+      "recommended": []
+    },
+    {
+      "id": "content-planning",
+      "required_any": [],
+      "recommended": [
+        "libreoffice"
+      ]
+    },
+    {
+      "id": "crypto-research",
+      "required_any": [
+        [
+          "python"
+        ],
+        [
+          "ccxt"
+        ]
+      ],
+      "recommended": [
+        "pandas",
+        "matplotlib",
+        "ta-py",
+        "backtesting-py"
+      ]
+    },
+    {
+      "id": "crypto-market-analysis",
+      "required_any": [
+        [
+          "python"
+        ],
+        [
+          "ccxt"
+        ]
+      ],
+      "recommended": [
+        "pandas",
+        "matplotlib",
+        "ta-py"
+      ]
+    },
+    {
+      "id": "crypto-futures-risk",
+      "required_any": [
+        [
+          "python"
+        ]
+      ],
+      "recommended": [
+        "pandas",
+        "matplotlib"
+      ]
+    },
+    {
+      "id": "trading-bot-audit",
+      "required_any": [
+        [
+          "python"
+        ]
+      ],
+      "recommended": [
+        "ccxt",
+        "pandas",
+        "matplotlib"
+      ]
+    },
+    {
+      "id": "product-marketing",
+      "required_any": [],
+      "recommended": []
+    },
+    {
+      "id": "marketing-copywriting",
+      "required_any": [],
+      "recommended": []
+    },
+    {
+      "id": "seo-audit",
+      "required_any": [
+        [
+          "playwright",
+          "lighthouse"
+        ]
+      ],
+      "recommended": [
+        "axe-core"
+      ]
+    },
+    {
+      "id": "business-kwork",
+      "required_any": [],
+      "recommended": [
+        "libreoffice"
+      ]
+    },
+    {
+      "id": "research-fact-checking",
+      "required_any": [],
+      "recommended": [
+        "git",
+        "curl",
+        "jq"
+      ]
+    },
+    {
+      "id": "product-images",
+      "required_any": [
+        [
+          "imagemagick",
+          "gimp",
+          "rembg"
+        ]
+      ],
+      "recommended": [
+        "exiftool"
+      ]
+    },
+    {
+      "id": "marketplace-listings",
+      "required_any": [
+        [
+          "imagemagick",
+          "gimp"
+        ]
+      ],
+      "recommended": [
+        "exiftool",
+        "rembg"
+      ]
+    },
+    {
+      "id": "google-sheets",
+      "required_any": [],
+      "recommended": [
+        "python"
+      ]
+    },
+    {
+      "id": "documents-office",
+      "required_any": [
+        [
+          "libreoffice",
+          "pandoc",
+          "poppler-utils",
+          "tesseract"
+        ]
+      ],
+      "recommended": [
+        "python"
+      ]
+    },
+    {
+      "id": "crypto-security",
+      "required_any": [],
+      "recommended": [
+        "bandit",
+        "pip-audit",
+        "gitleaks",
+        "trivy",
+        "age",
+        "restic",
+        "podman",
+        "syft",
+        "cosign"
+      ]
+    }
+  ]
+}

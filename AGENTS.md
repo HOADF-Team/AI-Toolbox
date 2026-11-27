@@ -69,3 +69,8 @@ Never upgrade a status based only on reading a README or seeing that a GitHub re
 - Do not duplicate Skills. Link to relevant Skills where useful.
 - Keep upstream code upstream unless redistribution is permitted and genuinely needed.
 - Record dates in ISO format (`YYYY-MM-DD`).
+
+
+## Personal-AI-Library integration
+
+Use the organization's Skills as task workflows and this repository as the tool inventory. The shared operating procedure is documented in [INTEGRATION/SKILLS-WORKFLOW.md](INTEGRATION/SKILLS-WORKFLOW.md), with the authoritative detailed workflow in [Personal-AI-Library](https://github.com/HOADF-Team/Personal-AI-Library/blob/main/INTEGRATION/AI-AGENT-WORKFLOW.md). Select only relevant Skills, verify tools in the actual target environment, and record evidence. A catalog status never proves that software is installed on a user's device.

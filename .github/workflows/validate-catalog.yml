@@ -5,14 +5,14 @@ on:
     paths:
       - "CATALOG/**"
       - "TOOLS/**"
-      - "scripts/validate_catalog.py"
+      - "scripts/**"
       - ".github/workflows/validate-catalog.yml"
   push:
     branches: [main]
     paths:
       - "CATALOG/**"
       - "TOOLS/**"
-      - "scripts/validate_catalog.py"
+      - "scripts/**"
       - ".github/workflows/validate-catalog.yml"
   workflow_dispatch:
 
@@ -21,14 +21,19 @@ permissions:
 
 jobs:
   validate:
-    name: Validate tool catalog
+    name: Validate tool catalog and Skill map
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
+      - name: Check out AI-Toolbox
         uses: actions/checkout@v4
+      - name: Check out public Personal-AI-Library integration branch
+        # Keep the two open integration PRs validated against the same Skill set.
+        run: git clone --depth 1 --branch integration/skills-toolbox-workflow https://github.com/HOADF-Team/Personal-AI-Library.git Personal-AI-Library
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Validate catalog and tool records
         run: python scripts/validate_catalog.py
+      - name: Validate Skills against the integration map
+        run: python scripts/validate_skill_map.py --skills-root Personal-AI-Library/skills

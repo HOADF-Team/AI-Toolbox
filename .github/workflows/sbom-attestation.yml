@@ -1,0 +1,120 @@
+name: SBOM and build provenance attestations
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sbom-attestation-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  attest:
+    name: Generate, attest and verify source SBOM
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+
+    steps:
+      - name: Check out the exact source commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Install pinned Syft and verify the official release checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          cd "$tmp"
+          syft_version="1.57.1"
+          syft_archive="syft_${syft_version}_linux_amd64.tar.gz"
+          checksums_file="syft_${syft_version}_checksums.txt"
+          curl --fail --silent --show-error --location \
+            "https://github.com/anchore/syft/releases/download/v${syft_version}/${syft_archive}" \
+            -o "$syft_archive"
+          curl --fail --silent --show-error --location \
+            "https://github.com/anchore/syft/releases/download/v${syft_version}/${checksums_file}" \
+            -o "$checksums_file"
+          echo "92466b2b1a4695ee908f8a1567f4ff074e0fbb4f34da28463927a2630901fe2c  ${checksums_file}" | sha256sum --check -
+          grep "  ${syft_archive}$" "$checksums_file" | sha256sum --check -
+          mkdir syft-release
+          tar -xzf "$syft_archive" -C syft-release syft
+          sudo install -m 0755 syft-release/syft /usr/local/bin/syft
+          syft version
+
+      - name: Generate CycloneDX SBOM for this exact checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          syft dir:"$GITHUB_WORKSPACE" -o cyclonedx-json="$RUNNER_TEMP/AI-Toolbox.sbom.cdx.json"
+          python - "$RUNNER_TEMP/AI-Toolbox.sbom.cdx.json" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          path = Path(sys.argv[1])
+          document = json.loads(path.read_text(encoding="utf-8"))
+          components = document.get("components")
+          assert isinstance(components, list) and components, "SBOM is empty or invalid"
+          assert document.get("bomFormat") == "CycloneDX", "Unexpected SBOM format"
+          print(f"Validated CycloneDX SBOM: {len(components)} component(s)")
+          PY
+
+      - name: Create deterministic source archive for the attested subject
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/AI-Toolbox-$GITHUB_SHA.tar.gz"
+          git archive --format=tar.gz --prefix=AI-Toolbox/ "$GITHUB_SHA" > "$archive"
+          test -s "$archive"
+          digest="$(sha256sum "$archive" | cut -d ' ' -f 1)"
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+          echo "sha256=$digest" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Attested source"
+            echo "- Commit: `$GITHUB_SHA`"
+            echo "- Archive SHA-256: `$digest`"
+            echo "- SBOM: CycloneDX JSON"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create signed CycloneDX SBOM attestation
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: ${{ steps.source.outputs.archive }}
+          sbom-path: ${{ runner.temp }}/AI-Toolbox.sbom.cdx.json
+
+      - name: Create signed SLSA build provenance attestation
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: ${{ steps.source.outputs.archive }}
+
+      - name: Verify provenance and signer workflow identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh attestation verify "${{ steps.source.outputs.archive }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/sbom-attestation.yml" \
+            --predicate-type "https://slsa.dev/provenance/v1"
+
+      - name: Verify CycloneDX SBOM attestation and signer workflow identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh attestation verify "${{ steps.source.outputs.archive }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/sbom-attestation.yml" \
+            --predicate-type "https://cyclonedx.org/bom"

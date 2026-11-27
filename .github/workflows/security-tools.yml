@@ -1,0 +1,233 @@
+name: Security tools smoke tests
+
+on:
+  pull_request:
+    paths:
+      - "CATALOG/tools.json"
+      - "TOOLS/security/**"
+      - "scripts/inventory.py"
+      - "scripts/match_inventory.py"
+      - "TESTS/test_inventory.py"
+      - ".github/workflows/security-tools.yml"
+      - ".github/workflows/sbom-attestation.yml"
+      - "requirements-dev.txt"
+  push:
+    branches: [main]
+    paths:
+      - "CATALOG/tools.json"
+      - "TOOLS/security/**"
+      - "scripts/inventory.py"
+      - "scripts/match_inventory.py"
+      - "TESTS/test_inventory.py"
+      - ".github/workflows/security-tools.yml"
+      - ".github/workflows/sbom-attestation.yml"
+      - "requirements-dev.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  security-tools:
+    name: Install and exercise security tools in an isolated runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned pip-audit
+        run: |
+          python -m pip install --disable-pip-version-check "pip-audit==2.10.1"
+          pip-audit --version
+
+      - name: Audit pinned development dependencies
+        run: pip-audit --strict -r requirements-dev.txt
+
+      - name: Install Gitleaks and Trivy from official releases
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          cd "$tmp"
+
+          gitleaks_version="8.30.1"
+          gitleaks_archive="gitleaks_${gitleaks_version}_linux_x64.tar.gz"
+          curl --fail --silent --show-error --location \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${gitleaks_version}/${gitleaks_archive}" \
+            -o "$gitleaks_archive"
+          curl --fail --silent --show-error --location \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${gitleaks_version}/gitleaks_${gitleaks_version}_checksums.txt" \
+            -o gitleaks_checksums.txt
+          grep "  ${gitleaks_archive}$" gitleaks_checksums.txt | sha256sum --check -
+          tar -xzf "$gitleaks_archive" gitleaks
+          sudo install -m 0755 gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+          trivy_version="0.76.2"
+          trivy_archive="trivy_${trivy_version}_Linux-64bit.tar.gz"
+          curl --fail --silent --show-error --location \
+            "https://github.com/aquasecurity/trivy/releases/download/v${trivy_version}/${trivy_archive}" \
+            -o "$trivy_archive"
+          curl --fail --silent --show-error --location \
+            "https://github.com/aquasecurity/trivy/releases/download/v${trivy_version}/trivy_${trivy_version}_checksums.txt" \
+            -o trivy_checksums.txt
+          grep "  ${trivy_archive}$" trivy_checksums.txt | sha256sum --check -
+          tar -xzf "$trivy_archive" trivy
+          sudo install -m 0755 trivy /usr/local/bin/trivy
+          trivy --version
+
+      - name: Install pinned Syft release and verify its SBOM output
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          cd "$tmp"
+          syft_version="1.57.1"
+          syft_archive="syft_${syft_version}_linux_amd64.tar.gz"
+          checksums_file="syft_${syft_version}_checksums.txt"
+          curl --fail --silent --show-error --location \
+            "https://github.com/anchore/syft/releases/download/v${syft_version}/${syft_archive}" \
+            -o "$syft_archive"
+          curl --fail --silent --show-error --location \
+            "https://github.com/anchore/syft/releases/download/v${syft_version}/${checksums_file}" \
+            -o "$checksums_file"
+          echo "92466b2b1a4695ee908f8a1567f4ff074e0fbb4f34da28463927a2630901fe2c  ${checksums_file}" | sha256sum --check -
+          grep "  ${syft_archive}$" "$checksums_file" | sha256sum --check -
+          mkdir syft-release
+          tar -xzf "$syft_archive" -C syft-release syft
+          sudo install -m 0755 syft-release/syft /usr/local/bin/syft
+          syft version
+          syft dir:"$GITHUB_WORKSPACE" -o cyclonedx-json="$tmp/ai-toolbox-sbom.cdx.json"
+          python - "$tmp/ai-toolbox-sbom.cdx.json" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          document = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          components = document.get("components")
+          assert isinstance(components, list) and components, "Syft produced an empty or invalid CycloneDX SBOM"
+          print(f"Syft generated CycloneDX SBOM with {len(components)} component(s)")
+          PY
+
+      - name: Install pinned Cosign and verify a signed artifact with an ephemeral key pair
+        uses: sigstore/cosign-installer@v4.1.4
+        with:
+          cosign-release: 'v3.1.5'
+
+      - name: Verify Cosign signing and tamper detection
+        shell: bash
+        env:
+          COSIGN_PASSWORD: ""
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "$tmp"' EXIT
+          cosign version
+
+          printf 'AI-Toolbox Cosign signing smoke test\n' > "$tmp/artifact.txt"
+          cosign generate-key-pair --output-key-prefix "$tmp/ephemeral"
+          # Use Cosign v3's detached-signature compatibility mode for a fully
+          # local test: no Fulcio, OIDC, Rekor, TSA or external publication.
+          cosign sign-blob \
+            --key "$tmp/ephemeral.key" \
+            --new-bundle-format=false \
+            --use-signing-config=false \
+            --tlog-upload=false \
+            --output-signature "$tmp/artifact.sig" \
+            --yes \
+            "$tmp/artifact.txt"
+          cosign verify-blob \
+            --key "$tmp/ephemeral.pub" \
+            --signature "$tmp/artifact.sig" \
+            --insecure-ignore-tlog \
+            "$tmp/artifact.txt"
+
+          printf 'tampered\n' >> "$tmp/artifact.txt"
+          if cosign verify-blob \
+            --key "$tmp/ephemeral.pub" \
+            --signature "$tmp/artifact.sig" \
+            --insecure-ignore-tlog \
+            "$tmp/artifact.txt"; then
+            echo "Cosign unexpectedly accepted a tampered artifact" >&2
+            exit 1
+          else
+            echo "Cosign correctly rejected the tampered artifact"
+          fi
+
+      - name: Scan repository for exposed secrets
+        run: gitleaks dir --redact --exit-code 1 .
+
+      - name: Scan repository dependencies, secrets and configuration
+        run: trivy fs --scanners vuln,secret,misconfig --skip-dirs .git --exit-code 1 .
+
+      - name: Install pinned age and restic official release binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          cd "$tmp"
+
+          age_archive="age-v1.3.2-linux-amd64.tar.gz"
+          curl --fail --silent --show-error --location \
+            "https://github.com/FiloSottile/age/releases/download/v1.3.2/${age_archive}" \
+            -o "$age_archive"
+          echo "cbe24006683f8eb669266162894b9a522a1af52f2665fbc63a4bb032ed26ac10  ${age_archive}" | sha256sum --check -
+          mkdir age-release
+          tar -xzf "$age_archive" -C age-release
+          age_binary="$(find age-release -type f -name age -print -quit)"
+          age_keygen_binary="$(find age-release -type f -name age-keygen -print -quit)"
+          test -n "$age_binary"
+          test -n "$age_keygen_binary"
+          sudo install -m 0755 "$age_binary" /usr/local/bin/age
+          sudo install -m 0755 "$age_keygen_binary" /usr/local/bin/age-keygen
+
+          restic_archive="restic_0.20.0_linux_amd64.bz2"
+          curl --fail --silent --show-error --location \
+            "https://github.com/restic/restic/releases/download/v0.20.0/${restic_archive}" \
+            -o "$restic_archive"
+          echo "0ccd9fa7885074a24603b051e01bf9bd8b5e45d6a1791e9d9887e9e9372107f7  ${restic_archive}" | sha256sum --check -
+          bunzip2 -c "$restic_archive" > restic
+          sudo install -m 0755 restic /usr/local/bin/restic
+
+          age --version
+          age-keygen --version
+          restic version
+
+      - name: Verify age encryption and decryption round trip
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "$tmp"' EXIT
+          printf 'AI-Toolbox isolated encryption smoke test\n' > "$tmp/plaintext"
+          age-keygen -o "$tmp/identity" 2>/dev/null
+          age-keygen -y "$tmp/identity" > "$tmp/recipient"
+          age -R "$tmp/recipient" -o "$tmp/ciphertext" "$tmp/plaintext"
+          age --decrypt -i "$tmp/identity" -o "$tmp/decrypted" "$tmp/ciphertext"
+          cmp "$tmp/plaintext" "$tmp/decrypted"
+
+      - name: Verify restic encrypted backup and restore round trip
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "$tmp"' EXIT
+          export RESTIC_REPOSITORY="$tmp/repository"
+          export RESTIC_PASSWORD="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+          mkdir "$tmp/source"
+          printf 'AI-Toolbox isolated backup smoke test\n' > "$tmp/source/payload.txt"
+          restic init
+          restic backup "$tmp/source"
+          restic check
+          restic restore latest --target "$tmp/restore"
+          restored_file="$(find "$tmp/restore" -type f -name payload.txt -print -quit)"
+          test -n "$restored_file"
+          cmp "$tmp/source/payload.txt" "$restored_file"
