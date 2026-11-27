@@ -1,58 +1,50 @@
-# SBOM attestation and build provenance plan
+# SBOM attestation and build provenance
 
-**Status:** design only; no OIDC permission or external attestation has been enabled.  
-**Scope:** public AI-Toolbox repository and its CI-generated source inventory.  
-**Owner:** repository maintainers.
+**Status:** implemented in `.github/workflows/sbom-attestation.yml`; awaiting trusted-branch execution and end-to-end verification.  
+**Scope:** public `HOADF-Team/AI-Toolbox` source archive and CycloneDX SBOM only.
 
-## Current baseline
+## Workflow behavior
 
-- Syft 1.57.1 is pinned and tested in GitHub-hosted Ubuntu Linux x86_64 CI.
-- CI generates a non-empty CycloneDX JSON SBOM from the repository checkout.
-- Cosign 3.1.5 is installed and tested only for local ephemeral-key detached-signature verification and tamper detection.
-- The existing security workflow has `contents: read` only. It does not request an OIDC token, publish signatures, or create GitHub artifact attestations.
-- These checks establish tool behavior in CI, not a signed claim about the repository's release or a production environment.
+- Runs on pushes to `main` and manual dispatch. The job has an explicit `refs/heads/main` guard, so pull requests, forks, tags and dispatches from other branches cannot mint attestations.
+- Checks out the exact source commit with `actions/checkout` pinned to full commit SHA `11bd71901bbe5b1630ceea73d27597364c9af683`, with persisted Git credentials disabled.
+- Installs Syft 1.57.1 from the official release archive and verifies both the checksum manifest and binary archive SHA-256.
+- Generates and validates a non-empty CycloneDX JSON SBOM from that checkout.
+- Creates a source archive from the exact commit using `git archive`; records commit SHA and archive SHA-256 in the workflow summary.
+- Uses `actions/attest` pinned to reviewed full commit SHA `1e69f48acb82d1966a394da916b4c1698aa569d6` to create:
+  1. a CycloneDX SBOM attestation (`https://cyclonedx.org/bom`);
+  2. a SLSA build provenance attestation (`https://slsa.dev/provenance/v1`).
+- Verifies both attestations using GitHub CLI, requiring the expected repository and exact signer workflow path `.github/workflows/sbom-attestation.yml`.
 
-## Recommended next-stage design
+## Permissions and trust boundary
 
-Use GitHub artifact attestations for a dedicated, trusted-branch workflow rather than extending the general pull-request smoke-test job.
+Only the `attest` job receives:
+- `contents: read`
+- `id-token: write`
+- `attestations: write`
 
-1. Trigger on pushes to the protected default branch and optional manual dispatch. Do not run the signing job for pull requests or untrusted fork code.
-2. Generate a CycloneDX SBOM with the pinned Syft release.
-3. Create a deterministic source archive for the exact commit that the SBOM describes. Record the commit SHA and archive SHA-256 as workflow outputs/log evidence.
-4. Attest the source archive and attach the SBOM using the official `actions/attest` action. Keep the subject immutable and digest-addressed.
-5. Scope permissions to that job only:
-   - `contents: read`
-   - `id-token: write`
-   - `attestations: write`
-   - Add `artifact-metadata: write` only if repository artifact storage records are intentionally required.
-6. Pin third-party actions to reviewed full commit SHAs. Do not use mutable action references in a security-critical workflow.
-7. Verify the generated attestation with GitHub CLI from a separate verification step or clean runner. Check the expected repository, signer workflow identity, source commit, subject digest, and SBOM predicate type. A cryptographically valid signature from an unexpected workflow identity must fail policy.
-8. Retain the SBOM and attestation bundle as CI artifacts for a defined period. Review the SBOM for sensitive package names and paths before making it publicly downloadable.
+The workflow does not grant `artifact-metadata: write`, `packages: write`, or repository-wide OIDC permissions. No long-lived signing key or secret is used. The existing pull-request security smoke-test workflow remains read-only and now runs when the attestation workflow file changes.
 
-## Security boundaries
+## Verification policy
 
-- OIDC `id-token: write` allows the job to request an identity token. Grant it only to the isolated attestation job; do not add it to the repository-wide workflow permissions.
-- The attestation action uses short-lived Sigstore signing identity and stores the attestation with the repository. It does not require a long-lived private signing key in GitHub Secrets.
-- A signature proves who signed a particular digest under the verified identity policy. It does not prove that source code is safe, that the SBOM is complete, or that the build process is free of compromise.
-- The SBOM is an inventory, not a vulnerability report. Continue running Trivy and dependency audits separately.
-- Do not attest private project source, trading-engine code, credentials, customer data, or server backups from this public repository workflow.
-- Do not treat this workflow as server hardening. Production VPS security requires a separate approved host-specific assessment.
+The workflow verifies:
+- source archive digest binding;
+- GitHub repository association;
+- signer workflow identity;
+- SLSA provenance predicate type;
+- CycloneDX SBOM predicate type.
 
-## Rollout gates
+A successful first run on `main` is required before catalog entries can claim that signed SBOM and provenance have been tested. Until then, the workflow is implemented but the end-to-end capability remains pending.
 
-Before enabling the workflow:
+## Security limits
 
-- Confirm that the repository is intended to remain public and that publishing its SBOM metadata is acceptable.
-- Review the exact `actions/attest` release and pin its immutable commit SHA.
-- Confirm the exact CycloneDX predicate type emitted by the action and use that exact value for verification.
-- Add an explicit signer-identity verification test and a negative test for an unexpected repository/workflow identity.
-- Confirm that pull-request workflows remain unable to mint OIDC attestations.
-- Run once on a trusted branch, inspect the resulting attestation, then verify it from a clean environment.
-- Update tool records only after the end-to-end test passes; distinguish generated SBOM, signed SBOM attestation, and verified build provenance as separate capabilities.
+- Attestations prove a signed claim about a digest and workflow identity; they do not prove that source code is safe, that the SBOM is complete, or that the runner/build process was uncompromised.
+- SBOM inventory is not a vulnerability scan. Trivy and dependency audits remain separate.
+- This workflow does not attest private project source, trading-engine code, credentials, customer data, backups, container images or production server state.
+- This is not VPS hardening or production incident-response validation.
 
-## Official references
+## References
 
-- GitHub: [Using artifact attestations to establish provenance](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations)
-- GitHub: [actions/attest](https://github.com/actions/attest)
-- GitHub: [Workflow permissions](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)
-- GitHub: [Verifying attestations offline](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/verify-attestations-offline)
+- [GitHub artifact attestations](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations)
+- [actions/attest](https://github.com/actions/attest)
+- [GitHub CLI attestation verification](https://cli.github.com/manual/gh_attestation_verify)
+- [CycloneDX in-toto predicate](https://github.com/in-toto/attestation/blob/main/spec/predicates/cyclonedx.md)
