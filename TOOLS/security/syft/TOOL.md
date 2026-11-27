@@ -6,8 +6,9 @@
 - **Publisher / maintainer:** Anchore
 - **License:** Apache-2.0
 - **Tested version:** 1.57.1
-- **CI verification:** GitHub-hosted Ubuntu Linux x86_64; verified the official checksum manifest and release archive SHA-256, installed the pinned CLI, and generated a non-empty CycloneDX SBOM from the AI-Toolbox checkout.
-- **CI record:** `../../.github/workflows/security-tools.yml`
+- **CI verification:** GitHub-hosted Ubuntu Linux x86_64; verified the official checksum manifest and release archive SHA-256, installed Syft 1.57.1, and generated a non-empty CycloneDX SBOM.
+- **Attestation verification:** GitHub Artifact Attestations using Sigstore OIDC; CycloneDX SBOM and SLSA provenance attestations both passed GitHub CLI verification with the exact repository and signer workflow identity on commit `bc78db91caf3bb640a2f6aa9715138d4fa4600c7`.
+- **CI records:** `../../.github/workflows/security-tools.yml`; `../../.github/workflows/sbom-attestation.yml`
 
 - **Purpose:** generate a Software Bill of Materials (SBOM) from source directories, filesystems and container images in SPDX or CycloneDX formats.
 - **Upstream:** https://github.com/anchore/syft
