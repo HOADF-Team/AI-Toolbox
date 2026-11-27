@@ -16,7 +16,7 @@ The `Security tools smoke tests` workflow exercises the five security tools adde
 
 - The workflow has read-only repository permissions.
 - Gitleaks and Trivy archives are downloaded from their official release URLs and checked against the checksum files published with those releases.
-- age and restic are installed at exact Go module versions; Go's module checksum verification is used.
+- age 1.3.2 and restic 0.20.0 are downloaded from their official release pages and checked against SHA-256 digests published in GitHub release metadata.
 - Python dependency audit is pinned to pip-audit 2.10.1.
 - The age identity and restic password are generated temporarily at runtime. No real credentials, exchange keys, user files or production backups are used.
 - The workflow does not install software on a user machine or VPS and does not deploy any configuration.
