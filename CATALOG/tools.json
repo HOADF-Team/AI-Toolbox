@@ -799,7 +799,7 @@
       "name": "Gitleaks",
       "category": "security",
       "description": "Scans Git history, repositories, files and stdin for exposed credentials and secret-like patterns.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/security/gitleaks/TOOL.md",
       "official_url": "https://github.com/gitleaks/gitleaks",
       "source_repository": "https://github.com/gitleaks/gitleaks",
@@ -813,16 +813,18 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
-      }
+        "installation_tested": true,
+        "runtime_tested": true
+      },
+      "tested_version": "8.30.1",
+      "tested_environment": "GitHub-hosted Ubuntu Linux x86_64 CI only"
     },
     {
       "id": "pip-audit",
       "name": "pip-audit",
       "category": "security",
       "description": "Audits Python environments and dependency inputs for known published package vulnerabilities; can emit CycloneDX SBOMs.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/security/pip-audit/TOOL.md",
       "official_url": "https://github.com/pypa/pip-audit",
       "source_repository": "https://github.com/pypa/pip-audit",
@@ -836,16 +838,18 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
-      }
+        "installation_tested": true,
+        "runtime_tested": true
+      },
+      "tested_version": "2.10.1",
+      "tested_environment": "GitHub-hosted Ubuntu Linux x86_64 CI only"
     },
     {
       "id": "trivy",
       "name": "Trivy",
       "category": "security",
       "description": "Scans container images, filesystems and repositories for known vulnerabilities, secrets, licenses and configured misconfigurations.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/security/trivy/TOOL.md",
       "official_url": "https://trivy.dev/",
       "source_repository": "https://github.com/aquasecurity/trivy",
@@ -859,16 +863,18 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
-      }
+        "installation_tested": true,
+        "runtime_tested": true
+      },
+      "tested_version": "0.76.2",
+      "tested_environment": "GitHub-hosted Ubuntu Linux x86_64 CI only"
     },
     {
       "id": "age",
       "name": "age",
       "category": "security",
       "description": "Modern file encryption tool and format using explicit recipients or passphrases; not a secrets manager.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/security/age/TOOL.md",
       "official_url": "https://github.com/FiloSottile/age",
       "source_repository": "https://github.com/FiloSottile/age",
@@ -882,16 +888,18 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
-      }
+        "installation_tested": true,
+        "runtime_tested": true
+      },
+      "tested_version": "1.3.2",
+      "tested_environment": "GitHub-hosted Ubuntu Linux x86_64 CI only"
     },
     {
       "id": "restic",
       "name": "restic",
       "category": "security",
       "description": "Backup utility storing versioned snapshots in encrypted repositories across local and remote backends.",
-      "status": "reviewed",
+      "status": "tested",
       "record": "TOOLS/security/restic/TOOL.md",
       "official_url": "https://restic.readthedocs.io/",
       "source_repository": "https://github.com/restic/restic",
@@ -905,9 +913,11 @@
       "verification": {
         "source_reviewed": true,
         "license_reviewed": true,
-        "installation_tested": false,
-        "runtime_tested": false
-      }
+        "installation_tested": true,
+        "runtime_tested": true
+      },
+      "tested_version": "0.20.0",
+      "tested_environment": "GitHub-hosted Ubuntu Linux x86_64 CI only"
     }
   ]
 }
