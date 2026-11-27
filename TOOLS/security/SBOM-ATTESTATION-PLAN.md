@@ -7,6 +7,7 @@
 
 - Runs on source/CI changes pushed to `main` and on manual dispatch. The job has an explicit `refs/heads/main` guard, so pull requests, forks, tags and dispatches from other branches cannot mint attestations. Documentation-only and catalog-metadata-only commits do not trigger redundant attestations.
 - Checks out the exact source commit with `actions/checkout` pinned to full commit SHA `11bd71901bbe5b1630ceea73d27597364c9af683`, with persisted Git credentials disabled.
+- Validates the Skill-to-Tool map against the canonical `Personal-AI-Library` `main` branch before generating or signing artifacts.
 - Installs Syft 1.57.1 from the official release archive and verifies both the checksum manifest and binary archive SHA-256.
 - Generates and validates a non-empty CycloneDX JSON SBOM from that checkout.
 - Creates a source archive from the exact commit using `git archive`; records commit SHA and archive SHA-256 in the workflow summary.
