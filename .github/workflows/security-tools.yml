@@ -9,6 +9,7 @@ on:
       - "scripts/match_inventory.py"
       - "TESTS/test_inventory.py"
       - ".github/workflows/security-tools.yml"
+      - ".github/workflows/sbom-attestation.yml"
       - "requirements-dev.txt"
   push:
     branches: [main]
@@ -19,6 +20,7 @@ on:
       - "scripts/match_inventory.py"
       - "TESTS/test_inventory.py"
       - ".github/workflows/security-tools.yml"
+      - ".github/workflows/sbom-attestation.yml"
       - "requirements-dev.txt"
   workflow_dispatch:
 
