@@ -62,12 +62,23 @@ CONTROL_PATTERNS: dict[str, tuple[str, ...]] = {
 }
 
 
+INCIDENT_SEQUENCE = (
+    r"немедленно отзови их",
+    r"Безопасно изолируй скомпрометированный узел",
+)
+
+
 def validate_skill_text(content: str) -> list[str]:
-    """Return control IDs whose required safety guidance is absent."""
+    """Return missing controls and incident-order violations."""
     missing: list[str] = []
     for control_id, alternatives in CONTROL_PATTERNS.items():
         if not any(re.search(pattern, content, re.IGNORECASE | re.DOTALL) for pattern in alternatives):
             missing.append(control_id)
+
+    revoke = re.search(INCIDENT_SEQUENCE[0], content, re.IGNORECASE)
+    isolate = re.search(INCIDENT_SEQUENCE[1], content, re.IGNORECASE)
+    if revoke and isolate and revoke.start() > isolate.start():
+        missing.append("urgent_credential_revocation_must_precede_host_isolation")
     return missing
 
 
