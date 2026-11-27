@@ -36,6 +36,13 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      - name: Validate Skills and Toolbox dependency map against Personal-AI-Library main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch main https://github.com/HOADF-Team/Personal-AI-Library.git "$RUNNER_TEMP/Personal-AI-Library"
+          python3 scripts/validate_skill_map.py --skills-root "$RUNNER_TEMP/Personal-AI-Library/skills"
+
       - name: Install pinned Syft and verify the official release checksum
         shell: bash
         run: |
