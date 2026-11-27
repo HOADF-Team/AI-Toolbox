@@ -18,7 +18,7 @@ Security is a first-class capability of AI-Toolbox. This directory contains revi
 
 ## Verification status
 
-The eight security CLI tools above (Bandit, pip-audit, Gitleaks, Trivy, Syft, Cosign, age and restic) have pinned, scoped smoke tests in [security-tools.yml](../../.github/workflows/security-tools.yml); all eight passed their current CI checks. The tests run in GitHub-hosted Ubuntu Linux x86_64 and exercise representative behavior; see each `TOOL.md` for exact versions and test scope.
+The eight security CLI tools above (Bandit, pip-audit, Gitleaks, Trivy, Syft, Cosign, age and restic) have pinned, scoped smoke tests in [security-tools.yml](../../.github/workflows/security-tools.yml); all eight passed their current CI checks. In addition, [sbom-attestation.yml](../../.github/workflows/sbom-attestation.yml) successfully generated a CycloneDX SBOM, created Sigstore OIDC SBOM and SLSA provenance attestations, and verified both against the exact repository and signer workflow identity. The tests run in GitHub-hosted Ubuntu Linux x86_64; see each `TOOL.md` for exact versions and scope.
 
 A `tested` catalog status is evidence for that recorded environment only. It does not mean the tool is installed or available on a user's PC, in another AI runtime, or on a production host. A passing scanner run is not a security certification and cannot prove the absence of vulnerabilities.
 
@@ -38,7 +38,7 @@ A `tested` catalog status is evidence for that recorded environment only. It doe
 The current set is a practical baseline, not a complete security platform. Candidates for later evaluation:
 
 - Multi-language SAST and data-flow analysis (for example, Semgrep or CodeQL); select only after source, license, usage and CI constraints are reviewed.
-- Artifact signing and build provenance beyond the current local Cosign smoke test: SBOM attestation/signing, keyless OIDC identity policy, OCI registry signing and verifiable build provenance.
+- OCI registry signing, trusted reusable build workflows, stronger source-digest policy, and provenance verification from an independent clean consumer environment. Current GitHub OIDC SBOM and SLSA attestations are verified in the trusted workflow.
 - Secret-manager/KMS integrations and automated credential rotation workflows.
 - Host configuration auditing and compliance benchmarks.
 - Centralized security event collection, alerting and incident-response automation.
