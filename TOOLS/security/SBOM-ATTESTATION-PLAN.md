@@ -34,7 +34,7 @@ The workflow verifies:
 - SLSA provenance predicate type;
 - CycloneDX SBOM predicate type.
 
-The latest trusted-branch run passed all steps. Run: [45952959296](https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45952959296). Source commit: `ddb0a79789af8ab4f868b3f7edba2c390a89c8e6`. Both predicate types were verified with `gh attestation verify`, requiring the repository and exact signer workflow identity. The Syft catalog record now reflects this scoped result.
+The latest trusted-branch run passed all steps, including canonical Skill-map validation. Run: [45953226471](https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45953226471). Source commit: `19433a1df285538e6590b1583af870a7d6e1e182`. Both predicate types were verified with `gh attestation verify`, requiring the repository and exact signer workflow identity. The Syft catalog record now reflects this scoped result.
 
 ## Security limits
 
