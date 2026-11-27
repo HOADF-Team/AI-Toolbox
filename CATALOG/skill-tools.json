@@ -264,7 +264,8 @@
         "trivy",
         "age",
         "restic",
-        "podman"
+        "podman",
+        "syft"
       ]
     }
   ]
