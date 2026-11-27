@@ -15,7 +15,6 @@
 - **Documentation:** https://github.com/FiloSottile/age#readme
 - **License:** BSD-3-Clause (verify the exact upstream release and bundled components)
 - **Platforms:** Windows, Linux, macOS; verify release binary for target platform.
-- **Catalog status:** reviewed; installation and runtime are not yet tested in AI-Toolbox.
 
 ## Safe use
 
