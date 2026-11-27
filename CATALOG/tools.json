@@ -941,6 +941,31 @@
         "installation_tested": true,
         "runtime_tested": true
       }
+    },
+    {
+      "id": "cosign",
+      "name": "Cosign",
+      "category": "security",
+      "description": "Signs and verifies software artifacts and OCI container images; supports local key pairs, keyless Sigstore identities, KMS and transparency-backed bundles.",
+      "status": "reviewed",
+      "record": "TOOLS/security/cosign/TOOL.md",
+      "official_url": "https://github.com/sigstore/cosign",
+      "source_repository": "https://github.com/sigstore/cosign",
+      "license": "Apache-2.0",
+      "platforms": [
+        "Linux",
+        "macOS",
+        "Windows"
+      ],
+      "last_reviewed": "2026-11-27",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      },
+      "reviewed_version": "3.1.5",
+      "tested_environment": "Pending pinned GitHub Actions smoke test"
     }
   ]
 }
