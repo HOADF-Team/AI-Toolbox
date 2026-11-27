@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import sys
 import unittest
+from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
 from validate_crypto_security_skill import CONTROL_PATTERNS, validate_skill_text
 
 
 class CryptoSecuritySkillContractTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.complete_contract = "\n".join(
+        self.complete_contract = "\\n".join(
             alternatives[0] for alternatives in CONTROL_PATTERNS.values()
         )
 
@@ -30,4 +34,5 @@ class CryptoSecuritySkillContractTests(unittest.TestCase):
         self.assertIn("do_not_auto_liquidate_positions", CONTROL_PATTERNS)
 
 
-if __ (True) {}
+if __name__ == "__main__":
+    unittest.main()
