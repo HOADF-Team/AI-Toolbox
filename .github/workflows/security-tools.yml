@@ -130,32 +130,27 @@ jobs:
           trap 'rm -rf "$tmp"' EXIT
           cosign version
 
-          # No Fulcio, OIDC, Rekor or TSA services are configured for this
-          # local key-based smoke test. No production identity or secret is used.
-          cosign signing-config create \
-            --no-default-fulcio \
-            --no-default-oidc \
-            --no-default-rekor \
-            --no-default-tsa \
-            --out "$tmp/signing-config.json"
-
           printf 'AI-Toolbox Cosign signing smoke test\n' > "$tmp/artifact.txt"
           cosign generate-key-pair --output-key-prefix "$tmp/ephemeral"
+          # Use Cosign v3's detached-signature compatibility mode for a fully
+          # local test: no Fulcio, OIDC, Rekor, TSA or external publication.
           cosign sign-blob \
             --key "$tmp/ephemeral.key" \
-            --signing-config "$tmp/signing-config.json" \
-            --bundle "$tmp/artifact.sigstore.json" \
+            --new-bundle-format=false \
+            --use-signing-config=false \
+            --tlog-upload=false \
+            --output-signature "$tmp/artifact.sig" \
             --yes \
             "$tmp/artifact.txt"
           cosign verify-blob \
             --key "$tmp/ephemeral.pub" \
-            --bundle "$tmp/artifact.sigstore.json" \
+            --signature "$tmp/artifact.sig" \
             "$tmp/artifact.txt"
 
           printf 'tampered\n' >> "$tmp/artifact.txt"
           if cosign verify-blob \
             --key "$tmp/ephemeral.pub" \
-            --bundle "$tmp/artifact.sigstore.json" \
+            --signature "$tmp/artifact.sig" \
             "$tmp/artifact.txt"; then
             echo "Cosign unexpectedly accepted a tampered artifact" >&2
             exit 1
