@@ -8,6 +8,7 @@ Security is a first-class capability of AI-Toolbox. This directory contains revi
 |---|---|---|---|
 | Python static application security testing (SAST) | [Bandit](bandit/TOOL.md) | Common Python security patterns and unsafe APIs | Python-focused; findings require review |
 | Dependency vulnerability auditing | [pip-audit](pip-audit/TOOL.md) | Known vulnerabilities in installed/resolved Python packages | Python ecosystem only; not a full dependency policy or malware detector |
+| SBOM generation | [Syft](syft/TOOL.md) | Software Bill of Materials in SPDX/CycloneDX for directories and images | Reviewed; installation/runtime smoke test pending |
 | Secret detection | [Gitleaks](gitleaks/TOOL.md) | Credential-like strings in files and Git content | Detection is heuristic; rotate any exposed credential, do not merely delete it |
 | Filesystem, dependency, container and configuration scanning | [Trivy](trivy/TOOL.md) | Known vulnerabilities, secrets and selected misconfigurations | Coverage depends on target type, scanners and database freshness |
 | File encryption | [age](age/TOOL.md) | Authenticated file encryption/decryption | Not a key-management service; protect and recover identities separately |
@@ -37,7 +38,7 @@ A `tested` catalog status is evidence for that recorded environment only. It doe
 The current set is a practical baseline, not a complete security platform. Candidates for later evaluation:
 
 - Multi-language SAST and data-flow analysis (for example, Semgrep or CodeQL); select only after source, license, usage and CI constraints are reviewed.
-- SBOM generation and vulnerability policy enforcement, plus artifact signing and build provenance.
+- Artifact signing and build provenance (Cosign/Sigstore); Syft SBOM generation is now cataloged as reviewed, with a pinned runtime smoke test still pending.
 - Secret-manager/KMS integrations and automated credential rotation workflows.
 - Host configuration auditing and compliance benchmarks.
 - Centralized security event collection, alerting and incident-response automation.
