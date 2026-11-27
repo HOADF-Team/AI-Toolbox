@@ -15,7 +15,6 @@
 - **Documentation:** https://restic.readthedocs.io/
 - **License:** BSD-2-Clause
 - **Platforms:** Windows, Linux, macOS; backend availability varies.
-- **Catalog status:** reviewed; installation and runtime are not yet tested in AI-Toolbox.
 
 ## Safe use
 

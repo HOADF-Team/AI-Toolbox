@@ -15,12 +15,11 @@
 - **Documentation:** https://github.com/pypa/pip-audit#readme
 - **License:** Apache-2.0
 - **Platforms:** Windows, Linux, macOS; requires Python 3.10+
-- **Catalog status:** reviewed; installation and runtime are not yet tested in AI-Toolbox.
 
 ## Safe use
 
-Prefer a pinned, isolated environment and a reviewed lock/requirements file. Example: `pip-audit -r requirements.txt`. This operation consults vulnerability data sources and therefore requires network access. Review package resolution behavior and use trusted indexes. Do not add `--fix` automatically; upgrades can change application behavior and require tests.
+Prefer a pinned, isolated environment and a reviewed lock/requirements file. Example: `pip-audit -r requirements.txt`. This operation consults vulnerability data sources and therefore requires network access. Dependency resolution may invoke pip and package build/install processes, which can execute code from package build backends. Run it only against trusted, reviewed inputs in an isolated environment; do not resolve untrusted requirements or project metadata. Do not add `--fix` automatically: it changes installed dependencies and requires explicit approval and tests.
 
 ## Limitations
 
-pip-audit reports known advisories for Python packages; it is not SAST, malware detection, a complete OS/shared-library scanner or proof that dependencies are safe. It cannot guarantee that a package has no unknown vulnerabilities. Treat skipped/unresolved dependencies as gaps, not clean results.
+pip-audit reports known advisories for Python packages; it is not SAST, malware detection, a complete OS/shared-library scanner or proof that dependencies are safe. It cannot guarantee that a package has no unknown vulnerabilities. Treat skipped/unresolved dependencies as gaps, not clean results. Dependency resolution is not a passive read-only operation; consult the security model before using it on untrusted inputs.
