@@ -2,9 +2,13 @@
 
 - **ID:** `age`
 - **Category:** security
-- **Status:** `reviewed`
+- **Status:** `tested`
 - **Publisher / maintainer:** Filippo Valsorda and contributors
 - **License:** BSD-3-Clause
+
+- **Tested version:** 1.3.2
+- **CI verification:** GitHub-hosted Ubuntu Linux x86_64; Verified file encryption and decryption round trip using a temporary identity after verifying the official release archive SHA-256.
+- **CI record:** `TESTS/SECURITY-TOOL-SMOKE.md`
 
 - **Purpose:** simple file encryption/decryption with explicit recipients or passphrases.
 - **Upstream:** https://github.com/FiloSottile/age
