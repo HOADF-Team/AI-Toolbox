@@ -21,6 +21,7 @@ COMMANDS = {
     "podman": ["--version"],
     "schemathesis": ["--version"],
     "bandit": ["--version"],
+    "pip-audit": ["--version"],
     "gitleaks": ["version"],
     "trivy": ["--version"],
     "age": ["--version"],
