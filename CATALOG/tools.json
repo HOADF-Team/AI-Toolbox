@@ -918,6 +918,29 @@
       },
       "tested_version": "0.20.0",
       "tested_environment": "GitHub-hosted Ubuntu Linux x86_64 CI only"
+    },
+    {
+      "id": "syft",
+      "name": "Syft",
+      "category": "security",
+      "description": "Generates Software Bill of Materials (SBOM) documents from source directories, filesystems and container images in SPDX or CycloneDX formats.",
+      "status": "reviewed",
+      "record": "TOOLS/security/syft/TOOL.md",
+      "official_url": "https://github.com/anchore/syft",
+      "source_repository": "https://github.com/anchore/syft",
+      "license": "Apache-2.0",
+      "platforms": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "last_reviewed": "2026-11-27",
+      "verification": {
+        "source_reviewed": true,
+        "license_reviewed": true,
+        "installation_tested": false,
+        "runtime_tested": false
+      }
     }
   ]
 }
