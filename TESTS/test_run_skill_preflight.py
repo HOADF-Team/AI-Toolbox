@@ -20,6 +20,8 @@ class RunSkillPreflightTests(unittest.TestCase):
         self.assertIn("commands", report["inventory"])
         self.assertIn("tools", report["tool_matches"])
         self.assertTrue(report["safety"]["read_only"])
+        self.assertTrue(report["safety"]["commands_executed"])
+        self.assertTrue(report["safety"]["trusted_path_required"])
         self.assertFalse(report["safety"]["network_access"])
         self.assertFalse(report["safety"]["installation_attempted"])
 
