@@ -180,3 +180,20 @@ For strict archival verification, pass the independently authenticated lifecycle
 
 
 Strict archival verification also takes the retained registry snapshots referenced by the key-add and retirement events. Each snapshot is rehashed and checked against the event digest, key fingerprint, lifecycle status, and retirement timestamp. A hash chain without the referenced snapshots is not sufficient for strict archive acceptance.
+
+
+## Consolidated regression suite
+
+Run the full focused regression set for signing, verification, key policy, archival history, and runtime handoffs:
+
+```bash
+python -m unittest \
+  TESTS.test_artifact_signing \
+  TESTS.test_artifact_integrity \
+  TESTS.test_trust_registry \
+  TESTS.test_trust_registry_history \
+  TESTS.test_archival_verification \
+  TESTS.test_handoff_runtime -v
+```
+
+This suite validates deterministic protocol mechanics with ephemeral local keys and synthetic artifacts. It does not execute an LLM or the four Skills and does not prove that a real host has configured or enforced the documented policies.
