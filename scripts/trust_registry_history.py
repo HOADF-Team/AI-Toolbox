@@ -186,12 +186,14 @@ def verify_rfc3161_timestamp(
         or not untrusted_chain_file.is_file()
     ):
         raise RegistryHistoryError("timestamp_untrusted_chain_unavailable")
-    for path, error_code in (
+    for crl_path, error_code in (
         (historical_tsa_crl_file, "historical_tsa_crl_unavailable"),
         (current_tsa_crl_file, "current_tsa_crl_unavailable"),
     ):
-        if path is not None and (
-            not isinstance(path, Path) or path.is_symlink() or not path.is_file()
+        if crl_path is not None and (
+            not isinstance(crl_path, Path)
+            or crl_path.is_symlink()
+            or not crl_path.is_file()
         ):
             raise RegistryHistoryError(error_code)
 
