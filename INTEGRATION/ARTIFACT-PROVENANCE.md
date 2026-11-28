@@ -202,3 +202,6 @@ This suite validates deterministic protocol mechanics with ephemeral local keys 
 ### Binding the stage-result object
 
 For runtime handoffs, `artifact_provenance.payload.stage_result_sha256` must contain the SHA-256 digest returned by `stage_result_sha256(result)` from `scripts/handoff_runtime.py`. The digest covers the entire stage-result JSON except the provenance envelope, signature bundle, and runtime-generated verification report. The runtime recomputes it before accepting the handoff. This prevents a stage result's evidence, actions, or domain-specific claims from being changed independently of the provenance envelope. With Ed25519 verification enabled, the envelope digest also cryptographically binds this stage-result digest. The digest establishes integrity of the supplied bytes, not truthfulness of the agent's original observations.
+
+
+Historical key resolution also compares the signed timestamp with the verifier's current timezone-aware clock and rejects future-dated signatures. A valid key window alone is insufficient: an active key must not be allowed to make a not-yet-created artifact appear historically verified.
