@@ -101,8 +101,20 @@ def verify_runtime_archive_cryptographically(
     required_policy = {"history_anchor_public_key", "history_anchor_key_id", "timestamp_ca_file"}
     if not required_policy.issubset(trust_policy):
         raise RuntimeArchiveVerificationError("external_trust_anchors_required")
-    anchor_key = Path(trust_policy["history_anchor_public_key"])
-    tsa_ca = Path(trust_policy["timestamp_ca_file"])
+    anchor_key_value = trust_policy["history_anchor_public_key"]
+    tsa_ca_value = trust_policy["timestamp_ca_file"]
+    anchor_key_id = trust_policy["history_anchor_key_id"]
+    if (
+        not isinstance(anchor_key_value, (str, Path))
+        or not str(anchor_key_value)
+        or not isinstance(tsa_ca_value, (str, Path))
+        or not str(tsa_ca_value)
+        or not isinstance(anchor_key_id, str)
+        or not anchor_key_id.strip()
+    ):
+        raise RuntimeArchiveVerificationError("external_trust_anchor_policy_invalid")
+    anchor_key = Path(anchor_key_value)
+    tsa_ca = Path(tsa_ca_value)
     tsa_chain_value = trust_policy.get("timestamp_untrusted_chain_file")
     tsa_chain = Path(tsa_chain_value) if tsa_chain_value else None
     require_timestamps = trust_policy.get("require_trusted_timestamps", True)
@@ -154,13 +166,17 @@ def verify_runtime_archive_cryptographically(
     if require_timestamps:
         anchor_timestamp = _safe_file(root, "trust/history-anchor.tsr")
     anchor_report = verify_history_anchor(
-        history, anchor, anchor_key, str(trust_policy["history_anchor_key_id"]),
+        history, anchor, anchor_key, anchor_key_id,
         timestamp_response=anchor_timestamp,
         timestamp_ca_file=tsa_ca if require_timestamps else None,
         timestamp_untrusted_chain_file=tsa_chain if require_timestamps else None,
     )
+    if anchor_report.get("status") != "signed_checkpoint_verified":
+        raise RuntimeArchiveVerificationError("registry_history_anchor_not_verified")
     if anchor_report.get("checkpoint") != checkpoint:
         raise RuntimeArchiveVerificationError("authenticated_history_checkpoint_mismatch")
+    if require_timestamps and anchor_report.get("timestamp", {}).get("status") != "verified":
+        raise RuntimeArchiveVerificationError("registry_history_anchor_timestamp_not_verified")
 
     snapshots: dict[str, dict[str, Any]] = {}
     for event_record in history:
@@ -228,6 +244,8 @@ def verify_runtime_archive_cryptographically(
         )
         if report.get("status") != "archived_verified":
             raise RuntimeArchiveVerificationError(f"stage_archival_verification_failed:{stage_id}")
+        if require_timestamps and report.get("trusted_timestamp", {}).get("status") != "verified":
+            raise RuntimeArchiveVerificationError(f"stage_timestamp_not_verified:{stage_id}")
         stage_results.append(result)
         stage_reports.append({"stage": stage_id, "verification": report})
 
