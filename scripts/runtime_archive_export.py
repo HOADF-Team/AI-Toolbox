@@ -148,16 +148,33 @@ def create_cryptographic_runtime_archive(
             raise RuntimeArchiveExportError("export_history_snapshot_reference_invalid")
         required_paths.add(f"trust/registry-snapshots/{digest}.json")
 
-    for stage_id in stage_ids:
+    for index, stage_id in enumerate(stage_ids):
         result_path = f"workflow/stages/{stage_id}.json"
         required_paths.add(result_path)
         required_paths.add(f"workflow/stages/{stage_id}/timestamp.tsr")
         result = _json_file(source_base, normalized, result_path)
         if not isinstance(result, dict) or result.get("status") != "completed":
             raise RuntimeArchiveExportError(f"export_stage_not_completed:{stage_id}")
+        if result.get("stage") != stage_id or result.get("skill_id") != skill_ids[index]:
+            raise RuntimeArchiveExportError(f"export_stage_identity_mismatch:{stage_id}")
+        envelope = result.get("artifact_provenance")
+        if not isinstance(envelope, dict):
+            raise RuntimeArchiveExportError(f"export_stage_provenance_missing:{stage_id}")
         bundle = result.get("integrity_bundle")
         if not isinstance(bundle, dict) or not isinstance(bundle.get("statement"), dict):
             raise RuntimeArchiveExportError(f"export_stage_integrity_bundle_missing:{stage_id}")
+        context = bundle["statement"].get("execution_context")
+        if not isinstance(context, dict) or any(
+            context.get(key) != expected
+            for key, expected in {
+                "run_id": metadata["run_id"],
+                "workflow_id": metadata["workflow_id"],
+                "stage_id": stage_id,
+                "skill_id": skill_ids[index],
+                "input_ref": result.get("input_ref"),
+            }.items()
+        ):
+            raise RuntimeArchiveExportError(f"export_signed_context_mismatch:{stage_id}")
         evidence = bundle["statement"].get("evidence")
         if not isinstance(evidence, list) or not evidence:
             raise RuntimeArchiveExportError(f"export_stage_evidence_manifest_missing:{stage_id}")
