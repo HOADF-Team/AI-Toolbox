@@ -132,7 +132,7 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
             result["provenance"]["skill_manifest_ref"] = "https://github.com/HOADF-Team/Personal-AI-Library/blob/main/skills/crypto-security/SKILL.md"
             return result
         report = execute_with_adapter(self.contract, self.plan(), wrong_revision)
-        self.assertIn("skill_manifest_ref_mismatch", str(report["stopped_reason"]))
+        self.assertIn("skill_manifest_ref_mismatch", report["stages"][0]["errors"])
 
     def test_stage_output_cannot_claim_wrong_skill(self) -> None:
         adapter, _ = self.adapter_for()
