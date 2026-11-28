@@ -75,6 +75,11 @@ class SkillInterfaceTests(unittest.TestCase):
         report = validate_workflow_compatibility(bad, self.catalog)
         self.assertIn("crypto-security.inputs_available", report["errors"])
 
+    def test_repository_workflow_bindings_are_compatible(self) -> None:
+        workflows = json.loads((ROOT / "CATALOG" / "workflows" / "workflows.json").read_text(encoding="utf-8"))
+        report = validate_workflow_compatibility(workflows["workflows"][0], self.catalog)
+        self.assertEqual(report["status"], "passed", report["errors"])
+
     def test_side_effect_metadata_does_not_grant_permission(self) -> None:
         report = validate_workflow_compatibility(self.workflow, self.catalog)
         self.assertTrue(all("side_effects_not_permissions" in item["id"] for item in report["checks"] if item["id"].endswith("side_effects_not_permissions")))
