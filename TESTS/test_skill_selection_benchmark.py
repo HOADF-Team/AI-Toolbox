@@ -58,6 +58,22 @@ class SelectionBenchmarkTests(unittest.TestCase):
         self.assertEqual(report["metrics"]["macro_f1"], 1.0)
         self.assertEqual(report["metrics"]["exact_match_rate"], 1.0)
 
+    def test_wrong_decision_is_not_an_exact_match(self) -> None:
+        report = score_benchmark(
+            self.benchmark,
+            {
+                "single-01": {
+                    "decision": "clarify",
+                    "selected_skills": ["automation-vps"],
+                    "rationale": "The skill is selected but the decision label is wrong.",
+                }
+            },
+            self.catalog,
+        )
+        self.assertEqual(report["metrics"]["micro_f1"], 1.0)
+        self.assertLess(report["metrics"]["decision_accuracy"], 1.0)
+        self.assertLess(report["metrics"]["exact_match_rate"], 1.0)
+
     def test_unnecessary_skill_is_false_positive(self) -> None:
         proposals = {
             "single-01": {
