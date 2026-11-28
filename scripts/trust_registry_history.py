@@ -20,7 +20,7 @@ class RegistryHistoryError(ValueError):
     """Raised when a registry lifecycle history fails validation."""
 
 
-def _validate_event(event: Any) -> None:
+def _validate_event(event: Any) -> dict[str, Any]:
     if not isinstance(event, dict):
         raise RegistryHistoryError("history_event_must_be_object")
     required = {"event_id", "action", "key_id", "effective_at", "registry_sha256"}
@@ -55,6 +55,7 @@ def _validate_event(event: Any) -> None:
             raise RegistryHistoryError("replacement_key_id_required")
         if replacement == event["key_id"]:
             raise RegistryHistoryError("replacement_key_id_must_differ")
+    return event
 
 
 def registry_snapshot_sha256(registry: dict[str, Any]) -> str:
@@ -131,8 +132,7 @@ def verify_registry_history(
             raise RegistryHistoryError("history_sequence_mismatch")
         if record.get("previous_event_sha256") != previous:
             raise RegistryHistoryError("history_previous_hash_mismatch")
-        event = record.get("event")
-        _validate_event(event)
+        event = _validate_event(record.get("event"))
         event_id = event["event_id"]
         if event_id in event_ids:
             raise RegistryHistoryError("duplicate_history_event_id")
