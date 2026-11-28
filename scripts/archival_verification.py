@@ -52,6 +52,8 @@ def verify_archived_bundle(
         raise RegistryHistoryError("historical_and_current_tsa_crls_must_be_supplied_together")
     if require_tsa_revocation and historical_tsa_crl_file is None:
         raise RegistryHistoryError("tsa_revocation_crls_required")
+    if require_tsa_revocation and not require_trusted_timestamp:
+        raise RegistryHistoryError("tsa_revocation_requires_trusted_timestamp")
     timestamp_paths_supplied = timestamp_response is not None or timestamp_ca_file is not None
     if timestamp_paths_supplied and (timestamp_response is None or timestamp_ca_file is None):
         raise RegistryHistoryError("timestamp_response_and_ca_must_be_supplied_together")
