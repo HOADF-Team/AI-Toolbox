@@ -159,11 +159,14 @@ def verify_history_anchor(
         raise RegistryHistoryError("trusted_history_anchor_key_id_required")
     if anchor.get("anchor_key_id") != trusted_anchor_key_id:
         raise RegistryHistoryError("untrusted_history_anchor_key_id")
+    log_id = anchor.get("log_id")
+    checkpoint = anchor.get("checkpoint")
+    anchored_at = anchor.get("anchored_at")
+    anchor_key_id = anchor.get("anchor_key_id")
+    if not isinstance(log_id, str) or not isinstance(checkpoint, dict) or not isinstance(anchored_at, str) or not isinstance(anchor_key_id, str):
+        raise RegistryHistoryError("invalid_history_anchor_statement_fields")
     statement = build_history_anchor_statement(
-        anchor.get("log_id"),
-        anchor.get("checkpoint"),
-        anchor.get("anchored_at"),
-        anchor.get("anchor_key_id"),
+        log_id, checkpoint, anchored_at, anchor_key_id
     )
     signature_text = anchor.get("signature")
     if not isinstance(signature_text, str) or not signature_text:
