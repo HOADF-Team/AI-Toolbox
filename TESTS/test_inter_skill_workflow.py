@@ -41,7 +41,7 @@ class InterSkillWorkflowTests(unittest.TestCase):
                          self.scenario["expected_skill_order"])
         self.assertTrue(all(item["readiness"] == "ready" for item in results))
         # Readiness is prerequisite matching only, never proof of workflow execution.
-        self.assertTrue(all("not proof" in item["note"] for item in results))
+        self.assertTrue(all("only declared prerequisites" in item["note"] for item in results))
 
     def test_scenario_enforces_credential_and_trading_safety(self) -> None:
         safeguards = self.scenario["safeguards"]
