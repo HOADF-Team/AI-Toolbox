@@ -1,0 +1,22 @@
+{
+  "envelope_version": "1.0",
+  "description": "Standard envelope for Skill/runtime artifacts. Structural contract only; values and references remain caller-supplied.",
+  "required": ["artifact_id", "artifact_type", "producer", "source", "created_at", "inputs", "payload", "evidence", "verification"],
+  "fields": {
+    "artifact_id": "Stable artifact identifier",
+    "artifact_type": "Namespaced artifact type",
+    "producer": {"kind": ["skill", "runtime", "tool", "human", "system"], "id": "Producer identifier", "version": "Producer/Skill version", "revision": "Full 40-character Git commit SHA"},
+    "source": {"repository": "Canonical source repository", "revision": "Full 40-character Git commit SHA"},
+    "created_at": "ISO 8601 timestamp with timezone",
+    "inputs": [{"ref": "Input artifact/reference ID", "artifact_type": "Input type"}],
+    "payload": "Object containing artifact data",
+    "evidence": ["Evidence reference; not proof by itself"],
+    "verification": {"status": ["unverified", "structurally_validated", "independently_verified"], "method": "How the result was checked", "checked_at": "ISO 8601 timestamp with timezone", "limitations": ["Known verification limitations"], "verifier": "Required when status is independently_verified"},
+    "payload_sha256": "Optional SHA-256 of canonical payload bytes"
+  },
+  "security_notes": [
+    "Never put secrets or raw credentials in envelopes, payloads, logs, or evidence references.",
+    "Do not claim independent verification solely because this structural validator passed.",
+    "A Git SHA is a supplied identifier until a trusted host resolves it against an approved checkout."
+  ]
+}
