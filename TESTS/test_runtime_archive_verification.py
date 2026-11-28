@@ -133,11 +133,18 @@ class RuntimeArchiveCryptographicVerificationTests(unittest.TestCase):
         with (
             patch(
                 "runtime_archive_verification.verify_history_anchor",
-                return_value={"status": "signed_checkpoint_verified", "checkpoint": checkpoint},
+                return_value={
+                    "status": "signed_checkpoint_verified",
+                    "checkpoint": checkpoint,
+                    "timestamp": {"status": "verified"},
+                },
             ) as anchor_verifier,
             patch(
                 "runtime_archive_verification.verify_archived_bundle",
-                return_value={"status": "archived_verified"},
+                return_value={
+                    "status": "archived_verified",
+                    "trusted_timestamp": {"status": "verified"},
+                },
             ) as stage_verifier,
             patch(
                 "runtime_archive_verification.validate_provenance_envelope",
@@ -175,6 +182,7 @@ class RuntimeArchiveCryptographicVerificationTests(unittest.TestCase):
                     return_value={
                         "status": "signed_checkpoint_verified",
                         "checkpoint": {"event_count": 0, "head_sha256": "0" * 64},
+                        "timestamp": {"status": "verified"},
                     },
                 ),
                 patch(
