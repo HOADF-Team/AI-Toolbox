@@ -98,3 +98,17 @@ report = create_cryptographic_runtime_archive(
 ```
 
 The exporter rejects missing stage timestamps, missing evidence, unexpected files, path traversal, symlinks, incomplete stages, mismatched signed run contexts, and private-key material. It does not discover files recursively or create signatures/timestamps; those must already exist and be explicitly supplied. The returned report confirms package file integrity only. Run `verify_runtime_archive_cryptographically` separately with host-provisioned trust roots to authenticate the archive.
+
+
+## End-to-end verification test
+
+`TESTS/test_runtime_archive_end_to_end.py` exercises the complete local pipeline with temporary Ed25519 signer and history-anchor keys plus an ephemeral local RFC 3161 TSA:
+
+1. Execute the four-stage workflow through the adapter protocol.
+2. Sign each stage result and evidence manifest; timestamp each exact signature.
+3. Build and sign a registry-history checkpoint; timestamp the anchor signature.
+4. Export the explicit evidence set into the portable archive layout.
+5. Verify the archive using only host-supplied history-anchor and TSA trust roots.
+6. Alter a stage signature while updating the package manifest and confirm that cryptographic verification still fails.
+
+The test uses synthetic stage fixtures and local OpenSSL-generated keys/certificates. It does not call a public TSA, use production keys, perform real Skill/LLM actions, or require a server. A passing test demonstrates protocol and cryptographic integration in this controlled fixture; it does not establish that the synthetic evidence is truthful or that an arbitrary machine already trusts the supplied roots.
