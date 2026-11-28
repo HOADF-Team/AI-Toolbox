@@ -92,7 +92,7 @@ def score_benchmark(
     rows = []
     true_positives = false_positives = false_negatives = 0
     exact_matches = eligible = order_checked = order_passed = 0
-    abstain_expected = abstain_correct = rationale_present = 0
+    abstain_expected = abstain_correct = rationale_present = decision_correct = 0
     per_skill: dict[str, dict[str, int]] = {}
 
     for case in benchmark["cases"]:
@@ -119,15 +119,13 @@ def score_benchmark(
             false_negatives += len(missing)
             eligible += 1
 
-            decision_ok = (
-                case["expected_decision"] not in {"abstain", "abstain_or_clarify"}
-                or decision
-                in (
-                    {"abstain"}
-                    if case["expected_decision"] == "abstain"
-                    else {"abstain", "clarify"}
-                )
-            )
+            accepted_decisions = {
+                "select": {"select"},
+                "abstain": {"abstain"},
+                "abstain_or_clarify": {"abstain", "clarify"},
+            }.get(case["expected_decision"], set())
+            decision_ok = decision in accepted_decisions
+            decision_correct += int(decision_ok)
             exact_matches += int(chosen == required and decision_ok)
 
             if case["expected_decision"] in {"abstain", "abstain_or_clarify"}:
@@ -173,7 +171,8 @@ def score_benchmark(
                 "selected_skills": selected,
                 "missing_required": sorted(missing),
                 "unnecessary_skills": sorted(unnecessary),
-                "exact_match": chosen == required,
+                "exact_match": chosen == required and decision_ok,
+                "decision_correct": decision_ok,
                 "rationale_present": bool(proposal.get("rationale")),
             }
         )
@@ -248,6 +247,7 @@ def score_benchmark(
             "macro_recall": round(macro_recall, 4),
             "macro_f1": round(macro_f1, 4),
             "exact_match_rate": round(exact_matches / eligible, 4) if eligible else 0.0,
+            "decision_accuracy": round(decision_correct / eligible, 4) if eligible else 0.0,
             "ordered_chain_accuracy": (
                 round(order_passed / order_checked, 4) if order_checked else None
             ),
