@@ -79,3 +79,22 @@ Missing anchors, invalid signatures, missing timestamps under strict policy, rev
 - Evidence hashes authenticate the archived bytes, not the truth of observations contained in those bytes.
 - This is retrospective offline audit only. A successful report never authorizes live runtime handoff, Skill execution, production changes, or external actions.
 - The verifier does not contact a public TSA, registry service, server, or external runtime.
+
+
+## Exporting a verifier-compatible archive
+
+Use `scripts/runtime_archive_export.py` when the run result and its evidence files have already been written to a staging directory. Supply an explicit archive-path-to-source-path map; the exporter derives and enforces the required paths from the contract, stage integrity bundles, registry key references, and registry history.
+
+```python
+from pathlib import Path
+from runtime_archive_export import create_cryptographic_runtime_archive
+
+report = create_cryptographic_runtime_archive(
+    source_root=Path("run-staging"),
+    destination=Path("portable-run"),
+    metadata=run_metadata,
+    files=explicit_archive_file_map,
+)
+```
+
+The exporter rejects missing stage timestamps, missing evidence, unexpected files, path traversal, symlinks, incomplete stages, mismatched signed run contexts, and private-key material. It does not discover files recursively or create signatures/timestamps; those must already exist and be explicitly supplied. The returned report confirms package file integrity only. Run `verify_runtime_archive_cryptographically` separately with host-provisioned trust roots to authenticate the archive.
