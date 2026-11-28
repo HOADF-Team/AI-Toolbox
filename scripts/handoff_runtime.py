@@ -9,7 +9,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from artifact_integrity import IntegrityVerificationError, verify_integrity_bundle
+from artifact_integrity import (\n    IntegrityVerificationError,\n    canonical_json_bytes,\n    sha256_bytes,\n    verify_integrity_bundle,\n)
 from artifact_provenance import validate_provenance_envelope
 from trust_registry import TrustRegistryError, resolve_trusted_key
 from handoff_contract import validate_handoff_chain
@@ -17,6 +17,15 @@ from handoff_contract import validate_handoff_chain
 
 class RuntimeProtocolError(ValueError):
     """Raised when a workflow cannot be safely prepared or continued."""
+
+def stage_result_sha256(result: dict[str, Any]) -> str:
+    """Digest the complete stage result, excluding its own envelope and signature fields."""
+    if not isinstance(result, dict):
+        raise IntegrityVerificationError("stage_result_must_be_object")
+    unsigned_fields = {"artifact_provenance", "integrity_bundle", "integrity_verification"}
+    content = {key: value for key, value in result.items() if key not in unsigned_fields}
+    return sha256_bytes(canonical_json_bytes(content))
+
 
 
 def build_workflow_plan(
@@ -137,6 +146,13 @@ def _validate_stage_result(
                 errors.append("artifact_provenance_payload_identity_mismatch")
             if payload.get("output_ref") != result.get("output_ref"):
                 errors.append("artifact_provenance_output_ref_mismatch")
+            try:
+                expected_stage_digest = stage_result_sha256(result)
+            except IntegrityVerificationError:
+                errors.append("stage_result_not_canonical_json")
+            else:
+                if payload.get("stage_result_sha256") != expected_stage_digest:
+                    errors.append("artifact_provenance_stage_result_digest_mismatch")
             inputs = artifact_provenance.get("inputs", [])
             if not inputs or inputs[0].get("ref") != envelope["input_ref"]:
                 errors.append("artifact_provenance_input_ref_mismatch")
