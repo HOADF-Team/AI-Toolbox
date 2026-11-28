@@ -229,6 +229,48 @@ class ArchivalVerificationTests(unittest.TestCase):
             "openssl_ts_verify_with_host_supplied_ca_at_authenticated_gen_time",
         )
 
+    def _intermediate_chain_file(self, tsa: LocalRfc3161TSA) -> Path:
+        intermediate = tsa.issue_intermediate_ca()
+        chain = self.root / "tsa-intermediate-chain.pem"
+        chain.write_bytes(intermediate.read_bytes() + b"\\n" + tsa.tsa_cert.read_bytes())
+        return chain
+
+    def test_tsa_intermediate_certificate_is_checked_with_issuer_crl(self) -> None:
+        tsa = LocalRfc3161TSA(self.root / "tsa-intermediate-valid")
+        chain = self._intermediate_chain_file(tsa)
+        signature = base64.b64decode(self.sign()["signature"], validate=True)
+        response = tsa.issue(signature)
+        historical_crl = tsa.generate_crl(self.root / "intermediate-historical.crl")
+        current_crl = tsa.generate_crl(self.root / "intermediate-current.crl")
+        report = verify_rfc3161_timestamp(
+            signature, response, tsa.ca_cert, chain,
+            historical_crl, current_crl, True,
+        )
+        self.assertEqual(
+            report["tsa_revocation"],
+            "historical_and_current_crl_verified_for_tsa_and_intermediates",
+        )
+
+    def test_revoked_tsa_intermediate_is_rejected_by_current_issuer_crl(self) -> None:
+        tsa = LocalRfc3161TSA(self.root / "tsa-intermediate-revoked")
+        chain = self._intermediate_chain_file(tsa)
+        signature = base64.b64decode(self.sign()["signature"], validate=True)
+        response = tsa.issue(signature)
+        historical_crl = tsa.generate_crl(self.root / "intermediate-historical-before-revocation.crl")
+        intermediate = self.root / "tsa-intermediate-chain.pem"
+        intermediate_cert = self.root / "intermediate.pem"
+        intermediate_cert.write_bytes(intermediate.read_bytes().split(b"-----END CERTIFICATE-----")[0] + b"-----END CERTIFICATE-----\\n")
+        tsa.revoke_certificate(intermediate_cert)
+        current_crl = tsa.generate_crl(self.root / "intermediate-current-after-revocation.crl")
+        with self.assertRaisesRegex(
+            ValueError,
+            "current_tsa_certificate_or_intermediate_revoked_or_crl_invalid",
+        ):
+            verify_rfc3161_timestamp(
+                signature, response, tsa.ca_cert, chain,
+                historical_crl, current_crl, True,
+            )
+
     def test_tsa_historical_and_current_crls_verify_offline(self) -> None:
         tsa = LocalRfc3161TSA(self.root / "tsa-crl-valid")
         signature = base64.b64decode(self.sign()["signature"], validate=True)
