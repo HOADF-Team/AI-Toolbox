@@ -9,25 +9,71 @@ import subprocess
 from pathlib import Path
 
 
-def issue_local_rfc3161_timestamp(data: bytes, root: Path) -> tuple[Path, Path, Path]:
-    """Issue a real RFC 3161 response for data using a temporary local TSA."""
-    if not isinstance(data, bytes) or not data:
-        raise ValueError("timestamp data must be non-empty bytes")
-    root.mkdir(parents=True, exist_ok=True)
-    ca_key = root / "tsa-root.key"
-    ca_cert = root / "tsa-root.pem"
-    tsa_key = root / "tsa-signer.key"
-    tsa_csr = root / "tsa-signer.csr"
-    tsa_cert = root / "tsa-signer.pem"
-    tsa_ext = root / "tsa-signer.ext"
-    config = root / "tsa.cnf"
-    serial = root / "tsa.srl"
-    data_path = root / "timestamped-data.bin"
-    request_path = root / "request.tsq"
-    response_path = root / "response.tsr"
-    data_path.write_bytes(data)
+class LocalRfc3161TSA:
+    """One temporary local TSA that can issue multiple independent timestamp tokens."""
 
-    def run_openssl(*args: str) -> None:
+    def __init__(self, root: Path) -> None:
+        root.mkdir(parents=True, exist_ok=True)
+        self.root = root
+        self.ca_key = root / "tsa-root.key"
+        self.ca_cert = root / "tsa-root.pem"
+        self.tsa_key = root / "tsa-signer.key"
+        self.tsa_csr = root / "tsa-signer.csr"
+        self.tsa_cert = root / "tsa-signer.pem"
+        self.tsa_ext = root / "tsa-signer.ext"
+        self.config = root / "tsa.cnf"
+        self.serial = root / "tsa.srl"
+        self.counter = 0
+
+        self._run_openssl(
+            "req", "-x509", "-newkey", "rsa:2048", "-nodes",
+            "-keyout", str(self.ca_key), "-out", str(self.ca_cert),
+            "-subj", "/CN=HOADF Ephemeral Test Root", "-days", "2",
+            "-addext", "basicConstraints=critical,CA:TRUE",
+            "-addext", "keyUsage=critical,keyCertSign,cRLSign",
+            "-addext", "subjectKeyIdentifier=hash",
+        )
+        self._run_openssl(
+            "req", "-new", "-newkey", "rsa:2048", "-nodes",
+            "-keyout", str(self.tsa_key), "-out", str(self.tsa_csr),
+            "-subj", "/CN=HOADF Ephemeral Test TSA",
+        )
+        self.tsa_ext.write_text(
+            "[ v3_tsa ]\n"
+            "basicConstraints = critical,CA:FALSE\n"
+            "keyUsage = critical,digitalSignature,nonRepudiation\n"
+            "extendedKeyUsage = critical,timeStamping\n"
+            "subjectKeyIdentifier = hash\n"
+            "authorityKeyIdentifier = keyid,issuer\n",
+            encoding="utf-8",
+        )
+        self._run_openssl(
+            "x509", "-req", "-in", str(self.tsa_csr), "-CA", str(self.ca_cert),
+            "-CAkey", str(self.ca_key), "-CAcreateserial", "-out", str(self.tsa_cert),
+            "-days", "1", "-sha256", "-extfile", str(self.tsa_ext), "-extensions", "v3_tsa",
+        )
+        self.serial.write_text("01\n", encoding="ascii")
+        self.config.write_text(
+            "[ tsa ]\n"
+            "default_tsa = tsa_config1\n"
+            "[ tsa_config1 ]\n"
+            f"serial = {self.serial}\n"
+            "crypto_device = builtin\n"
+            f"signer_cert = {self.tsa_cert}\n"
+            f"certs = {self.ca_cert}\n"
+            f"signer_key = {self.tsa_key}\n"
+            "signer_digest = sha256\n"
+            "default_policy = 1.2.3.4.1\n"
+            "digests = sha256, sha384, sha512\n"
+            "accuracy = secs:1\n"
+            "ordering = yes\n"
+            "tsa_name = yes\n"
+            "ess_cert_id_chain = no\n",
+            encoding="utf-8",
+        )
+
+    @staticmethod
+    def _run_openssl(*args: str) -> None:
         completed = subprocess.run(
             ["openssl", *args], check=False, capture_output=True, text=True, timeout=30
         )
@@ -37,58 +83,29 @@ def issue_local_rfc3161_timestamp(data: bytes, root: Path) -> tuple[Path, Path, 
                 f"stdout={completed.stdout}; stderr={completed.stderr}"
             )
 
-    run_openssl(
-        "req", "-x509", "-newkey", "rsa:2048", "-nodes",
-        "-keyout", str(ca_key), "-out", str(ca_cert),
-        "-subj", "/CN=HOADF Ephemeral Test Root", "-days", "2",
-        "-addext", "basicConstraints=critical,CA:TRUE",
-        "-addext", "keyUsage=critical,keyCertSign,cRLSign",
-        "-addext", "subjectKeyIdentifier=hash",
-    )
-    run_openssl(
-        "req", "-new", "-newkey", "rsa:2048", "-nodes",
-        "-keyout", str(tsa_key), "-out", str(tsa_csr),
-        "-subj", "/CN=HOADF Ephemeral Test TSA",
-    )
-    tsa_ext.write_text(
-        "[ v3_tsa ]\n"
-        "basicConstraints = critical,CA:FALSE\n"
-        "keyUsage = critical,digitalSignature,nonRepudiation\n"
-        "extendedKeyUsage = critical,timeStamping\n"
-        "subjectKeyIdentifier = hash\n"
-        "authorityKeyIdentifier = keyid,issuer\n",
-        encoding="utf-8",
-    )
-    run_openssl(
-        "x509", "-req", "-in", str(tsa_csr), "-CA", str(ca_cert),
-        "-CAkey", str(ca_key), "-CAcreateserial", "-out", str(tsa_cert),
-        "-days", "1", "-sha256", "-extfile", str(tsa_ext), "-extensions", "v3_tsa",
-    )
-    serial.write_text("01\n", encoding="ascii")
-    config.write_text(
-        "[ tsa ]\n"
-        "default_tsa = tsa_config1\n"
-        "[ tsa_config1 ]\n"
-        f"serial = {serial}\n"
-        "crypto_device = builtin\n"
-        f"signer_cert = {tsa_cert}\n"
-        f"certs = {ca_cert}\n"
-        f"signer_key = {tsa_key}\n"
-        "signer_digest = sha256\n"
-        "default_policy = 1.2.3.4.1\n"
-        "digests = sha256, sha384, sha512\n"
-        "accuracy = secs:1\n"
-        "ordering = yes\n"
-        "tsa_name = yes\n"
-        "ess_cert_id_chain = no\n",
-        encoding="utf-8",
-    )
-    run_openssl(
-        "ts", "-query", "-data", str(data_path), "-sha256", "-cert",
-        "-out", str(request_path),
-    )
-    run_openssl(
-        "ts", "-reply", "-config", str(config), "-queryfile",
-        str(request_path), "-out", str(response_path),
-    )
-    return response_path, ca_cert, tsa_cert
+    def issue(self, data: bytes) -> Path:
+        """Issue one RFC 3161 token for exact data bytes."""
+        if not isinstance(data, bytes) or not data:
+            raise ValueError("timestamp data must be non-empty bytes")
+        self.counter += 1
+        stem = f"timestamp-{self.counter:03d}"
+        data_path = self.root / f"{stem}.bin"
+        request_path = self.root / f"{stem}.tsq"
+        response_path = self.root / f"{stem}.tsr"
+        data_path.write_bytes(data)
+        self._run_openssl(
+            "ts", "-query", "-data", str(data_path), "-sha256", "-cert",
+            "-out", str(request_path),
+        )
+        self._run_openssl(
+            "ts", "-reply", "-config", str(self.config), "-queryfile",
+            str(request_path), "-out", str(response_path),
+        )
+        return response_path
+
+
+def issue_local_rfc3161_timestamp(data: bytes, root: Path) -> tuple[Path, Path, Path]:
+    """Issue a single response and return response, trusted CA, and TSA certificate paths."""
+    tsa = LocalRfc3161TSA(root)
+    response = tsa.issue(data)
+    return response, tsa.ca_cert, tsa.tsa_cert
