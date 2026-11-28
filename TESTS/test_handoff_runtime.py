@@ -215,7 +215,7 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
             )
         self.assertEqual(report["status"], "completed")
         self.assertEqual(
-            verifier.call_args.kwargs["expected_execution_context"],
+            verifier.call_args_list[0].kwargs["expected_execution_context"],
             {
                 "run_id": "runtime-run-001",
                 "workflow_id": self.contract["workflow_id"],
