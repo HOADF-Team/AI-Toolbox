@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "stage": "crypto-security",
+  "input_ref": "scenario",
+  "output_ref": "handoff:crypto-security",
+  "evidence": [
+    {"location": "demo_bot.py:credential logging path", "observation": "credential value is written to application logs"}
+  ],
+  "risk": "credential exposure with possible active misuse",
+  "incident_events": [
+    {"event": "credential_revocation_recommended", "mode": "recommendation_only"},
+    {"event": "host_isolation_recommended", "mode": "recommendation_only"}
+  ],
+  "automatic_actions": [],
+  "decision": "recommend immediate credential revocation through trusted provider interface; then isolate affected host; do not liquidate positions or cancel orders automatically"
+}

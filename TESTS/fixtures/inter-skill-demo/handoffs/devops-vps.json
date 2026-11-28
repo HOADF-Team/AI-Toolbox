@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "stage": "devops-vps",
+  "input_ref": "handoff:python-development",
+  "output_ref": "handoff:devops-vps",
+  "evidence": [
+    {"location": "demo-bot.service:Service", "observation": "service runs as root and lacks hardening directives"}
+  ],
+  "systemd_findings": ["root execution", "missing privilege and filesystem restrictions"],
+  "hardening_proposal": ["dedicated unprivileged service account", "review NoNewPrivileges, PrivateTmp, ProtectSystem and filesystem access"],
+  "remote_access": "not_checked",
+  "production_changes": "not_performed",
+  "ssh_attempted": false
+}

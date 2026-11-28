@@ -16,61 +16,38 @@ Maintain a practical collection of real tools that AI agents can discover, insta
 
 ## Research and review requirements
 
-For every candidate, record:
-
-- canonical name and stable ID;
-- official project and download/documentation URLs;
-- publisher/maintainer and source repository where applicable;
-- license and redistribution constraints (do not guess);
-- supported operating systems and architectures, if known;
-- runtime, dependencies, external services, accounts, API keys, and costs;
-- installation and removal approach;
-- permissions, network access, telemetry, and relevant security considerations;
-- test environment, date, exact checks performed, and observed result;
-- known limitations and a clear verification status.
-
-If a fact cannot be verified, write `unknown` or `not checked`; do not infer it.
+For every candidate, record canonical name and stable ID; official URLs; publisher; license; platforms; dependencies and costs; installation/removal; permissions and security; exact test environment and checks; limitations and verification status. If a fact cannot be verified, write `unknown` or `not checked`.
 
 ## Installation and execution safety
 
-- Do not run an unknown installer, shell script, binary, container, or remote command before reviewing its source, origin, and expected effects.
-- Prefer official package managers, signed releases, checksums, pinned versions, and isolated environments when available.
-- Test in a disposable VM, container, sandbox, or separate test account where practical.
-- Do not run with administrator/root privileges unless strictly required and explicitly justified.
-- Never disable security controls to make a tool work.
-- Never expose or commit tokens, passwords, private keys, cookies, credentials, or personal data.
-- Do not make purchases, create paid subscriptions, publish externally, or modify production systems without explicit user approval.
-- Do not install software on the user's machine unless the user has asked for installation and the target environment is clear.
+- Review unknown installers and binaries before execution; prefer official sources, pinned versions, checksums and isolated environments.
+- Do not use root/admin unless necessary and justified.
+- Never expose or commit credentials, private keys, cookies or personal data.
+- Do not purchase, publish externally or modify production without explicit approval.
+- Do not install software on the user's machine unless asked and the target is clear.
+- Never execute the intentionally vulnerable inter-Skill fixture or install its requirements. Use only its JSON and source text as inert test data.
+- Treat `validate_inter_skill_workflow.py` as a deterministic contract checker, not an LLM/Skill executor or production incident-response tool.
+- Never represent a recommendation to revoke a credential or isolate a host as an action actually performed. Never liquidate positions or cancel orders automatically.
 
 ## Contribution workflow
 
-1. Create or update one focused tool record under `TOOLS/<category>/<tool-id>/TOOL.md`.
-2. Update `CATALOG/tools.json` consistently.
-3. Include evidence and a repeatable test procedure.
-4. Run repository validation if available; do not claim tests that were not run.
-5. Submit changes through a pull request. Do not push directly to the default branch unless the repository owner has explicitly established that workflow.
-6. A reviewer must be able to distinguish research, review, testing, and readiness.
+1. Update one focused tool record and catalog entry where applicable.
+2. Include evidence and a repeatable test procedure.
+3. Run repository validation; do not claim tests that were not run.
+4. Submit changes through a pull request; do not push directly to the default branch.
+5. Distinguish research, review, testing and readiness.
 
 ## Status rules
 
-- `discovered`: candidate found, not yet reviewed.
-- `reviewed`: source, license, requirements, and risks reviewed.
-- `tested`: at least one documented test actually ran; environment and results recorded.
-- `ready`: repeatable installation/use/check instructions are available and tested within the stated scope.
+- `discovered`: candidate found, not reviewed.
+- `reviewed`: source, license, requirements and risks reviewed.
+- `tested`: at least one documented test actually ran.
+- `ready`: repeatable instructions are available and tested within the stated scope.
 - `blocked`: a specific issue prevents safe or reliable use.
-- `deprecated`: no longer recommended; explain why and, where possible, name a replacement.
+- `deprecated`: no longer recommended; explain why.
 
-Never upgrade a status based only on reading a README or seeing that a GitHub repository exists.
-
-## Quality
-
-- Keep records concise, practical, and understandable to non-programmers.
-- Prefer one record per distinct tool, not one record per vague technology category.
-- Do not duplicate Skills. Link to relevant Skills where useful.
-- Keep upstream code upstream unless redistribution is permitted and genuinely needed.
-- Record dates in ISO format (`YYYY-MM-DD`).
-
+Never upgrade status based only on a README or repository listing.
 
 ## Personal-AI-Library integration
 
-Use the organization's Skills as task workflows and this repository as the tool inventory. The shared operating procedure is documented in [INTEGRATION/SKILLS-WORKFLOW.md](INTEGRATION/SKILLS-WORKFLOW.md), with the authoritative detailed workflow in [Personal-AI-Library](https://github.com/HOADF-Team/Personal-AI-Library/blob/main/INTEGRATION/AI-AGENT-WORKFLOW.md). Select only relevant Skills, verify tools in the actual target environment, and record evidence. A catalog status never proves that software is installed on a user's device.
+Use the organization's Skills as task workflows and this repository as the tool inventory. The shared procedure is in [INTEGRATION/SKILLS-WORKFLOW.md](INTEGRATION/SKILLS-WORKFLOW.md); the authoritative detailed workflow is in [Personal-AI-Library](https://github.com/HOADF-Team/Personal-AI-Library/blob/main/INTEGRATION/AI-AGENT-WORKFLOW.md). Select relevant Skills, verify tools in the actual target environment, and record evidence. A catalog status never proves software is installed on a user's device.
