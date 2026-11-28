@@ -70,3 +70,8 @@ Use [Artifact signing](ARTIFACT-SIGNING.md) to create the Ed25519 integrity bund
 ### Replay-resistant signature policy
 
 For signed stage results, the host should generate a unique run ID once per workflow execution and configure `require_execution_context=True`, that `run_id`, and a bounded `max_signature_age_seconds` in the integrity policy. The signing helper then binds each signature to the workflow ID, stage ID, Skill ID, and exact input reference, with signed issue/expiry times. A signature from a different run or stage, or one outside its validity window, blocks the stage. If this policy is not enabled, the legacy signature format remains compatible but replay protection is not claimed. The host is responsible for unique run-ID generation and non-reuse.
+
+
+### Archival verification is not runtime authorization
+
+Use `scripts/archival_verification.py` only when auditing stored artifacts signed by a planned-retired key. It checks the signed timestamp against the original key validity and `retired_at` record. Revoked keys are always rejected. An `archived_verified` result is historical evidence only and must never be treated as a newly completed live Skill stage. See [Artifact provenance](ARTIFACT-PROVENANCE.md).
