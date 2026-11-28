@@ -22,11 +22,14 @@ def build_workflow_plan(
     skills_root: Path,
     task: str,
     task_ref: str,
+    skills_revision: str,
     approvals: dict[str, str] | None = None,
 ) -> list[dict[str, Any]]:
     """Resolve explicit contract stages to canonical Skill manifests and envelopes."""
     if not task.strip() or not task_ref.strip():
         raise RuntimeProtocolError("task and task_ref must be non-empty")
+    if len(skills_revision) != 40 or any(ch not in "0123456789abcdef" for ch in skills_revision.lower()):
+        raise RuntimeProtocolError("skills_revision must be a full 40-character Git commit SHA")
     catalog_ids = {
         item.get("id") for item in skill_map.get("skills", [])
         if isinstance(item, dict) and isinstance(item.get("id"), str)
@@ -62,6 +65,8 @@ def build_workflow_plan(
             "stage": {"id": stage_id, "index": index, "skill_id": skill_id},
             "skill": {
                 "manifest_path": manifest_rel.as_posix(),
+                "manifest_revision": skills_revision,
+                "manifest_ref": f"https://github.com/HOADF-Team/Personal-AI-Library/blob/{skills_revision}/{manifest_rel.as_posix()}",
                 "manifest_available": True,
                 "execution_instruction": "The host agent must read this canonical Markdown Skill and execute it; this adapter does not.",
             },
@@ -105,6 +110,8 @@ def _validate_stage_result(
         for key in ("execution_mode", "skill_manifest_ref", "agent")
     ):
         errors.append("invalid_provenance")
+    elif provenance.get("skill_manifest_ref") != envelope["skill"]["manifest_ref"]:
+        errors.append("skill_manifest_ref_mismatch")
     actions = result.get("actions_taken", [])
     if not isinstance(actions, list):
         errors.append("invalid_actions_taken")
