@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "stage": "python-development",
+  "input_ref": "handoff:code-audit",
+  "output_ref": "handoff:python-development",
+  "evidence": [
+    {"location": "demo_bot.py:credential logging path", "observation": "proposed change removes secret value from logs"}
+  ],
+  "patch_status": "proposed_not_applied",
+  "patch_summary": "replace credential-value logging with a fixed redacted status message",
+  "regression_test_plan": ["assert logs never contain credential values", "assert normal startup diagnostics remain available"],
+  "fixture_dependencies_installed": false
+}
