@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "stage": "code-audit",
+  "input_ref": "handoff:crypto-security",
+  "output_ref": "handoff:code-audit",
+  "evidence": [
+    {"location": "demo_bot.py:credential logging path", "observation": "sensitive environment variable is logged without redaction"},
+    {"location": "requirements.txt:1", "observation": "dependency is pinned to an intentionally outdated version"}
+  ],
+  "execution": "not_executed",
+  "findings": ["credential disclosure in logs", "dependency pin requires advisory/database review"]
+}
