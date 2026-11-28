@@ -12,7 +12,7 @@ The reference implementation in scripts/handoff_runtime.py does not call an LLM,
 
 ## Lifecycle
 
-1. The host chooses a workflow contract based on the user's task. Skill selection is explicit and recorded in the contract; the runtime does not guess a chain from fuzzy text matching.
+1. The host AI planner proposes relevant Skills and emits an explicit selection document. Validate it using [Skill Selection](SKILL-SELECTION.md) before choosing the reviewed workflow contract. Selection validation checks structure and declared rationale, not semantic relevance.
 2. Load CATALOG/skill-tools.json and confirm each skill_id exists.
 3. Resolve the canonical manifest under skills/<skill-id>/SKILL.md in a trusted checkout of HOADF-Team/Personal-AI-Library. Supply the full 40-character commit SHA of that checkout as skills_revision. The envelope carries an immutable GitHub file reference for each Skill. Missing manifests stop planning.
 4. Optionally run scripts/run_skill_preflight.py in the actual target runtime when tool availability matters. Preserve its report and environment identity. Do not interpret another machine's inventory as the user's local availability.
@@ -25,7 +25,7 @@ The reference implementation in scripts/handoff_runtime.py does not call an LLM,
 
 The envelope contains workflow/task identity, stage and Skill IDs, canonical manifest path, prior output reference, required outputs, constraints, and requested/granted/missing approvals.
 
-A stage result contains stage and Skill IDs, status (completed/blocked/failed), input_ref, non-empty output_ref, domain fields required by the workflow contract, a non-empty evidence array with location and observation, provenance.execution_mode, provenance.skill_manifest_ref, provenance.agent. The manifest ref must exactly match the pinned commit and path in the stage envelope., and actions_taken. Use an empty actions_taken array when no action was performed.
+A stage result contains stage and Skill IDs, status (completed/blocked/failed), input_ref, non-empty output_ref, domain fields required by the workflow contract, a non-empty evidence array with location and observation, provenance.execution_mode, provenance.skill_manifest_ref, provenance.agent, and actions_taken. The manifest ref must exactly match the pinned commit and path in the stage envelope. Use an empty actions_taken array when no action was performed.
 
 Every action record must include action and an approval_id matching an approval granted to that exact action. Approval does not make an unsafe action automatically appropriate: host policy must still evaluate scope, reversibility, and user intent. Report recommendations separately from actions actually performed.
 
