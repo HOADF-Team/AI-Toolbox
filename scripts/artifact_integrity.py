@@ -10,6 +10,7 @@ import hashlib
 import json
 import subprocess
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -56,12 +57,62 @@ def _safe_evidence_file(root: Path, relative: str) -> Path:
     return resolved
 
 
+def _parse_aware_time(value: Any, field: str) -> datetime:
+    if not isinstance(value, str) or not value:
+        raise IntegrityVerificationError(f"invalid_{field}")
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise IntegrityVerificationError(f"invalid_{field}") from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise IntegrityVerificationError(f"{field}_must_include_timezone")
+    return parsed
+
+
+def _validate_execution_context(
+    statement: dict[str, Any],
+    expected: dict[str, str],
+    max_age_seconds: int,
+    now: datetime | None,
+) -> dict[str, Any]:
+    context = statement.get("execution_context")
+    if not isinstance(context, dict):
+        raise IntegrityVerificationError("signed_execution_context_required")
+    required = {"run_id", "workflow_id", "stage_id", "skill_id", "input_ref", "issued_at", "expires_at"}
+    if set(context) != required:
+        raise IntegrityVerificationError("invalid_signed_execution_context_fields")
+    for key, value in expected.items():
+        if not isinstance(value, str) or not value or context.get(key) != value:
+            raise IntegrityVerificationError(f"signed_execution_context_mismatch:{key}")
+    issued = _parse_aware_time(context.get("issued_at"), "issued_at")
+    expires = _parse_aware_time(context.get("expires_at"), "expires_at")
+    if expires <= issued:
+        raise IntegrityVerificationError("invalid_execution_context_expiry")
+    if not isinstance(max_age_seconds, int) or isinstance(max_age_seconds, bool) or not 1 <= max_age_seconds <= 86400:
+        raise IntegrityVerificationError("invalid_max_signature_age_seconds")
+    if (expires - issued).total_seconds() > max_age_seconds:
+        raise IntegrityVerificationError("execution_context_ttl_exceeds_policy")
+    current = now or datetime.now(timezone.utc)
+    if current.tzinfo is None or current.utcoffset() is None:
+        raise IntegrityVerificationError("verification_time_must_include_timezone")
+    if issued > current:
+        raise IntegrityVerificationError("signature_issued_in_future")
+    if current >= expires:
+        raise IntegrityVerificationError("signed_execution_context_expired")
+    if (current - issued).total_seconds() > max_age_seconds:
+        raise IntegrityVerificationError("signed_execution_context_too_old")
+    return context
+
+
 def verify_integrity_bundle(
     envelope: dict[str, Any],
     bundle: dict[str, Any],
     trusted_public_key: Path,
     trusted_key_id: str,
     evidence_root: Path,
+    expected_execution_context: dict[str, str] | None = None,
+    max_age_seconds: int = 900,
+    now: datetime | None = None,
 ) -> dict[str, Any]:
     """Verify payload/evidence hashes and an Ed25519 signature from a trusted key."""
     if not isinstance(envelope, dict) or not isinstance(bundle, dict):
@@ -71,8 +122,16 @@ def verify_integrity_bundle(
     if bundle.get("algorithm") != "Ed25519":
         raise IntegrityVerificationError("unsupported_signature_algorithm")
     statement = bundle.get("statement")
-    if not isinstance(statement, dict) or statement.get("statement_version") != "1.0":
+    if not isinstance(statement, dict) or statement.get("statement_version") not in {"1.0", "1.1"}:
         raise IntegrityVerificationError("invalid_integrity_statement")
+    if expected_execution_context is not None:
+        if statement.get("statement_version") != "1.1":
+            raise IntegrityVerificationError("signed_execution_context_required")
+        execution_context = _validate_execution_context(
+            statement, expected_execution_context, max_age_seconds, now
+        )
+    else:
+        execution_context = None
 
     envelope_digest = sha256_bytes(canonical_json_bytes(envelope))
     if statement.get("envelope_sha256") != envelope_digest:
@@ -142,6 +201,8 @@ def verify_integrity_bundle(
         "key_id": trusted_key_id,
         "envelope_sha256": envelope_digest,
         "verified_evidence": verified_evidence,
+        "execution_context": execution_context,
+        "replay_protection": "run_stage_bound_and_time_limited" if execution_context else "not_enabled",
         "limitations": [
             "The public key is trusted only because the host supplied it through policy.",
             "A valid signature proves integrity and key possession, not that evidence is truthful.",
