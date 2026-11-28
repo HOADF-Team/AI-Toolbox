@@ -162,10 +162,24 @@ def _validate_stage_result(
                     trusted_public_key = Path(integrity_policy["trusted_public_key"])
                     trusted_key_id = str(integrity_policy["trusted_key_id"])
                     resolved = {"status": "active", "key_id": trusted_key_id}
+                expected_execution_context = None
+                if integrity_policy.get("require_execution_context", False):
+                    run_id = integrity_policy.get("run_id")
+                    if not isinstance(run_id, str) or not run_id.strip():
+                        raise IntegrityVerificationError("runtime_run_id_required")
+                    expected_execution_context = {
+                        "run_id": run_id,
+                        "workflow_id": str(envelope["workflow_id"]),
+                        "stage_id": str(stage["id"]),
+                        "skill_id": str(stage["skill_id"]),
+                        "input_ref": str(envelope["input_ref"]),
+                    }
                 report = verify_integrity_bundle(
                     artifact_provenance, bundle,
                     trusted_public_key, trusted_key_id,
                     Path(integrity_policy["evidence_root"]),
+                    expected_execution_context=expected_execution_context,
+                    max_age_seconds=integrity_policy.get("max_signature_age_seconds", 900),
                 )
                 report["trust_resolution"] = resolved
                 result["integrity_verification"] = report
