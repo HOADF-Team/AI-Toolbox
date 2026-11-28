@@ -23,7 +23,7 @@ def validate_benchmark(data: dict[str, Any], catalog: dict[str, Any]) -> list[st
     ids = {
         item.get("id")
         for item in catalog.get("skills", [])
-        if isinstance(item, dict)
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
     }
     cases = data.get("cases")
     if not isinstance(cases, list) or not cases:
