@@ -215,7 +215,7 @@ def verify_rfc3161_timestamp(
         except (OSError, subprocess.TimeoutExpired) as exc:
             raise RegistryHistoryError("rfc3161_verifier_unavailable") from exc
         if verified.returncode != 0:
-            raise RegistryHistoryError("rfc3161_signature_or_historical_trust_verification_failed")
+            raise RegistryHistoryError("rfc3161_signature_or_trust_verification_failed")
 
     return {
         "status": "verified",
