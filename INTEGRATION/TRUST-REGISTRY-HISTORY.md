@@ -71,3 +71,31 @@ This is still not an authorization path for live workflow stages. The host must 
 
 
 Strict archival verification also requires the retained registry snapshots referenced by the key-add and key-retirement/rotation events. Pass them as a mapping from each canonical `registry_sha256` to the corresponding parsed registry snapshot using `registry_snapshots=...`. The verifier recalculates each snapshot digest, checks that the key's public-key fingerprint is unchanged, and confirms the snapshot status and `retired_at` agree with the lifecycle event. Missing or altered snapshots block strict archival verification.
+
+
+## Signed external checkpoint anchors
+
+The module also provides `build_history_anchor_statement(...)` and `verify_history_anchor(...)`. An independent audit authority can sign the checkpoint statement with an Ed25519 key and retain the signed anchor outside the editable registry/history store.
+
+The signed statement binds:
+- a stable `log_id`;
+- `anchor_key_id`, selected by host policy;
+- timezone-aware `anchored_at`;
+- the exact `event_count` and `head_sha256` checkpoint.
+
+The verifier receives the trusted anchor public-key path and expected key ID from host policy. It verifies the signature first, then validates the complete hash chain against the signed checkpoint. Editing the checkpoint, changing the history, using another anchor key ID, or truncating the chain is rejected.
+
+Example anchor payload creation:
+
+```python
+statement = build_history_anchor_statement(
+    log_id="security-key-lifecycle",
+    checkpoint=build_history_checkpoint(records),
+    anchored_at="2026-11-28T12:00:00Z",
+    anchor_key_id="external-audit-anchor-2026",
+)
+```
+
+The independent authority signs the canonical JSON bytes of this statement using its protected Ed25519 private key. Store the resulting signature alongside the statement, but retain both the signed anchor and trusted public key through a separately authenticated channel. The library does not hold the private key or publish the anchor.
+
+**Time limitation:** `anchored_at` is the signing authority's assertion. This mechanism authenticates who signed the checkpoint, not an independent time source. Strong proof of time requires an RFC 3161 timestamp token or another independently trusted timestamp service, verified against separately provisioned trust roots. Do not treat the host's local clock or a self-reported timestamp as trusted time.
