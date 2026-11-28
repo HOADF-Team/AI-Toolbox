@@ -229,17 +229,33 @@ sets `require_tsa_revocation: true`:
 
 The TSA signer certificate is extracted from the signed CMS timestamp token; the
 verifier does not accept a caller-selected certificate as the revocation subject.
-CRLs, like trust roots, are host inputs and cannot bootstrap trust from archive
-contents. Missing, stale, future-dated, wrongly signed, or revoking CRLs fail closed
-when the policy is required.
+The verifier also enumerates the non-root certificates embedded in the token and
+provided in the host-supplied untrusted chain. Each candidate certificate is
+independently path-validated to the host trust bundle and checked as the target of
+OpenSSL `verify -crl_check`. This checks the TSA signer and each supplied
+intermediate against the CRL issued by that certificate's issuer. Exact
+certificates already present in the host trust bundle are treated as trust anchors
+and are not checked for revocation. The verifier deliberately does not use
+`-crl_check_all`, which would also require a CRL for the root trust anchor.
 
-The current-status pass uses OpenSSL `-no_check_time` so an expired TSA leaf can
-still be checked for revocation. CRL freshness is checked separately against the
-audit clock. Historical certificate-chain validity and timestamp EKU are still
-checked by the RFC 3161 verification pass at `genTime`. This does not establish
-current validity of an expired TSA certificate, nor does it provide a full
-current-time revocation audit for every CA in a multi-level chain; the CRL policy
-currently targets the TSA signer certificate.
+Both CRL paths accept PEM bundles containing multiple `X509 CRL` entries. Every
+CRL entry in a bundle must have a validity interval covering the relevant
+historical `genTime` or current audit time. OpenSSL selects the issuer-matching
+CRL while validating each certificate. Supply the complete issuer CRL set needed
+for the TSA path: typically the TSA issuer's CRL and, when an intermediate CA is
+present, the root issuer's CRL for that intermediate. CRL bundles and trust roots
+remain independent host inputs and cannot bootstrap trust from archive contents.
+Missing, stale, future-dated, wrongly signed, or revoking CRLs fail closed when
+the policy is required.
+
+The current-status pass uses OpenSSL `-no_check_time` so an expired TSA leaf or
+intermediate can still be checked for revocation. CRL freshness is checked
+separately against the audit clock. Historical certificate-chain validity and
+timestamp EKU are still checked by the RFC 3161 verification pass at `genTime`.
+This does not establish current validity of an expired certificate; it establishes
+revocation status for each supplied non-root certificate in the validated TSA
+chain. Unrelated or ambiguous certificates in the supplied untrusted chain may
+cause verification to fail closed rather than being silently ignored.
 
 If `require_tsa_revocation` is omitted or false, timestamp verification remains
 compatible with the earlier timestamp-only policy and the report explicitly says

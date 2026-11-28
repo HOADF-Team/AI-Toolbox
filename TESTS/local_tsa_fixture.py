@@ -82,6 +82,11 @@ class LocalRfc3161TSA:
             "keyUsage = critical,digitalSignature,nonRepudiation\n"
             "extendedKeyUsage = critical,timeStamping\n"
             "subjectKeyIdentifier = hash\n"
+            "authorityKeyIdentifier = keyid,issuer\n"
+            "[ v3_intermediate_ca ]\n"
+            "basicConstraints = critical,CA:TRUE,pathlen:0\n"
+            "keyUsage = critical,keyCertSign,cRLSign\n"
+            "subjectKeyIdentifier = hash\n"
             "authorityKeyIdentifier = keyid,issuer\n",
             encoding="utf-8",
         )
@@ -141,6 +146,30 @@ class LocalRfc3161TSA:
             str(request_path), "-out", str(response_path),
         )
         return response_path
+
+    def issue_intermediate_ca(self, name: str = "intermediate") -> Path:
+        """Issue a temporary CA certificate signed by the fixture root."""
+        key = self.root / f"{name}.key"
+        csr = self.root / f"{name}.csr"
+        certificate = self.root / f"{name}.pem"
+        self._run_openssl(
+            "req", "-new", "-newkey", "rsa:2048", "-nodes",
+            "-keyout", str(key), "-out", str(csr), "-subj",
+            f"/CN=HOADF Ephemeral {name}",
+        )
+        self._run_openssl(
+            "ca", "-batch", "-notext", "-config", str(self.ca_config),
+            "-extensions", "v3_intermediate_ca", "-in", str(csr),
+            "-out", str(certificate),
+        )
+        return certificate
+
+    def revoke_certificate(self, certificate: Path) -> None:
+        """Revoke any certificate issued by this fixture CA."""
+        self._run_openssl(
+            "ca", "-batch", "-config", str(self.ca_config),
+            "-revoke", str(certificate),
+        )
 
     def revoke_tsa_certificate(self) -> None:
         """Revoke the TSA signer certificate in the local test CA database."""
