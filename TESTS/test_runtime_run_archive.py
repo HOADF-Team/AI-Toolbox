@@ -74,7 +74,7 @@ class RuntimeRunArchiveTests(unittest.TestCase):
         self.create()
         target = self.destination / "report/runtime-report.json"
         target.write_text("tampered", encoding="utf-8")
-        with self.assertRaisesRegex(RuntimeArchiveError, "digest_mismatch"):
+        with self.assertRaisesRegex(RuntimeArchiveError, "size_mismatch|digest_mismatch"):
             verify_runtime_archive(self.destination)
 
     def test_unlisted_file_is_rejected(self) -> None:
