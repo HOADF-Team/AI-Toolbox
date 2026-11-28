@@ -147,17 +147,18 @@ class TrustRegistryHistoryTests(unittest.TestCase):
                 "-subj", "/CN=HOADF Ephemeral Test TSA",
             )
             tsa_ext.write_text(
-                "basicConstraints=critical,CA:FALSE\\n"
-                "keyUsage=critical,digitalSignature,nonRepudiation\\n"
-                "extendedKeyUsage=critical,timeStamping\\n"
-                "subjectKeyIdentifier=hash\\n"
-                "authorityKeyIdentifier=keyid,issuer\\n",
+                "[ v3_tsa ]\\n"
+                "basicConstraints = critical,CA:FALSE\\n"
+                "keyUsage = critical,digitalSignature,nonRepudiation\\n"
+                "extendedKeyUsage = critical,timeStamping\\n"
+                "subjectKeyIdentifier = hash\\n"
+                "authorityKeyIdentifier = keyid,issuer\\n",
                 encoding="utf-8",
             )
             run_openssl(
                 "x509", "-req", "-in", str(tsa_csr), "-CA", str(ca_cert),
                 "-CAkey", str(ca_key), "-CAcreateserial", "-out", str(tsa_cert),
-                "-days", "1", "-sha256", "-extfile", str(tsa_ext),
+                "-days", "1", "-sha256", "-extfile", str(tsa_ext), "-extensions", "v3_tsa",
             )
             serial.write_text("01\\n", encoding="ascii")
             config.write_text(
