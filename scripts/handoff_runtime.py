@@ -49,7 +49,7 @@ def _resolve_skill_manifest(skills_root: Path, relative_path: Path) -> Path:
         manifest = current.resolve(strict=True)
         manifest.relative_to(base)
     except (OSError, ValueError) as exc:
-        raise RuntimeProtocolError("canonical Skill manifest escapes checkout or is unavailable") from exc
+        raise RuntimeProtocolError("canonical Skill manifest unavailable or escapes checkout") from exc
     if not manifest.is_file():
         raise RuntimeProtocolError("canonical Skill manifest is not a regular file")
     return manifest
