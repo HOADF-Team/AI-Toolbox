@@ -131,7 +131,6 @@ def verify_runtime_archive_cryptographically(
         raise RuntimeArchiveVerificationError("historical_and_current_tsa_crls_must_be_supplied_together")
     if require_tsa_revocation and not require_timestamps:
         raise RuntimeArchiveVerificationError("tsa_revocation_requires_trusted_timestamp")
-    use_tsa_crls = historical_crl is not None
     if anchor_key.is_symlink() or not anchor_key.is_file():
         raise RuntimeArchiveVerificationError("external_history_anchor_key_unavailable")
     if tsa_ca.is_symlink() or not tsa_ca.is_file():
@@ -183,6 +182,7 @@ def verify_runtime_archive_cryptographically(
             raise RuntimeArchiveVerificationError("archive_tsa_revocation_policy_downgrade")
     if require_tsa_revocation and historical_crl is None:
         raise RuntimeArchiveVerificationError("tsa_revocation_crls_required")
+    use_tsa_crls = historical_crl is not None
 
     registry_path = _safe_file(root, "trust/registry.json")
     key_root = _safe_directory(root, "trust/keys")
