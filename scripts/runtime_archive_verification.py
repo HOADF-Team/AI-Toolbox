@@ -136,6 +136,11 @@ def verify_runtime_archive_cryptographically(
         raise RuntimeArchiveVerificationError("archive_workflow_id_mismatch")
     if metadata.get("run_status") != "completed":
         raise RuntimeArchiveVerificationError("archive_run_not_completed")
+    archive_policy = metadata.get("verification_policy")
+    if not isinstance(archive_policy, dict):
+        raise RuntimeArchiveVerificationError("archive_verification_policy_invalid")
+    if archive_policy.get("require_trusted_timestamp") is True and not require_timestamps:
+        raise RuntimeArchiveVerificationError("archive_timestamp_policy_downgrade")
 
     registry_path = _safe_file(root, "trust/registry.json")
     key_root = _safe_directory(root, "trust/keys")
@@ -173,6 +178,8 @@ def verify_runtime_archive_cryptographically(
         result = _read_json(root, f"workflow/stages/{stage_id}.json")
         if not isinstance(result, dict):
             raise RuntimeArchiveVerificationError(f"stage_result_not_object:{stage_id}")
+        if result.get("status") != "completed":
+            raise RuntimeArchiveVerificationError(f"stage_not_completed:{stage_id}")
         envelope = result.get("artifact_provenance")
         bundle = result.get("integrity_bundle")
         if not isinstance(envelope, dict) or not isinstance(bundle, dict):
