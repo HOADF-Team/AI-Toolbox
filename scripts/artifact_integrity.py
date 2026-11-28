@@ -251,10 +251,7 @@ def verify_integrity_bundle(
         try:
             # Local import avoids a module cycle: trust_registry_history shares
             # canonical JSON helpers from this module.
-            from trust_registry_history import (
-                RegistryHistoryError,
-                verify_rfc3161_timestamp,
-            )
+            from trust_registry_history import verify_rfc3161_timestamp
 
             timestamp_report = verify_rfc3161_timestamp(
                 signature,
