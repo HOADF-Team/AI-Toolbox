@@ -124,9 +124,14 @@ class TrustRegistryHistoryTests(unittest.TestCase):
             data_path.write_bytes(data)
 
             def run_openssl(*args: str) -> None:
-                subprocess.run(
-                    ["openssl", *args], check=True, capture_output=True, text=True, timeout=30
+                completed = subprocess.run(
+                    ["openssl", *args], check=False, capture_output=True, text=True, timeout=30
                 )
+                if completed.returncode != 0:
+                    self.fail(
+                        f"OpenSSL command failed: {args!r}; "
+                        f"stdout={completed.stdout}; stderr={completed.stderr}"
+                    )
 
             run_openssl(
                 "req", "-x509", "-newkey", "rsa:2048", "-nodes",
@@ -134,6 +139,7 @@ class TrustRegistryHistoryTests(unittest.TestCase):
                 "-subj", "/CN=HOADF Ephemeral Test Root", "-days", "2",
                 "-addext", "basicConstraints=critical,CA:TRUE",
                 "-addext", "keyUsage=critical,keyCertSign,cRLSign",
+                "-addext", "subjectKeyIdentifier=hash",
             )
             run_openssl(
                 "req", "-new", "-newkey", "rsa:2048", "-nodes",
