@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-_TOKEN = re.compile(r"^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$")
+_TOKEN = re.compile(r"^[a-z][a-z0-9_]*(?:[.-][a-z0-9_]+)*$")
 _SIDE_EFFECTS = {"local_write", "network", "remote", "production", "financial"}
 _STATUSES = {"draft", "reviewed", "deprecated"}
 
