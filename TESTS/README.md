@@ -37,12 +37,18 @@ Run the runtime adapter protocol tests:
 python -m unittest TESTS.test_handoff_runtime -v
 ```
 
+Run the provider-neutral runtime interface tests:
+
+```bash
+python -m unittest TESTS.test_provider_neutral_runtime -v
+```
+
 Run the scenario-specific security regression tests:
 
 ```bash
 python -m unittest TESTS.test_inter_skill_workflow -v
 ```
 
-The runtime tests use a deterministic mock adapter. They validate envelope creation, catalog/manifest resolution, ordered handoffs, approval gates, failure stopping, and report aggregation. They do not execute Skills or an LLM and do not establish reasoning quality.
+The runtime tests use deterministic mock adapters. They validate envelope creation, catalog/manifest references, ordered handoffs, approval gates, failure stopping, planner request construction, strict response validation, and report aggregation. They do not execute Skills or invoke an LLM and do not establish reasoning quality.
 
 The fixture is intentionally vulnerable and must not be executed, installed, or deployed. These tests do not prove real agent reasoning, perform credential revocation or host isolation, establish remote VPS access, or harden production.
