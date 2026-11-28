@@ -112,3 +112,83 @@ The exporter rejects missing stage timestamps, missing evidence, unexpected file
 6. Alter a stage signature while updating the package manifest and confirm that cryptographic verification still fails.
 
 The test uses synthetic stage fixtures and local OpenSSL-generated keys/certificates. It does not call a public TSA, use production keys, perform real Skill/LLM actions, or require a server. A passing test demonstrates protocol and cryptographic integration in this controlled fixture; it does not establish that the synthetic evidence is truthful or that an arbitrary machine already trusts the supplied roots.
+
+
+## Local command-line workflow
+
+The local CLI wraps the existing exporter and cryptographic verifier; it does not introduce another archive format or trust mechanism. It requires Python 3.12 and the repository's existing runtime dependencies.
+
+### 1. Prepare an explicit export request
+
+Create a JSON file such as `export-request.json`:
+
+```json
+{
+  "source_root": "./run-staging",
+  "destination": "./portable-run",
+  "metadata": {
+    "run_id": "run-2026-001",
+    "workflow_id": "four-stage-workflow",
+    "stage_ids": ["stage-one", "stage-two", "stage-three", "stage-four"],
+    "skill_ids": ["skill-one", "skill-two", "skill-three", "skill-four"],
+    "personal_ai_library_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "ai_toolbox_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "created_at": "2026-11-28T10:00:00Z",
+    "run_status": "completed",
+    "verification_policy": {"require_trusted_timestamp": true}
+  },
+  "files": {
+    "workflow/contract.json": "workflow/contract.json",
+    "workflow/stages/stage-one.json": "workflow/stages/stage-one.json"
+  }
+}
+```
+
+The example file map is intentionally abbreviated: the request must explicitly map every required stage result, stage timestamp, evidence file, registry key, registry snapshot, history record, checkpoint, anchor, and anchor timestamp. Use the actual stage and Skill IDs from the contract. The exporter rejects incomplete or extra mappings and never scans the staging directory.
+
+Run:
+
+```bash
+python scripts/runtime_archive_cli.py export --request export-request.json
+```
+
+The export report confirms package integrity only; it is not cryptographic verification.
+
+### 2. Provision trust roots on the verifier machine
+
+Copy the history-anchor **public** key and TSA CA certificate bundle to a trusted location on the verifier machine through an independent, authenticated process. Do not copy trust roots out of the archive and do not place private keys in the trust configuration.
+
+Create `host-trust/trust-config.json`:
+
+```json
+{
+  "history_anchor_public_key": "history-anchor-public.pem",
+  "history_anchor_key_id": "registry-anchor-2026",
+  "timestamp_ca_file": "tsa-roots.pem",
+  "timestamp_untrusted_chain_file": "tsa-intermediates.pem",
+  "require_trusted_timestamps": true
+}
+```
+
+Trust file paths may be absolute or relative to the trust configuration file. The CLI rejects missing files, symlinks, unknown configuration fields, invalid policy types, and private-key PEM material. The TSA intermediate chain is optional; the anchor public key and TSA CA bundle are required.
+
+### 3. Transfer and verify offline
+
+Transfer only the completed archive directory and the independently provisioned verifier trust material. On the verifier machine run:
+
+```bash
+python scripts/runtime_archive_cli.py verify \\
+  --archive ./portable-run \\
+  --trust-config ./host-trust/trust-config.json \\
+  --report ./verification-report.json
+```
+
+Exit code `0` means the requested operation completed and the report was written. A nonzero exit code means the request or verification failed; treat the archive as unverified. Without `--report`, the JSON report is printed to standard output. Error messages go to standard error.
+
+### Operational boundaries
+
+- Export and verification are local filesystem operations; the CLI does not contact a public TSA, registry, server, or external runtime.
+- The export request's file map is an explicit allowlist, not a discovery pattern.
+- Trust roots come from the verifier host, never from the archive.
+- Successful cryptographic verification is retrospective `offline_audit_only`; it does not authorize Skill execution, live runtime handoff, or external actions.
+- This CLI is an initial local interface. It does not yet provide automatic run-staging discovery, trust-root rotation, or a full revocation/expiry policy manager.
