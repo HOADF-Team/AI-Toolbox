@@ -65,3 +65,8 @@ For an external planner evaluation exchange, use [External AI runtime benchmark 
 ### Creating signed bundles
 
 Use [Artifact signing](ARTIFACT-SIGNING.md) to create the Ed25519 integrity bundle after resolving the active key through the host-managed trust registry. The helper does not store or manage private keys and does not prevent cross-run replay.
+
+
+### Replay-resistant signature policy
+
+For signed stage results, the host should generate a unique run ID once per workflow execution and configure `require_execution_context=True`, that `run_id`, and a bounded `max_signature_age_seconds` in the integrity policy. The signing helper then binds each signature to the workflow ID, stage ID, Skill ID, and exact input reference, with signed issue/expiry times. A signature from a different run or stage, or one outside its validity window, blocks the stage. If this policy is not enabled, the legacy signature format remains compatible but replay protection is not claimed. The host is responsible for unique run-ID generation and non-reuse.

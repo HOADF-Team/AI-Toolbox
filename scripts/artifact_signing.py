@@ -11,6 +11,7 @@ import os
 import re
 import subprocess
 import tempfile
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -73,6 +74,8 @@ def create_integrity_bundle(
     expected_public_key_sha256: str,
     evidence_root: Path,
     evidence_paths: dict[str, str],
+    execution_context: dict[str, str] | None = None,
+    ttl_seconds: int = 900,
 ) -> dict[str, Any]:
     """Build a signed bundle; callers must resolve the key through host trust policy first."""
     if not isinstance(envelope, dict):
@@ -100,11 +103,27 @@ def create_integrity_bundle(
             "sha256": sha256_bytes(path.read_bytes()),
         })
 
-    statement = {
+    statement: dict[str, Any] = {
         "statement_version": "1.0",
         "envelope_sha256": sha256_bytes(canonical_json_bytes(envelope)),
         "evidence": manifest,
     }
+    if execution_context is not None:
+        required_context = {"run_id", "workflow_id", "stage_id", "skill_id", "input_ref"}
+        if not isinstance(execution_context, dict) or set(execution_context) != required_context:
+            raise IntegrityVerificationError("invalid_execution_context_fields")
+        if any(not isinstance(value, str) or not value.strip() for value in execution_context.values()):
+            raise IntegrityVerificationError("execution_context_values_must_be_nonempty_strings")
+        if not isinstance(ttl_seconds, int) or isinstance(ttl_seconds, bool) or not 1 <= ttl_seconds <= 86400:
+            raise IntegrityVerificationError("invalid_execution_context_ttl_seconds")
+        issued = datetime.now(timezone.utc)
+        expires = issued + timedelta(seconds=ttl_seconds)
+        statement["statement_version"] = "1.1"
+        statement["execution_context"] = {
+            **execution_context,
+            "issued_at": issued.isoformat().replace("+00:00", "Z"),
+            "expires_at": expires.isoformat().replace("+00:00", "Z"),
+        }
     with tempfile.TemporaryDirectory(prefix="artifact-signing-") as temp_dir:
         statement_path = Path(temp_dir) / "statement.json"
         signature_path = Path(temp_dir) / "statement.sig"

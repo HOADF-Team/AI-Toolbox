@@ -48,3 +48,40 @@ Run:
 ```bash
 python -m unittest TESTS.test_artifact_signing TESTS.test_artifact_integrity -v
 ```
+
+
+## Replay-resistant execution binding
+
+For a workflow stage, pass the five expected identifiers to `create_integrity_bundle(..., execution_context=...)`:
+
+```python
+execution_context = {
+    "run_id": host_generated_unique_run_id,
+    "workflow_id": stage_envelope["workflow_id"],
+    "stage_id": stage_envelope["stage"]["id"],
+    "skill_id": stage_envelope["stage"]["skill_id"],
+    "input_ref": stage_envelope["input_ref"],
+}
+bundle = create_integrity_bundle(
+    ...,
+    execution_context=execution_context,
+    ttl_seconds=300,
+)
+```
+
+This produces statement version `1.1`, with signed `issued_at` and `expires_at` timestamps. The host must generate a new, non-reused run ID for every workflow execution. A bundle signed for another run, workflow, stage, Skill, or input reference will fail when the runtime checks the expected context. Expired and future-dated bundles are rejected. The maximum permitted signature lifetime is one day; the verifier policy may impose a shorter maximum.
+
+Enable enforcement in the runtime policy:
+
+```python
+integrity_policy = {
+    "trust_registry_path": "/host/policy/trust-registry.json",
+    "key_root": "/host/policy/public-keys",
+    "evidence_root": "/host/evidence",
+    "require_execution_context": True,
+    "run_id": host_generated_unique_run_id,
+    "max_signature_age_seconds": 300,
+}
+```
+
+If `require_execution_context` is omitted or false, compatibility verification accepts the earlier statement format and does not claim replay protection. The host must persist run IDs and ensure they are never reused. This mechanism binds signatures to a host-declared run context; it is not a globally distributed nonce database and cannot stop a compromised host from deliberately reusing its own run ID.
