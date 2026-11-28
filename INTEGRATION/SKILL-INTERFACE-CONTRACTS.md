@@ -27,6 +27,7 @@ No forward references, implicit coercion, or automatic insertion of missing stag
 
 ```bash
 python scripts/validate_skill_interfaces.py --pretty
+python scripts/validate_workflow_compatibility.py --pretty
 python -m unittest TESTS.test_skill_interfaces -v
 ```
 
