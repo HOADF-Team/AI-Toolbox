@@ -11,6 +11,7 @@ from typing import Any
 
 from artifact_integrity import IntegrityVerificationError, verify_integrity_bundle
 from artifact_provenance import validate_provenance_envelope
+from trust_registry import TrustRegistryError, resolve_trusted_key
 from handoff_contract import validate_handoff_chain
 
 
@@ -145,14 +146,30 @@ def _validate_stage_result(
             errors.append("missing_integrity_bundle")
         else:
             try:
+                if "trust_registry_path" in integrity_policy:
+                    producer = artifact_provenance["producer"]["id"]
+                    artifact_type = artifact_provenance["artifact_type"]
+                    resolved = resolve_trusted_key(
+                        Path(integrity_policy["trust_registry_path"]),
+                        Path(integrity_policy["key_root"]),
+                        str(bundle.get("key_id", "")),
+                        producer,
+                        artifact_type,
+                    )
+                    trusted_public_key = Path(resolved["trusted_public_key"])
+                    trusted_key_id = resolved["trusted_key_id"]
+                else:
+                    trusted_public_key = Path(integrity_policy["trusted_public_key"])
+                    trusted_key_id = str(integrity_policy["trusted_key_id"])
+                    resolved = {"status": "active", "key_id": trusted_key_id}
                 report = verify_integrity_bundle(
                     artifact_provenance, bundle,
-                    Path(integrity_policy["trusted_public_key"]),
-                    str(integrity_policy["trusted_key_id"]),
+                    trusted_public_key, trusted_key_id,
                     Path(integrity_policy["evidence_root"]),
                 )
+                report["trust_resolution"] = resolved
                 result["integrity_verification"] = report
-            except (IntegrityVerificationError, KeyError, TypeError, OSError):
+            except (IntegrityVerificationError, TrustRegistryError, KeyError, TypeError, OSError):
                 errors.append("artifact_integrity_verification_failed")
     actions = result.get("actions_taken", [])
     if not isinstance(actions, list):

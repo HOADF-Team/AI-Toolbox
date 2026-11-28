@@ -40,6 +40,11 @@ The reference engine verifies only that an action's approval ID matches the call
 
 A host that has provisioned a trusted Ed25519 public key and local evidence store can enable fail-closed artifact verification by passing `integrity_policy` to `execute_with_adapter`. The policy contains `trusted_public_key`, `trusted_key_id`, and `evidence_root`. Each stage result must then include a signed `integrity_bundle`; the runtime verifies the signature, envelope digest, and evidence-file hashes before accepting the stage. A missing or invalid bundle stops the chain. Without a configured policy, only the existing structural and consistency checks run; no cryptographic verification is claimed. See [Artifact provenance](ARTIFACT-PROVENANCE.md) for the signed bundle format and trust limitations.
 
+
+### Host-managed signing trust registry
+
+For production host integration, prefer a registry-backed `integrity_policy` with `trust_registry_path`, `key_root`, and `evidence_root`. The runtime resolves the bundle key ID against the registry, checks the public-key fingerprint, active status, validity window, producer scope, and artifact-type scope, then verifies the Ed25519 signature. Revoked or retired keys are rejected. The registry and public-key directory must be protected and authenticated by the host; this repository does not provide key custody or secure policy distribution. See [Artifact provenance](ARTIFACT-PROVENANCE.md) and [the example registry](../SECURITY/trust-registry.example.json).
+
 ## Evidence, failure behavior, and limitations
 
 The artifact provenance envelope is required for every stage result. Structural validation checks its schema and binds key identifiers to the stage result; it does not authenticate producer identity, resolve the source revision, or prove evidence. Evidence locations and observations are agent-reported. The adapter checks basic structure and required provenance fields; it does not authenticate evidence, attest model identity, or verify that an action occurred. Use explicit classifications in final reports: **Observed**, **Inferred**, **Recommended**, and **Not checked**.
