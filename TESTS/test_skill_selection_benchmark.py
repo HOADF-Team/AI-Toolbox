@@ -55,6 +55,7 @@ class SelectionBenchmarkTests(unittest.TestCase):
             }
         report = score_benchmark(self.benchmark, proposals, self.catalog)
         self.assertEqual(report["metrics"]["micro_f1"], 1.0)
+        self.assertEqual(report["metrics"]["macro_f1"], 1.0)
         self.assertEqual(report["metrics"]["exact_match_rate"], 1.0)
 
     def test_unnecessary_skill_is_false_positive(self) -> None:
