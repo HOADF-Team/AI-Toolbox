@@ -14,4 +14,4 @@ The synthetic cross-Skill security scenario is documented in [`fixtures/inter-sk
 python -m unittest TESTS.test_inter_skill_workflow -v
 ```
 
-The fixture is intentionally vulnerable and must not be executed, installed, or deployed. These tests do not establish live credential revocation, remote VPS access, or production hardening.
+The fixture is intentionally vulnerable and must not be executed, installed, or deployed. The general Trivy repository scan excludes only its deliberately outdated `requirements.txt`; a separate CI step scans that fixture and asserts detection of the known `requests==2.19.1` advisory. The exclusion therefore does not hide the fixture from security testing. These tests do not establish live credential revocation, remote VPS access, or production hardening.
