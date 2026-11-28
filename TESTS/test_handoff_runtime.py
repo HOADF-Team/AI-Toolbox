@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import os
 import subprocess
@@ -14,6 +15,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SKILLS_REVISION = "a" * 40
 FIXTURE = ROOT / "TESTS" / "fixtures" / "inter-skill-demo"
 sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(ROOT / "TESTS"))
+from local_tsa_fixture import LocalRfc3161TSA  # noqa: E402
 from artifact_signing import create_integrity_bundle  # noqa: E402
 from trust_registry import public_key_fingerprint  # noqa: E402
 from handoff_runtime import RuntimeProtocolError, build_workflow_plan, execute_with_adapter, stage_result_sha256  # noqa: E402
@@ -110,7 +113,7 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
     def test_mock_adapter_executes_full_sequence_and_validates_handoffs(self) -> None:
         adapter, calls = self.adapter_for()
         report = execute_with_adapter(self.contract, self.plan(), adapter)
-        self.assertEqual(report["status"], "completed")
+        self.assertEqual(report["status"], "completed", report)
         self.assertEqual(len(calls), 4)
         self.assertEqual(report["handoff_validation"]["status"], "passed")
 
@@ -271,6 +274,8 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
         )
         key_id = "synthetic-chain-key"
         fingerprint = public_key_fingerprint(public_key)
+        tsa = LocalRfc3161TSA(root / "local-tsa")
+        timestamp_responses: dict[str, str] = {}
         registry_path = root / "trust-registry.json"
         registry_path.write_text(json.dumps({
             "registry_version": "1.0",
@@ -313,6 +318,10 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
                 },
                 ttl_seconds=300,
             )
+            signature = base64.b64decode(
+                result["integrity_bundle"]["signature"], validate=True
+            )
+            timestamp_responses[stage_id] = str(tsa.issue(signature))
             if tamper_signature and len(calls) == 1:
                 result["integrity_bundle"]["signature"] = "AA=="
             return result
@@ -324,6 +333,10 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
             "require_execution_context": True,
             "run_id": run_id,
             "max_signature_age_seconds": 300,
+            "require_trusted_timestamp": True,
+            "timestamp_responses": timestamp_responses,
+            "timestamp_ca_file": str(tsa.ca_cert),
+            "timestamp_untrusted_chain_file": str(tsa.tsa_cert),
         }
         return signed_adapter, policy, calls
 
@@ -333,7 +346,7 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
             report = execute_with_adapter(
                 self.contract, self.plan(), adapter, integrity_policy=policy
             )
-        self.assertEqual(report["status"], "completed")
+        self.assertEqual(report["status"], "completed", report)
         self.assertEqual(len(calls), 4)
         self.assertEqual(report["handoff_validation"]["status"], "passed")
         self.assertTrue(all(
@@ -341,12 +354,16 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
             == "run_stage_bound_and_time_limited"
             for item in report["artifacts"]
         ))
+        self.assertTrue(all(
+            item["integrity_verification"]["trusted_timestamp"]["status"] == "verified"
+            for item in report["artifacts"]
+        ))
 
     def test_required_timestamp_policy_blocks_without_stage_response(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             adapter, policy, calls = self._signed_chain_fixture(Path(temp_dir))
             policy["require_trusted_timestamp"] = True
-            policy["timestamp_ca_file"] = str(Path(temp_dir) / "tsa-ca.pem")
+            policy["timestamp_responses"] = {}
             report = execute_with_adapter(
                 self.contract, self.plan(), adapter, integrity_policy=policy
             )
