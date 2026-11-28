@@ -106,6 +106,31 @@ class TrustRegistryHistoryTests(unittest.TestCase):
 
 
 
+
+    def test_history_anchor_timestamps_exact_signature_bytes(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            records, anchor, public_key = self._signed_anchor(Path(temp_dir))
+            token_path = Path(temp_dir) / "response.tsr"
+            ca_path = Path(temp_dir) / "ca.pem"
+            token_path.write_bytes(b"synthetic response")
+            ca_path.write_bytes(b"synthetic trust root")
+            expected_signature = base64.b64decode(anchor["signature"], validate=True)
+            timestamp_report = {
+                "status": "verified",
+                "gen_time": "2026-11-28T12:00:00+00:00",
+                "verification": "openssl_ts_verify_with_host_supplied_ca",
+            }
+            with patch(
+                "trust_registry_history.verify_rfc3161_timestamp",
+                return_value=timestamp_report,
+            ) as verify_timestamp:
+                report = verify_history_anchor(
+                    records, anchor, public_key, "external-anchor-2026",
+                    timestamp_response=token_path, timestamp_ca_file=ca_path,
+                )
+            self.assertEqual(verify_timestamp.call_args.args[0], expected_signature)
+            self.assertEqual(report["timestamp"]["status"], "verified")
+
     def test_rfc3161_timestamp_end_to_end_with_ephemeral_local_tsa(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
