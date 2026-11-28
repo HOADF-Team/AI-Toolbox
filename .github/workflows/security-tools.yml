@@ -167,7 +167,39 @@ jobs:
         run: gitleaks dir --redact --exit-code 1 .
 
       - name: Scan repository dependencies, secrets and configuration
-        run: trivy fs --scanners vuln,secret,misconfig --skip-dirs .git --exit-code 1 .
+        # The training fixture intentionally pins a vulnerable package; test it separately below.
+        run: trivy fs --scanners vuln,secret,misconfig --skip-dirs .git --skip-files ./TESTS/fixtures/inter-skill-demo/requirements.txt --exit-code 1 .
+
+      - name: Verify Trivy detects the intentionally vulnerable training dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          report="$(mktemp)"
+          trap 'rm -f "$report"' EXIT
+          trivy fs --scanners vuln --exit-code 0 --format json --output "$report" TESTS/fixtures/inter-skill-demo
+          python - "$report" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          report = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          vulnerabilities = [
+              item
+              for result in report.get("Results", [])
+              for item in (result.get("Vulnerabilities") or [])
+          ]
+          expected = any(
+              item.get("VulnerabilityID") == "CVE-2018-18074"
+              and item.get("PkgName") == "requests"
+              and item.get("InstalledVersion") == "2.19.1"
+              for item in vulnerabilities
+          )
+          if not expected:
+              raise SystemExit(
+                  "Trivy did not detect the expected requests 2.19.1 training-fixture vulnerability."
+              )
+          print("Trivy detected the expected CVE in the isolated training fixture.")
+          PY
 
       - name: Install pinned age and restic official release binaries
         shell: bash
