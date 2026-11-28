@@ -9,7 +9,7 @@ import base64
 import re
 import subprocess
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -212,7 +212,7 @@ def verify_rfc3161_timestamp(
         raise RegistryHistoryError("rfc3161_generation_time_missing")
     return {
         "status": "verified",
-        "gen_time": generation_time.astimezone().isoformat(),
+        "gen_time": generation_time.astimezone(timezone.utc).isoformat(),
         "verification": "openssl_ts_verify_with_host_supplied_ca",
     }
 
