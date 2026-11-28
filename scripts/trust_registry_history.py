@@ -57,6 +57,13 @@ def _validate_event(event: Any) -> None:
             raise RegistryHistoryError("replacement_key_id_must_differ")
 
 
+def registry_snapshot_sha256(registry: dict[str, Any]) -> str:
+    """Digest a registry snapshot using the shared canonical JSON encoding."""
+    if not isinstance(registry, dict):
+        raise RegistryHistoryError("registry_snapshot_must_be_object")
+    return sha256_bytes(canonical_json_bytes(registry))
+
+
 def build_history_record(
     event: dict[str, Any],
     sequence: int,
