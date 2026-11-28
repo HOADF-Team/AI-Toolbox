@@ -221,7 +221,7 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
                 "workflow_id": self.contract["workflow_id"],
                 "stage_id": "crypto-security",
                 "skill_id": "crypto-security",
-                "input_ref": "scenario:demo",
+                "input_ref": self.contract.get("root_input_ref", "scenario:demo"),
             },
         )
 
