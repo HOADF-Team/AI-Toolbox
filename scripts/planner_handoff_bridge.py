@@ -23,7 +23,7 @@ def prepare_workflow_from_planner(
     skill_map: dict[str, Any],
     skills_root: Path,
     skills_revision: str,
-    approvals: dict[str, str] | None = None,
+    approvals: dict[str, dict[str, dict[str, Any]]] | None = None,
 ) -> dict[str, Any]:
     """Validate a planner choice and prepare matching canonical Skill envelopes.
 
