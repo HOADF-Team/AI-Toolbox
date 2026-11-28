@@ -37,7 +37,7 @@ The validator is offline and deterministic. It does not fetch Git revisions or r
 The optional verifier in `scripts/artifact_integrity.py` adds three checks:
 
 1. SHA-256 of the complete provenance envelope using the documented canonical JSON encoding (`sort_keys`, compact separators, UTF-8, no NaN/Infinity).
-2. SHA-256 of each evidence file, resolved only beneath an explicitly configured local evidence root. Absolute paths, parent traversal, symlinks, missing files, and non-files are rejected.
+2. SHA-256 of each evidence file, resolved only beneath an explicitly configured local evidence root. Absolute paths, parent traversal, symlinks, missing files, and non-files are rejected. The verifier also requires unique evidence references and exact manifest-entry fields (`ref`, `path`, `sha256`) with lowercase 64-character SHA-256 digests.
 3. Ed25519 signature over a statement containing the envelope digest and the evidence reference/path/digest manifest. OpenSSL is invoked with fixed arguments and without a shell.
 
 A bundle has this logical shape:
@@ -171,7 +171,7 @@ python -m unittest TESTS.test_trust_registry TESTS.test_archival_verification -v
 
 ## Tamper-evident lifecycle history
 
-The optional hash-chain helper in [TRUST-REGISTRY-HISTORY.md](TRUST-REGISTRY-HISTORY.md) records key addition, retirement, revocation, and rotation events against canonical registry snapshot digests. It detects edits and truncation relative to an independently authenticated checkpoint. It does not create immutable storage or authenticate a checkpoint stored beside the log. The host must retain the checkpoint through a separate trusted channel.
+The optional hash-chain helper in [TRUST-REGISTRY-HISTORY.md](TRUST-REGISTRY-HISTORY.md) records key addition, retirement, revocation, and atomic rotation events against canonical registry snapshot digests. A rotation event retires the old key and activates its replacement in one transition; the referenced registry snapshot must contain both resulting entries. It detects edits and truncation relative to an independently authenticated checkpoint. It does not create immutable storage or authenticate a checkpoint stored beside the log. The host must retain the checkpoint through a separate trusted channel.
 
 This history does not override revocation: revoked keys remain rejected by archival verification even when an earlier signature timestamp predates the revocation event.
 

@@ -12,7 +12,7 @@ Each event records:
 - `registry_sha256`: canonical SHA-256 digest of the registry snapshot associated with the event;
 - optional `reason` and `replacement_key_id` where applicable.
 
-The helper builds a sequential hash chain. Each record contains its sequence number, previous event digest, event object, and digest of the canonical record body. It checks lifecycle order: a key must be added before retirement or revocation; a retired key may later be revoked; revoked is terminal. Rotation events require a reason and a distinct replacement key ID.
+The helper builds a sequential hash chain. Each record contains its sequence number, previous event digest, event object, and digest of the canonical record body. It checks lifecycle order: a key must be added before retirement or revocation; a retired key may later be revoked; revoked is terminal. A `key_rotated` event is an atomic transition: the named old key becomes `retired`, and the previously unknown `replacement_key_id` becomes `active`. The registry snapshot for that event must contain both entries in those resulting states. The replacement cannot be registered a second time.
 
 ## Host-side flow
 
@@ -46,7 +46,7 @@ checkpoint = build_history_checkpoint(records)
 report = verify_registry_history(records, checkpoint)
 ```
 
-The example shows the data contract only; this repository does not provision storage, permissions, immutable retention, or an external checkpoint service.
+The example shows the data contract only; this repository does not provision storage, permissions, immutable retention, or an external checkpoint service. For rotation, create one `key_rotated` event whose `registry_sha256` points to a snapshot containing the old key as `retired` (with matching `retired_at`) and the replacement key as `active`.
 
 ## Security boundary
 
@@ -65,9 +65,9 @@ python -m unittest TESTS.test_trust_registry_history -v
 
 ## Enforcing history during archival verification
 
-The audit-only `verify_archived_bundle(..., require_history=True)` option requires both the complete event records and a separately authenticated checkpoint. It checks that the chain's lifecycle state agrees with the current host registry, that a retired key has exactly one retirement event matching `retired_at`, and that no revocation event exists for the key. A missing, truncated, altered, or contradictory history blocks archival verification.
+The audit-only `verify_archived_bundle(..., require_history=True)` option requires both the complete event records and a separately authenticated checkpoint. It checks that the chain's lifecycle state agrees with the current host registry, that a retired key has exactly one retirement or rotation event matching `retired_at`, and that no revocation event exists for the key. A missing, truncated, altered, or contradictory history blocks archival verification.
 
 This is still not an authorization path for live workflow stages. The host must authenticate the checkpoint and retain the relevant registry snapshots; a valid hash chain alone does not establish that the lifecycle action was authorized.
 
 
-Strict archival verification also requires the retained registry snapshots referenced by the key-add and key-retirement events. Pass them as a mapping from each canonical `registry_sha256` to the corresponding parsed registry snapshot using `registry_snapshots=...`. The verifier recalculates each snapshot digest, checks that the key's public-key fingerprint is unchanged, and confirms the snapshot status and `retired_at` agree with the lifecycle event. Missing or altered snapshots block strict archival verification.
+Strict archival verification also requires the retained registry snapshots referenced by the key-add and key-retirement/rotation events. Pass them as a mapping from each canonical `registry_sha256` to the corresponding parsed registry snapshot using `registry_snapshots=...`. The verifier recalculates each snapshot digest, checks that the key's public-key fingerprint is unchanged, and confirms the snapshot status and `retired_at` agree with the lifecycle event. Missing or altered snapshots block strict archival verification.

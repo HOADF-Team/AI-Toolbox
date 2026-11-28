@@ -158,6 +158,8 @@ def verify_registry_history(
             replacement = event["replacement_key_id"]
             if lifecycle.get(replacement) is not None:
                 raise RegistryHistoryError("replacement_key_already_registered")
+            lifecycle[key_id] = "retired"
+            lifecycle[replacement] = "active"
         body = {
             "sequence": index,
             "previous_event_sha256": previous,

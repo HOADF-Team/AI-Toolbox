@@ -141,5 +141,52 @@ class TrustRegistryHistoryTests(unittest.TestCase):
         self.assertEqual(registry_snapshot_sha256(first), registry_snapshot_sha256(second))
 
 
+    def test_rotation_atomically_retires_old_key_and_activates_replacement(self) -> None:
+        first = build_history_record(
+            self.event("old-key-added", "key_added", key_id="old-key"), 1
+        )
+        rotation = build_history_record(
+            self.event(
+                "old-key-rotated",
+                "key_rotated",
+                key_id="old-key",
+                replacement_key_id="new-key",
+                reason="planned key rotation",
+            ),
+            2,
+            first["event_sha256"],
+        )
+        records = [first, rotation]
+        report = verify_registry_history(records, build_history_checkpoint(records))
+        self.assertEqual(report["key_lifecycle"]["old-key"], "retired")
+        self.assertEqual(report["key_lifecycle"]["new-key"], "active")
+
+    def test_replacement_key_cannot_be_activated_twice(self) -> None:
+        first = build_history_record(
+            self.event("old-key-added", "key_added", key_id="old-key"), 1
+        )
+        rotation = build_history_record(
+            self.event(
+                "old-key-rotated",
+                "key_rotated",
+                key_id="old-key",
+                replacement_key_id="new-key",
+                reason="planned key rotation",
+            ),
+            2,
+            first["event_sha256"],
+        )
+        duplicate = build_history_record(
+            self.event("new-key-added-again", "key_added", key_id="new-key"),
+            3,
+            rotation["event_sha256"],
+        )
+        records = [first, rotation, duplicate]
+        with self.assertRaisesRegex(
+            RegistryHistoryError, "key_added_after_existing_lifecycle"
+        ):
+            verify_registry_history(records, build_history_checkpoint(records))
+
+
 if __name__ == "__main__":
     unittest.main()

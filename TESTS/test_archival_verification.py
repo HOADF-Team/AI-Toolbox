@@ -250,5 +250,73 @@ class ArchivalVerificationTests(unittest.TestCase):
             )
 
 
+    def test_strict_archival_verification_accepts_old_key_with_rotation_history(self) -> None:
+        replacement_private = self.root / "replacement-private.pem"
+        replacement_public = self.key_root / "replacement.pub"
+        subprocess.run(
+            ["openssl", "genpkey", "-algorithm", "ED25519", "-out", str(replacement_private)],
+            check=True, capture_output=True, timeout=15,
+        )
+        subprocess.run(
+            ["openssl", "pkey", "-in", str(replacement_private), "-pubout", "-out", str(replacement_public)],
+            check=True, capture_output=True, timeout=15,
+        )
+        replacement = {
+            "key_id": "replacement-key-2026",
+            "algorithm": "Ed25519",
+            "public_key_file": "replacement.pub",
+            "public_key_sha256": public_key_fingerprint(replacement_public),
+            "status": "active",
+            "not_before": "2026-12-01T00:00:00Z",
+            "not_after": "2027-12-01T00:00:00Z",
+            "allowed_producers": ["crypto-security"],
+            "allowed_artifact_types": ["security.review"],
+        }
+        active_old = {**self.entry, "status": "active"}
+        active_old.pop("retired_at", None)
+        added_snapshot = {"registry_version": "1.0", "keys": [active_old]}
+        rotated_old = {**self.entry, "status": "retired"}
+        rotation_snapshot = {
+            "registry_version": "1.0",
+            "keys": [rotated_old, replacement],
+        }
+        added_digest = registry_snapshot_sha256(added_snapshot)
+        rotation_digest = registry_snapshot_sha256(rotation_snapshot)
+        added = build_history_record({
+            "event_id": "old-key-added",
+            "action": "key_added",
+            "key_id": "archive-key-2026",
+            "effective_at": "2026-01-01T00:00:00Z",
+            "registry_sha256": added_digest,
+        }, 1)
+        rotated = build_history_record({
+            "event_id": "old-key-rotated",
+            "action": "key_rotated",
+            "key_id": "archive-key-2026",
+            "replacement_key_id": "replacement-key-2026",
+            "reason": "planned rotation",
+            "effective_at": self.entry["retired_at"],
+            "registry_sha256": rotation_digest,
+        }, 2, added["event_sha256"])
+        records = [added, rotated]
+        snapshots = {added_digest: added_snapshot, rotation_digest: rotation_snapshot}
+        checkpoint = build_history_checkpoint(records)
+        report = self.verify(
+            history_records=records,
+            history_checkpoint=checkpoint,
+            require_history=True,
+            registry_snapshots=snapshots,
+        )
+        self.assertEqual(report["status"], "archived_verified")
+        self.assertEqual(
+            report["history_verification"]["key_lifecycle"]["archive-key-2026"],
+            "retired",
+        )
+        self.assertEqual(
+            report["history_verification"]["key_lifecycle"]["replacement-key-2026"],
+            "active",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
