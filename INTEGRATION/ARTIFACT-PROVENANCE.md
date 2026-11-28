@@ -205,3 +205,6 @@ For runtime handoffs, `artifact_provenance.payload.stage_result_sha256` must con
 
 
 Historical key resolution also compares the signed timestamp with the verifier's current timezone-aware clock and rejects future-dated signatures. A valid key window alone is insufficient: an active key must not be allowed to make a not-yet-created artifact appear historically verified.
+
+
+The serializer now rejects non-string object keys and Python-only container/value types rather than silently coercing them. The canonical profile is the exact Python reference encoding described above; it is not claimed to be RFC 8785/JCS. A non-Python host must implement byte-for-byte compatible serialization (including number formatting and Unicode handling) or call a compatible reference implementation before signing/verifying. Cross-language golden test vectors remain a useful future interoperability gate.

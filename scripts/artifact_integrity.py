@@ -20,8 +20,25 @@ class IntegrityVerificationError(ValueError):
     """Raised when an artifact integrity bundle cannot be trusted."""
 
 
+def _validate_json_tree(value: Any) -> None:
+    """Reject Python values that JSON would silently coerce or reinterpret."""
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if not isinstance(key, str):
+                raise IntegrityVerificationError("canonical_json_object_keys_must_be_strings")
+            _validate_json_tree(child)
+    elif isinstance(value, list):
+        for child in value:
+            _validate_json_tree(child)
+    elif value is None or isinstance(value, (str, bool, int, float)):
+        return
+    else:
+        raise IntegrityVerificationError("value_is_not_json_data")
+
+
 def canonical_json_bytes(value: Any) -> bytes:
-    """Return the project's documented deterministic JSON encoding."""
+    """Return deterministic JSON bytes without Python-specific key coercion."""
+    _validate_json_tree(value)
     try:
         return json.dumps(
             value, sort_keys=True, separators=(",", ":"), ensure_ascii=False,

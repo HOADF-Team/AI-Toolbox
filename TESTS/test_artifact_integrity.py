@@ -178,5 +178,18 @@ class ArtifactIntegrityTests(unittest.TestCase):
             self.verify(bundle=bad)
 
 
+    def test_canonical_json_rejects_non_string_object_keys(self) -> None:
+        with self.assertRaisesRegex(
+            IntegrityVerificationError, "canonical_json_object_keys_must_be_strings"
+        ):
+            canonical_json_bytes({1: "value"})
+
+    def test_canonical_json_rejects_python_only_container_types(self) -> None:
+        with self.assertRaisesRegex(
+            IntegrityVerificationError, "value_is_not_json_data"
+        ):
+            canonical_json_bytes({"values": ("not", "a", "json-array")})
+
+
 if __name__ == "__main__":
     unittest.main()
