@@ -407,5 +407,50 @@ class ArchivalVerificationTests(unittest.TestCase):
         )
 
 
+    def test_expired_signing_key_is_rejected_using_authenticated_tsa_time(self) -> None:
+        bundle = self.sign()
+        signature = base64.b64decode(bundle["signature"], validate=True)
+        response, ca_bundle, tsa_cert = issue_local_rfc3161_timestamp(
+            signature, self.root / "expired-key-local-tsa"
+        )
+        timestamp = verify_rfc3161_timestamp(signature, response, ca_bundle, tsa_cert)
+        generation_time = datetime.fromisoformat(timestamp["gen_time"])
+        self.write_registry({
+            **self.entry,
+            "not_before": (generation_time - timedelta(days=2)).isoformat(),
+            "not_after": (generation_time - timedelta(seconds=1)).isoformat(),
+            "retired_at": (generation_time + timedelta(days=1)).isoformat(),
+        })
+        with self.assertRaisesRegex(ValueError, "historical_signature_outside_key_validity"):
+            self.verify(
+                bundle=bundle,
+                timestamp_response=response,
+                timestamp_ca_file=ca_bundle,
+                timestamp_untrusted_chain_file=tsa_cert,
+                require_trusted_timestamp=True,
+                now=generation_time + timedelta(seconds=30),
+            )
+
+    def test_substituted_tsa_trust_root_rejects_timestamp(self) -> None:
+        bundle = self.sign()
+        signature = base64.b64decode(bundle["signature"], validate=True)
+        response, _, _ = issue_local_rfc3161_timestamp(
+            signature, self.root / "original-local-tsa"
+        )
+        _, substituted_ca, substituted_tsa = issue_local_rfc3161_timestamp(
+            b"independent fixture data", self.root / "substituted-local-tsa"
+        )
+        with self.assertRaisesRegex(ValueError, "rfc3161_signature_or_trust_verification_failed"):
+            verify_rfc3161_timestamp(
+                signature, response, substituted_ca, substituted_tsa
+            )
+
+    def test_missing_archived_evidence_is_rejected(self) -> None:
+        bundle = self.sign()
+        (self.evidence_root / "scan.txt").unlink()
+        with self.assertRaisesRegex(ValueError, "evidence_file_missing_or_outside_root"):
+            self.verify(bundle=bundle)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -192,3 +192,17 @@ Exit code `0` means the requested operation completed and the report was written
 - Trust roots come from the verifier host, never from the archive.
 - Successful cryptographic verification is retrospective `offline_audit_only`; it does not authorize Skill execution, live runtime handoff, or external actions.
 - This CLI is an initial local interface. It does not yet provide automatic run-staging discovery, trust-root rotation, or a full revocation/expiry policy manager.
+
+
+## Trust lifecycle negative-test coverage
+
+The archival verification test suite also exercises fail-closed cases with ephemeral local fixtures:
+
+- A signing key whose validity window ended before the TSA-authenticated signature time is rejected, even when the signer-provided creation time claims an earlier date.
+- A timestamp token verified against a substituted, independently generated TSA root is rejected.
+- Missing evidence referenced by the signed evidence manifest is rejected.
+- Existing lifecycle tests continue to reject revoked signing keys, signatures outside a retired key's validity/retirement window, inconsistent registry snapshots, and altered history checkpoints.
+
+Revocation is intentionally conservative: once a key is recorded as revoked in the authenticated history/current registry, archival verification rejects signatures from that key even if a timestamp predates the recorded revocation. This is the current compromise-response policy; it avoids treating a possibly compromised key as safe merely because a token claims an earlier signing time.
+
+These tests use generated local keys and a local RFC 3161 TSA fixture only. They do not contact an external TSA or require network services.
