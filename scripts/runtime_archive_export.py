@@ -85,6 +85,11 @@ def create_cryptographic_runtime_archive(
     policy = metadata.get("verification_policy")
     if not isinstance(policy, dict) or policy.get("require_trusted_timestamp") is not True:
         raise RuntimeArchiveExportError("cryptographic_archive_requires_trusted_timestamps")
+    policy_version = metadata.get("verification_policy_version")
+    if policy_version is not None and (type(policy_version) is not int or policy_version != 2):
+        raise RuntimeArchiveExportError("unsupported_verification_policy_version")
+    if policy_version == 2 and policy.get("require_tsa_revocation") is not True:
+        raise RuntimeArchiveExportError("version_2_policy_requires_tsa_revocation")
     stage_ids = metadata.get("stage_ids")
     skill_ids = metadata.get("skill_ids")
     if (
