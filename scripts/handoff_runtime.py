@@ -302,6 +302,8 @@ def _validate_stage_result(
                 timestamp_response_path = timestamp_responses.get(str(stage["id"]))
                 if require_trusted_timestamp and timestamp_response_path is None:
                     raise IntegrityVerificationError("stage_trusted_timestamp_required")
+                if timestamp_response_path is not None and not isinstance(timestamp_response_path, str):
+                    raise IntegrityVerificationError("invalid_stage_timestamp_response_path")
                 timestamp_ca_path = integrity_policy.get("timestamp_ca_file")
                 timestamp_chain_path = integrity_policy.get("timestamp_untrusted_chain_file")
                 if timestamp_response_path is not None and not isinstance(timestamp_ca_path, str):
@@ -314,11 +316,11 @@ def _validate_stage_result(
                     Path(integrity_policy["evidence_root"]),
                     expected_execution_context=expected_execution_context,
                     max_age_seconds=integrity_policy.get("max_signature_age_seconds", 900),
-                    timestamp_response=Path(timestamp_response_path) if timestamp_response_path else None,
-                    timestamp_ca_file=Path(timestamp_ca_path) if timestamp_response_path else None,
+                    timestamp_response=Path(timestamp_response_path) if isinstance(timestamp_response_path, str) else None,
+                    timestamp_ca_file=Path(timestamp_ca_path) if isinstance(timestamp_response_path, str) and isinstance(timestamp_ca_path, str) else None,
                     timestamp_untrusted_chain_file=(
                         Path(timestamp_chain_path)
-                        if timestamp_response_path and isinstance(timestamp_chain_path, str)
+                        if isinstance(timestamp_response_path, str) and isinstance(timestamp_chain_path, str)
                         else None
                     ),
                     require_trusted_timestamp=require_trusted_timestamp,
