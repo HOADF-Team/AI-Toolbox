@@ -1,16 +1,16 @@
 # SBOM attestation and build provenance
 
-**Status:** end-to-end verified on `main` on 2026-11-27. Both CycloneDX SBOM and SLSA provenance attestations were created and verified.  
+**Status:** end-to-end verified on `main` on 2026-11-28. Both CycloneDX SBOM and SLSA provenance attestations were created and verified.  
 **Scope:** public `HOADF-Team/AI-Toolbox` source archive and CycloneDX SBOM only.
 
 ## Workflow behavior
 
-- Runs on source/CI changes pushed to `main` and on manual dispatch. The job has an explicit `refs/heads/main` guard, so pull requests, forks, tags and dispatches from other branches cannot mint attestations. Documentation-only and catalog-metadata-only commits do not trigger redundant attestations.
-- Checks out the exact source commit with `actions/checkout` pinned to full commit SHA `11bd71901bbe5b1630ceea73d27597364c9af683`, with persisted Git credentials disabled.
-- Validates the Skill-to-Tool map against the canonical `Personal-AI-Library` `main` branch before generating or signing artifacts.
+- Runs on every push to `main` and on manual dispatch. The job has an explicit `refs/heads/main` guard, so pull requests, forks, tags and dispatches from other branches cannot mint attestations.
+- Checks out the exact source commit with `actions/checkout` v7.0.1 pinned to full commit SHA `3d3c42e5aac5ba805825da76410c181273ba90b1`, with persisted Git credentials disabled.
+- Validates the Skill-to-Tool map against the canonical `Personal-AI-Library` `main` branch before generating or signing artifacts, and records the exact cloned library commit SHA in the workflow summary. This external repository is a moving validation input; it is not included in the AI-Toolbox source archive or its SBOM.
 - Installs Syft 1.57.1 from the official release archive and verifies both the checksum manifest and binary archive SHA-256.
 - Generates and validates a non-empty CycloneDX JSON SBOM from that checkout.
-- Creates a source archive from the exact commit using `git archive`; records commit SHA and archive SHA-256 in the workflow summary.
+- Creates a source archive from the exact commit using `git archive`; records commit SHA and archive SHA-256 in the workflow summary. The summary uses `printf` so Markdown backticks are literal and do not trigger shell command substitution.
 - Uses `actions/attest` pinned to reviewed full commit SHA `1e69f48acb82d1966a394da916b4c1698aa569d6` to create:
   1. a CycloneDX SBOM attestation (`https://cyclonedx.org/bom`);
   2. a SLSA build provenance attestation (`https://slsa.dev/provenance/v1`).
@@ -34,7 +34,7 @@ The workflow verifies:
 - SLSA provenance predicate type;
 - CycloneDX SBOM predicate type.
 
-The latest trusted-branch run passed all steps, including canonical Skill-map validation. Run: [45953226471](https://github.com/HOADF-Team/AI-Toolbox/actions/runs/45953226471). Source commit: `19433a1df285538e6590b1583af870a7d6e1e182`. Both predicate types were verified with `gh attestation verify`, requiring the repository and exact signer workflow identity. The Syft catalog record now reflects this scoped result.
+The latest trusted-branch run passed all steps, including canonical Skill-map validation and both attestation verifications. Run: [46107273708](https://github.com/HOADF-Team/AI-Toolbox/actions/runs/46107273708). Source commit: `2b101e52b2714fe8ea14f1ba17552dfcee09ccae`. Source archive SHA-256: `6bbc54929d96c0cfb6d8473c5f671904bd632363a9124bbcc9afabb4488f6f53`. The run created [CycloneDX SBOM attestation](https://github.com/HOADF-Team/AI-Toolbox/attestations/73363554) and [SLSA provenance attestation](https://github.com/HOADF-Team/AI-Toolbox/attestations/73363562), then verified both with `gh attestation verify`, requiring the repository and exact signer workflow identity. The workflow summary's shell quoting defect was identified in this run's logs and is corrected by the current change; the attestations themselves were created and verified successfully.
 
 ## Security limits
 
