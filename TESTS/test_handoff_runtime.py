@@ -50,6 +50,7 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
             index = len(calls) - 1
             result = dict(values[index])
             result["input_ref"] = envelope["input_ref"]
+            result["status"] = "completed"
             result["skill_id"] = envelope["stage"]["skill_id"]
             result["provenance"] = {
                 "execution_mode": "mock",
