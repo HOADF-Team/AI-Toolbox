@@ -235,6 +235,7 @@ def execute_with_adapter(
 ) -> dict[str, Any]:
     """Run an injected adapter; optional host trust policy enforces signatures and evidence hashes."""
     contract_stages = contract.get("stages")
+    expected_stage_count = len(contract_stages) if isinstance(contract_stages, list) else -1
     granted = approvals if approvals is not None else {}
     artifacts: list[dict[str, Any]] = []
     stage_reports: list[dict[str, Any]] = []
@@ -322,12 +323,12 @@ def execute_with_adapter(
             break
 
     chain_report = None
-    if len(artifacts) == len(contract.get("stages", [])) and stopped_reason is None:
+    if len(artifacts) == expected_stage_count and stopped_reason is None:
         chain_report = validate_handoff_chain(contract, artifacts)
         if chain_report["status"] != "passed":
             stopped_reason = "handoff_contract_validation_failed"
 
-    complete = len(artifacts) == len(contract.get("stages", [])) and stopped_reason is None
+    complete = len(artifacts) == expected_stage_count and stopped_reason is None
     return {
         "schema_version": "1.0",
         "workflow_id": contract.get("workflow_id", "unnamed"),
