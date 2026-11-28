@@ -26,7 +26,7 @@ For every candidate, record canonical name and stable ID; official URLs; publish
 - Do not purchase, publish externally or modify production without explicit approval.
 - Do not install software on the user's machine unless asked and the target is clear.
 - Never execute the intentionally vulnerable inter-Skill fixture or install its requirements. Use only its JSON and source text as inert test data.
-- Treat `validate_inter_skill_workflow.py` as a deterministic contract checker, not an LLM/Skill executor or production incident-response tool.
+- Treat both handoff validators as deterministic contract checkers, not LLM/Skill executors or production incident-response tools.
 - Never represent a recommendation to revoke a credential or isolate a host as an action actually performed. Never liquidate positions or cancel orders automatically.
 
 ## Contribution workflow
@@ -50,4 +50,4 @@ Never upgrade status based only on a README or repository listing.
 
 ## Personal-AI-Library integration
 
-Use the organization's Skills as task workflows and this repository as the tool inventory. The shared procedure is in [INTEGRATION/SKILLS-WORKFLOW.md](INTEGRATION/SKILLS-WORKFLOW.md); the authoritative detailed workflow is in [Personal-AI-Library](https://github.com/HOADF-Team/Personal-AI-Library/blob/main/INTEGRATION/AI-AGENT-WORKFLOW.md). Select relevant Skills, verify tools in the actual target environment, and record evidence. A catalog status never proves software is installed on a user's device.
+Use the organization's Skills as task workflows and this repository as the tool inventory. The shared procedure is in [INTEGRATION/SKILLS-WORKFLOW.md](INTEGRATION/SKILLS-WORKFLOW.md); the detailed operating workflow is in [Personal-AI-Library](https://github.com/HOADF-Team/Personal-AI-Library/blob/main/INTEGRATION/AI-AGENT-WORKFLOW.md). For multi-Skill work, use the generic [handoff protocol](INTEGRATION/HANDOFF-PROTOCOL.md): define a declarative contract, collect JSON stage artifacts, validate references/evidence/rules, and preserve the generated report. A passing contract is not proof of real Skill execution or factual correctness.
