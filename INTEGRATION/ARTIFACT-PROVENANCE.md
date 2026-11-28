@@ -133,3 +133,37 @@ Do not place credentials, private keys, tokens, customer data, or other secrets 
 ### Signing helper
 
 The host-side bundle creation helper is documented in [ARTIFACT-SIGNING.md](ARTIFACT-SIGNING.md). It checks that the supplied private key matches the registry-resolved public-key fingerprint before signing. It does not provide key custody or replay protection.
+
+
+## Historical verification after planned key retirement
+
+The separate audit-only path is implemented in `scripts/archival_verification.py`. It allows a key marked `retired` to verify an archived signature only when the signed timestamp falls within the key's original validity window and strictly before the registry's timezone-aware `retired_at` value.
+
+Example registry entry fields for a retired key:
+
+```json
+{
+  "key_id": "runtime-signing-2026-01",
+  "algorithm": "Ed25519",
+  "public_key_file": "runtime-signing-2026-01.pub",
+  "public_key_sha256": "<SPKI SHA-256>",
+  "status": "retired",
+  "not_before": "2026-01-01T00:00:00Z",
+  "not_after": "2027-01-01T00:00:00Z",
+  "retired_at": "2026-11-01T00:00:00Z",
+  "allowed_producers": ["crypto-security"],
+  "allowed_artifact_types": ["security.review"]
+}
+```
+
+The audit helper uses the signed execution-context `issued_at` timestamp for statement version 1.1, or the envelope's signed `created_at` field for legacy statement version 1.0. It then verifies the Ed25519 signature, envelope digest, and local evidence digests.
+
+**Revoked keys are never accepted**, including for historical verification. This deliberately sacrifices some archival availability after suspected compromise rather than treating signatures from a compromised key as trustworthy. Planned retirement and compromise revocation are different lifecycle events.
+
+Historical verification returns `archived_verified` and is not an authorization path for a live runtime handoff. Do not feed an archived verification result into a current workflow as if it were a newly verified stage result. The host must preserve authenticated registry history and public-key material; editing a local registry file is not itself a tamper-evident audit trail.
+
+Tests:
+
+```bash
+python -m unittest TESTS.test_trust_registry TESTS.test_archival_verification -v
+```

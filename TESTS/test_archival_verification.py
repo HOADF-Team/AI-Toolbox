@@ -1,0 +1,145 @@
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+from archival_verification import verify_archived_bundle  # noqa: E402
+from artifact_integrity import IntegrityVerificationError  # noqa: E402
+from artifact_signing import create_integrity_bundle  # noqa: E402
+from trust_registry import public_key_fingerprint  # noqa: E402
+
+
+class ArchivalVerificationTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temp = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp.name)
+        self.key_root = self.root / "keys"
+        self.key_root.mkdir()
+        self.evidence_root = self.root / "evidence"
+        self.evidence_root.mkdir()
+        (self.evidence_root / "scan.txt").write_text("archived fixture\n", encoding="utf-8")
+        self.private_key = self.root / "private.pem"
+        self.public_key = self.key_root / "archived.pub"
+        subprocess.run(
+            ["openssl", "genpkey", "-algorithm", "ED25519", "-out", str(self.private_key)],
+            check=True, capture_output=True, timeout=15,
+        )
+        os.chmod(self.private_key, 0o600)
+        subprocess.run(
+            ["openssl", "pkey", "-in", str(self.private_key), "-pubout", "-out", str(self.public_key)],
+            check=True, capture_output=True, timeout=15,
+        )
+        self.registry_path = self.root / "registry.json"
+        self.entry = {
+            "key_id": "archive-key-2026",
+            "algorithm": "Ed25519",
+            "public_key_file": "archived.pub",
+            "public_key_sha256": public_key_fingerprint(self.public_key),
+            "status": "retired",
+            "retired_at": "2026-12-01T00:00:00Z",
+            "not_before": "2026-01-01T00:00:00Z",
+            "not_after": "2027-01-01T00:00:00Z",
+            "allowed_producers": ["crypto-security"],
+            "allowed_artifact_types": ["security.review"],
+        }
+        self.write_registry(self.entry)
+        self.envelope = {
+            "envelope_version": "1.0",
+            "artifact_id": "archived.security.review.001",
+            "artifact_type": "security.review",
+            "producer": {
+                "kind": "skill", "id": "crypto-security", "version": "1",
+                "revision": "a" * 40,
+            },
+            "source": {"repository": "HOADF-Team/Personal-AI-Library", "revision": "a" * 40},
+            "created_at": "2026-06-01T12:00:00Z",
+            "inputs": [{"ref": "fixture:input", "artifact_type": "task"}],
+            "payload": {"decision": "synthetic-pass"},
+            "evidence": ["evidence:scan"],
+            "verification": {
+                "status": "structurally_validated", "method": "fixture",
+                "checked_at": "2026-06-01T12:01:00Z", "limitations": ["synthetic archive"],
+            },
+        }
+
+    def tearDown(self) -> None:
+        self.temp.cleanup()
+
+    def write_registry(self, entry) -> None:
+        self.registry_path.write_text(
+            json.dumps({"registry_version": "1.0", "keys": [entry]}),
+            encoding="utf-8",
+        )
+
+    def sign(self, envelope=None, execution_context=None):
+        return create_integrity_bundle(
+            envelope=envelope or self.envelope,
+            key_id="archive-key-2026",
+            private_key=self.private_key,
+            trusted_public_key=self.public_key,
+            expected_public_key_sha256=self.entry["public_key_sha256"],
+            evidence_root=self.evidence_root,
+            evidence_paths={"evidence:scan": "scan.txt"},
+            execution_context=execution_context,
+            ttl_seconds=300,
+        )
+
+    def verify(self, envelope=None, bundle=None):
+        return verify_archived_bundle(
+            envelope or self.envelope,
+            bundle or self.sign(),
+            self.registry_path,
+            self.key_root,
+            self.evidence_root,
+        )
+
+    def test_retired_key_verifies_artifact_signed_before_retirement(self) -> None:
+        report = self.verify()
+        self.assertEqual(report["status"], "archived_verified")
+        self.assertEqual(report["trust_resolution"]["status"], "retired")
+        self.assertEqual(report["trust_resolution"]["verification_mode"], "historical")
+
+    def test_revoked_key_is_never_accepted_for_archive(self) -> None:
+        self.write_registry({
+            **self.entry, "status": "revoked",
+            "revoked_at": "2026-09-01T00:00:00Z",
+            "revocation_reason": "suspected_compromise",
+        })
+        with self.assertRaisesRegex(ValueError, "signing_key_revoked"):
+            self.verify()
+
+    def test_artifact_signed_after_retirement_is_rejected(self) -> None:
+        self.write_registry({
+            **self.entry, "retired_at": "2026-05-01T00:00:00Z"
+        })
+        with self.assertRaisesRegex(ValueError, "historical_signature_after_key_retirement"):
+            self.verify()
+
+    def test_archived_signature_with_run_context_uses_signed_issue_time(self) -> None:
+        context = {
+            "run_id": "archived-run-001",
+            "workflow_id": "security-review-four-skill-chain",
+            "stage_id": "crypto-security",
+            "skill_id": "crypto-security",
+            "input_ref": "fixture:input",
+        }
+        bundle = self.sign(execution_context=context)
+        report = self.verify(bundle=bundle)
+        self.assertEqual(report["status"], "archived_verified")
+
+    def test_tampered_envelope_is_rejected(self) -> None:
+        bundle = self.sign()
+        changed = {**self.envelope, "payload": {"decision": "tampered"}}
+        with self.assertRaisesRegex(IntegrityVerificationError, "artifact_envelope_digest_mismatch"):
+            self.verify(envelope=changed, bundle=bundle)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -57,9 +57,13 @@ class TrustRegistryTests(unittest.TestCase):
             encoding="utf-8",
         )
 
-    def resolve(self, key_id="runtime-signing-2026-01", producer="crypto-security", artifact="security.review"):
+    def resolve(
+        self, key_id="runtime-signing-2026-01", producer="crypto-security",
+        artifact="security.review", verification_mode="current", signed_at=None,
+    ):
         return resolve_trusted_key(
-            self.registry_path, self.key_root, key_id, producer, artifact, self.now
+            self.registry_path, self.key_root, key_id, producer, artifact, self.now,
+            verification_mode, signed_at,
         )
 
     def test_active_key_with_matching_fingerprint_and_scope_passes(self) -> None:
@@ -70,7 +74,7 @@ class TrustRegistryTests(unittest.TestCase):
     def test_revoked_key_is_rejected(self) -> None:
         entry = {**self.entry, "status": "revoked"}
         self.write_registry([entry])
-        with self.assertRaisesRegex(TrustRegistryError, "signing_key_not_active"):
+        with self.assertRaisesRegex(TrustRegistryError, "signing_key_revoked"):
             self.resolve()
 
     def test_retired_key_is_rejected(self) -> None:
@@ -125,6 +129,71 @@ class TrustRegistryTests(unittest.TestCase):
         other_public.replace(self.public_key)
         with self.assertRaisesRegex(TrustRegistryError, "trusted_public_key_fingerprint_mismatch"):
             self.resolve()
+
+
+    def test_retired_key_is_rejected_for_current_verification(self) -> None:
+        self.write_registry([{
+            **self.entry, "status": "retired", "retired_at": "2026-10-01T00:00:00Z"
+        }])
+        with self.assertRaisesRegex(TrustRegistryError, "signing_key_not_active"):
+            self.resolve()
+
+    def test_retired_key_can_verify_signature_created_before_retirement(self) -> None:
+        self.write_registry([{
+            **self.entry, "status": "retired", "retired_at": "2026-10-01T00:00:00Z"
+        }])
+        result = self.resolve(
+            verification_mode="historical", signed_at="2026-06-01T12:00:00Z"
+        )
+        self.assertEqual(result["status"], "retired")
+        self.assertEqual(result["verification_mode"], "historical")
+
+    def test_retired_key_cannot_verify_signature_created_after_retirement(self) -> None:
+        self.write_registry([{
+            **self.entry, "status": "retired", "retired_at": "2026-10-01T00:00:00Z"
+        }])
+        with self.assertRaisesRegex(
+            TrustRegistryError, "historical_signature_after_key_retirement"
+        ):
+            self.resolve(
+                verification_mode="historical", signed_at="2026-10-02T00:00:00Z"
+            )
+
+    def test_historical_signature_must_be_inside_key_validity_window(self) -> None:
+        self.write_registry([{
+            **self.entry, "status": "retired", "retired_at": "2026-10-01T00:00:00Z"
+        }])
+        with self.assertRaisesRegex(
+            TrustRegistryError, "historical_signature_outside_key_validity"
+        ):
+            self.resolve(
+                verification_mode="historical", signed_at="2025-12-31T23:59:59Z"
+            )
+
+    def test_revoked_key_is_rejected_even_for_historical_verification(self) -> None:
+        self.write_registry([{
+            **self.entry, "status": "revoked",
+            "revoked_at": "2026-09-01T00:00:00Z",
+            "revocation_reason": "suspected_compromise",
+        }])
+        with self.assertRaisesRegex(TrustRegistryError, "signing_key_revoked"):
+            self.resolve(
+                verification_mode="historical", signed_at="2026-06-01T12:00:00Z"
+            )
+
+    def test_retired_key_requires_retirement_timestamp_for_historical_use(self) -> None:
+        self.write_registry([{**self.entry, "status": "retired"}])
+        with self.assertRaisesRegex(TrustRegistryError, "invalid_retired_at"):
+            self.resolve(
+                verification_mode="historical", signed_at="2026-06-01T12:00:00Z"
+            )
+
+    def test_historical_mode_requires_signed_timestamp(self) -> None:
+        self.write_registry([{
+            **self.entry, "status": "retired", "retired_at": "2026-10-01T00:00:00Z"
+        }])
+        with self.assertRaisesRegex(TrustRegistryError, "invalid_signed_at"):
+            self.resolve(verification_mode="historical")
 
 
 if __name__ == "__main__":
