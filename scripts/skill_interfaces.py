@@ -97,9 +97,16 @@ def validate_workflow_compatibility(
             continue
         check(f"{sid}.interface_exists", True, f"interface status={iface.get('status')}")
         consumes, produces = stage.get("consumes"), stage.get("produces")
-        if not isinstance(consumes, list) or not isinstance(produces, list):
-            check(f"{sid}.bindings_shape", False, "stage consumes and produces must be arrays")
+        valid_bindings = (
+            isinstance(consumes, list) and isinstance(produces, list)
+            and all(isinstance(value, str) and _TOKEN.fullmatch(value) for value in consumes)
+            and all(isinstance(value, str) and _TOKEN.fullmatch(value) for value in produces)
+        )
+        if not valid_bindings:
+            check(f"{sid}.bindings_shape", False, "stage consumes and produces must be arrays of valid artifact type IDs")
             continue
+        check(f"{sid}.bindings_unique", len(consumes) == len(set(consumes)) and len(produces) == len(set(produces)),
+              "consumes and produces must not contain duplicates")
         accepted = set(iface.get("accepts", []))
         declared_outputs = set(iface.get("produces", []))
         check(f"{sid}.consumes_supported", set(consumes).issubset(accepted),
