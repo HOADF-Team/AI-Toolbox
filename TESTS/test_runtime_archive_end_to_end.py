@@ -125,7 +125,7 @@ class RuntimeArchiveEndToEndTests(unittest.TestCase):
 
         skill_root = self.root / "skills"
         for stage in self.contract["stages"]:
-            path = skill_root / stage["id"] / "SKILL.md"
+            path = skill_root / "skills" / stage["id"] / "SKILL.md"
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(f"# {stage['id']}\n", encoding="utf-8")
         plan = build_workflow_plan(
