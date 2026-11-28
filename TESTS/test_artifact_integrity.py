@@ -178,6 +178,17 @@ class ArtifactIntegrityTests(unittest.TestCase):
             self.verify(bundle=bad)
 
 
+
+    def test_published_canonical_json_golden_vectors(self) -> None:
+        vector_path = ROOT / "TESTS" / "fixtures" / "canonical-json-vectors.json"
+        fixture = json.loads(vector_path.read_text(encoding="utf-8"))
+        self.assertEqual(fixture["profile_id"], "hoadf-python-json-v1")
+        for vector in fixture["vectors"]:
+            with self.subTest(vector=vector["id"]):
+                encoded = canonical_json_bytes(vector["value"])
+                self.assertEqual(encoded.decode("utf-8"), vector["canonical_utf8"])
+                self.assertEqual(sha256_bytes(encoded), vector["sha256"])
+
     def test_canonical_json_rejects_non_string_object_keys(self) -> None:
         with self.assertRaisesRegex(
             IntegrityVerificationError, "canonical_json_object_keys_must_be_strings"
