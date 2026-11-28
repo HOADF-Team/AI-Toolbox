@@ -285,7 +285,7 @@ class ArchivalVerificationTests(unittest.TestCase):
             current_crl,
             True,
         )
-        self.assertEqual(report["tsa_revocation"], "historical_and_current_crl_verified")
+        self.assertEqual(report["tsa_revocation"], "historical_and_current_crl_verified_for_tsa_and_intermediates")
 
     def test_currently_revoked_tsa_certificate_is_rejected_after_timestamp(self) -> None:
         tsa = LocalRfc3161TSA(self.root / "tsa-crl-current-revoked")
