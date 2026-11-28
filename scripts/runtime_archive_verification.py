@@ -265,8 +265,8 @@ def verify_runtime_archive_cryptographically(
             timestamp_untrusted_chain_file=tsa_chain if require_timestamps else None,
             require_trusted_timestamp=require_timestamps,
             now=now,
-            historical_tsa_crl_file=historical_crl if require_tsa_revocation else None,
-            current_tsa_crl_file=current_crl if require_tsa_revocation else None,
+            historical_tsa_crl_file=historical_crl if use_tsa_crls else None,
+            current_tsa_crl_file=current_crl if use_tsa_crls else None,
             require_tsa_revocation=require_tsa_revocation,
         )
         if report.get("status") != "archived_verified":
