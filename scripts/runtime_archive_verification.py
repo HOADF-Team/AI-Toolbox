@@ -131,6 +131,9 @@ def verify_runtime_archive_cryptographically(
         raise RuntimeArchiveVerificationError("historical_and_current_tsa_crls_must_be_supplied_together")
     if require_tsa_revocation and historical_crl is None:
         raise RuntimeArchiveVerificationError("tsa_revocation_crls_required")
+    if require_tsa_revocation and not require_timestamps:
+        raise RuntimeArchiveVerificationError("tsa_revocation_requires_trusted_timestamp")
+    use_tsa_crls = historical_crl is not None
     if anchor_key.is_symlink() or not anchor_key.is_file():
         raise RuntimeArchiveVerificationError("external_history_anchor_key_unavailable")
     if tsa_ca.is_symlink() or not tsa_ca.is_file():
@@ -187,8 +190,8 @@ def verify_runtime_archive_cryptographically(
         timestamp_response=anchor_timestamp,
         timestamp_ca_file=tsa_ca if require_timestamps else None,
         timestamp_untrusted_chain_file=tsa_chain if require_timestamps else None,
-        historical_tsa_crl_file=historical_crl if require_tsa_revocation else None,
-        current_tsa_crl_file=current_crl if require_tsa_revocation else None,
+        historical_tsa_crl_file=historical_crl if use_tsa_crls else None,
+        current_tsa_crl_file=current_crl if use_tsa_crls else None,
         require_tsa_revocation=require_tsa_revocation,
         now=now,
     )
@@ -287,7 +290,7 @@ def verify_runtime_archive_cryptographically(
         "verification_scope": "offline_audit_only",
         "tsa_revocation_policy": (
             "historical_and_current_crl_verified"
-            if require_tsa_revocation else "not_required_by_host_policy"
+            if use_tsa_crls else "not_required_by_host_policy"
         ),
         "limitations": [
             "The host-supplied history-anchor public key and TSA trust bundle are the trust roots.",
