@@ -1,8 +1,10 @@
-# Local Ollama runtime: zero-API-cost evaluation path
+# Local Ollama runtime: optional provider implementation path
 
 ## Purpose
 
-This document describes an optional way to connect a locally running language model to the Skill-selection benchmark. It is intended for a machine the user controls. It does not install software, download model weights, start a server, or run a benchmark by itself.
+This document describes one optional way for a host environment to implement the provider-neutral interface using a locally running language model. It is not the architecture's required runtime and does not install software, download model weights, start a server, or run a benchmark by itself.
+
+The provider-neutral contract is documented in [Provider-neutral AI runtime interface](PROVIDER-NEUTRAL-RUNTIME.md). Ollama is only one possible host implementation; other local or hosted runtimes can implement the same `JsonModelRuntime` Protocol.
 
 Ollama is a local model runner with an HTTP API. A local model can be queried without an Inference Provider API key. Model weights still need to be downloaded, which consumes disk space and internet bandwidth. Performance depends on available RAM, GPU/VRAM, model size, and context length.
 
@@ -60,19 +62,18 @@ The example is illustrative, not a recommendation that this model will perform a
 
 ## Connecting to the Toolbox benchmark
 
-The existing exchange protocol remains the source of truth:
-
 1. Pin a full 40-character Personal-AI-Library commit SHA.
 2. Export the gold-label-free request bundle with `scripts/skill_selection_runtime_eval.py prepare`.
 3. The local host must verify its trusted Skills checkout is exactly the pinned commit and load canonical `skills/<id>/SKILL.md` files from that checkout.
-4. Send only task text, candidate Skill IDs, and the canonical manifests to the local model. Never send `benchmark.json`, expected decisions, required/acceptable/excluded Skill labels, annotation rationales, or human-review labels.
-5. Validate model output against the response schema, then score it offline with `scripts/skill_selection_runtime_eval.py score`.
+4. Implement the provider-neutral `JsonModelRuntime.generate_json()` interface using the local Ollama API. Keep the implementation local-only and reject cloud model identifiers.
+5. Send only task text, candidate Skill IDs, and canonical manifests to the local model. Never send `benchmark.json`, expected decisions, required/acceptable/excluded Skill labels, annotation rationales, or human-review labels.
+6. Validate model output through the provider-neutral interface, then score the response bundle offline with `scripts/skill_selection_runtime_eval.py score`.
 
-The current repository does not yet include an Ollama invocation adapter. The benchmark bridge prepares and scores JSON exchanges; it does not call Ollama or any other model. A separate adapter implementation and an actual successful local run are required before claiming that a model is connected or evaluated.
+The Toolbox includes the provider-neutral interface and mock tests, but no concrete Ollama transport implementation and no observed local model connection. A provider implementation and an actual successful local run are required before claiming that Ollama is connected or evaluated.
 
-## Security requirements for a future adapter
+## Security requirements for a future Ollama adapter
 
-- Accept only a loopback URL by default; reject non-loopback hosts unless an explicit, separately reviewed configuration is introduced.
+- Accept only a loopback URL by default; reject non-loopback hosts.
 - Never send Skills, task data, or outputs to a cloud model or external endpoint.
 - Never transmit credentials, API keys, passwords, private keys, approval tokens, or private customer data.
 - Treat model output as untrusted. Validate JSON, case IDs, decisions, Skill IDs, duplicates, and complete case coverage before scoring.
@@ -82,7 +83,7 @@ The current repository does not yet include an Ollama invocation adapter. The be
 
 ## What counts as a successful connection
 
-A connection is confirmed only when all of the following are observed on the user's target machine:
+A connection is confirmed only when all of the following are observed on the selected host machine:
 
 - Ollama is installed and its version is recorded.
 - The selected model is present in `ollama list`.
