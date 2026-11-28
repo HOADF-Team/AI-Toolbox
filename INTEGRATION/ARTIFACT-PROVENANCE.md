@@ -167,3 +167,10 @@ Tests:
 ```bash
 python -m unittest TESTS.test_trust_registry TESTS.test_archival_verification -v
 ```
+
+
+## Tamper-evident lifecycle history
+
+The optional hash-chain helper in [TRUST-REGISTRY-HISTORY.md](TRUST-REGISTRY-HISTORY.md) records key addition, retirement, revocation, and rotation events against canonical registry snapshot digests. It detects edits and truncation relative to an independently authenticated checkpoint. It does not create immutable storage or authenticate a checkpoint stored beside the log. The host must retain the checkpoint through a separate trusted channel.
+
+This history does not override revocation: revoked keys remain rejected by archival verification even when an earlier signature timestamp predates the revocation event.
