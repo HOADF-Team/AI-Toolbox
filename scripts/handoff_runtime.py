@@ -290,6 +290,8 @@ def _validate_stage_result(
                 require_trusted_timestamp = integrity_policy.get("require_trusted_timestamp", False)
                 if not isinstance(require_trusted_timestamp, bool):
                     raise IntegrityVerificationError("invalid_require_trusted_timestamp_policy")
+                if require_trusted_timestamp and "trust_registry_path" not in integrity_policy:
+                    raise IntegrityVerificationError("trusted_timestamp_requires_trust_registry")
                 timestamp_responses = integrity_policy.get("timestamp_responses", {})
                 if not isinstance(timestamp_responses, dict) or any(
                     not isinstance(key, str) or not key
@@ -304,6 +306,8 @@ def _validate_stage_result(
                 timestamp_chain_path = integrity_policy.get("timestamp_untrusted_chain_file")
                 if timestamp_response_path is not None and not isinstance(timestamp_ca_path, str):
                     raise IntegrityVerificationError("timestamp_ca_file_required")
+                if timestamp_chain_path is not None and not isinstance(timestamp_chain_path, str):
+                    raise IntegrityVerificationError("invalid_timestamp_untrusted_chain_file")
                 report = verify_integrity_bundle(
                     artifact_provenance, bundle,
                     trusted_public_key, trusted_key_id,
