@@ -21,7 +21,7 @@ def load_json(path: Path) -> dict[str, Any]:
 def validate_benchmark(data: dict[str, Any], catalog: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     ids: set[str] = {
-        item.get("id")
+        str(item["id"])
         for item in catalog.get("skills", [])
         if isinstance(item, dict) and isinstance(item.get("id"), str)
     }
