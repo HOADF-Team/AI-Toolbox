@@ -430,6 +430,7 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
         outside_dir = root / "outside-skill"
         outside_dir.mkdir()
         (outside_dir / "SKILL.md").write_text("# outside\n", encoding="utf-8")
+        (skill_dir / "SKILL.md").unlink()
         skill_dir.rmdir()
         skill_dir.symlink_to(outside_dir, target_is_directory=True)
         with self.assertRaisesRegex(RuntimeProtocolError, "symlink"):
