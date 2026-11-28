@@ -1,0 +1,16 @@
+{
+  "registry_version": "1.0",
+  "keys": [
+    {
+      "key_id": "runtime-signing-2026-01",
+      "algorithm": "Ed25519",
+      "public_key_file": "runtime-signing-2026-01.pub",
+      "public_key_sha256": "REPLACE_WITH_64_CHARACTER_SHA256_OF_DER_PUBLIC_KEY",
+      "status": "active",
+      "not_before": "2026-11-28T00:00:00Z",
+      "not_after": "2027-05-28T00:00:00Z",
+      "allowed_producers": ["crypto-security", "code-audit"],
+      "allowed_artifact_types": ["workflow.stage_result", "security.review"]
+    }
+  ]
+}
