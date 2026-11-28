@@ -365,8 +365,13 @@ def verify_history_anchor(
     timestamp_response: Path | None = None,
     timestamp_ca_file: Path | None = None,
     timestamp_untrusted_chain_file: Path | None = None,
+    historical_tsa_crl_file: Path | None = None,
+    current_tsa_crl_file: Path | None = None,
+    require_tsa_revocation: bool = False,
+    now: datetime | None = None,
 ) -> dict[str, Any]:
     """Verify a signed history checkpoint and, optionally, its RFC 3161 timestamp."""
+
     if not isinstance(anchor, dict) or set(anchor) != {
         "anchor_version", "log_id", "anchor_key_id", "anchored_at", "checkpoint", "signature"
     }:
@@ -422,6 +427,10 @@ def verify_history_anchor(
         timestamp_report = verify_rfc3161_timestamp(
             signature, timestamp_response, timestamp_ca_file,
             timestamp_untrusted_chain_file,
+            historical_tsa_crl_file,
+            current_tsa_crl_file,
+            require_tsa_revocation,
+            now,
         )
     history_report = verify_registry_history(records, statement["checkpoint"])
     return {
