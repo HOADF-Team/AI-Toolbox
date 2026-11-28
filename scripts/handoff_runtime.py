@@ -291,6 +291,9 @@ def _validate_stage_result(
             if approval_errors:
                 errors.extend(f"action_approval:{action_id}:{error}" for error in approval_errors)
                 continue
+            if not isinstance(approval, dict):
+                errors.append(f"action_approval:{action_id}:approval_record_not_object")
+                continue
             if action.get("stage_id") != stage["id"]:
                 errors.append(f"action_stage_mismatch:{action_id}")
             if action.get("approval_id") != approval.get("approval_id"):
@@ -304,7 +307,7 @@ def execute_with_adapter(
     contract: dict[str, Any],
     plan: list[dict[str, Any]],
     adapter: Callable[[dict[str, Any]], dict[str, Any]],
-    approvals: dict[str, str] | None = None,
+    approvals: dict[str, dict[str, dict[str, Any]]] | None = None,
     integrity_policy: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run an injected adapter; optional host trust policy enforces signatures and evidence hashes."""
@@ -356,7 +359,7 @@ def execute_with_adapter(
         ) or len(set(requested)) != len(requested):
             stopped_reason = f"invalid_required_approvals:{stage_id}"
             break
-        supplied_approvals = granted.get(stage_id, {})
+        supplied_approvals: dict[str, Any] = granted.get(stage_id, {})
         if not isinstance(supplied_approvals, dict):
             stopped_reason = f"invalid_approval_records:{stage_id}"
             break
