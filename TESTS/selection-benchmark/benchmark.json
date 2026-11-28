@@ -1,0 +1,623 @@
+{
+  "schema_version": "1.0",
+  "benchmark_id": "skill-selection-semantic-v1",
+  "source": {
+    "skill_catalog": "HOADF-Team/AI-Toolbox@main CATALOG/skill-tools.json",
+    "canonical_manifests": "HOADF-Team/Personal-AI-Library@main skills/*/SKILL.md",
+    "skill_count": 25,
+    "curation": "manual synthetic cases based on canonical Skill names/descriptions and cross-skill boundaries"
+  },
+  "scoring_policy": {
+    "required": "all required_skills should be selected",
+    "acceptable": "acceptable_skills are permitted but not required and do not increase recall",
+    "excluded": "excluded_skills are counted as false positives",
+    "order": "expected_order is an ordered subsequence unless order_is_advisory is true",
+    "abstention": "abstain_or_clarify accepts abstain or clarify",
+    "human_review": "needs_human_review cases are excluded from aggregate metrics"
+  },
+  "cases": [
+    {
+      "case_id": "single-01",
+      "kind": "single_skill",
+      "task": "Разработать Python-интеграцию между CRM и API, webhook, retries и расписание.",
+      "required_skills": [
+        "automation-vps"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "automation-vps"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill automation-vps.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-02",
+      "kind": "single_skill",
+      "task": "Оценить клиентское ТЗ для Kwork: объём, сроки, цена, риски и сдача.",
+      "required_skills": [
+        "business-kwork"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "business-kwork"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill business-kwork.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-03",
+      "kind": "single_skill",
+      "task": "Проверить существующий код на ошибки, небезопасные вызовы и архитектурные дефекты.",
+      "required_skills": [
+        "code-audit"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "code-audit"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill code-audit.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-04",
+      "kind": "single_skill",
+      "task": "Составить контент-стратегию, рубрики и календарь публикаций на месяц.",
+      "required_skills": [
+        "content-planning"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "content-planning"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill content-planning.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-05",
+      "kind": "single_skill",
+      "task": "Рассчитать риск perpetual futures: размер позиции, плечо, стоп, ликвидация и комиссии.",
+      "required_skills": [
+        "crypto-futures-risk"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "crypto-futures-risk"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill crypto-futures-risk.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-06",
+      "kind": "single_skill",
+      "task": "Подготовить обзор общего состояния крипторынка: BTC, доминация, объёмы и funding.",
+      "required_skills": [
+        "crypto-market-analysis"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "crypto-market-analysis"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill crypto-market-analysis.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-07",
+      "kind": "single_skill",
+      "task": "Исследовать отдельную монету и проверить торговую гипотезу на исторических данных.",
+      "required_skills": [
+        "crypto-research"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "crypto-research"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill crypto-research.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-08",
+      "kind": "single_skill",
+      "task": "Спроектировать защиту криптоторговой системы, API-ключей, VPS и резервных копий.",
+      "required_skills": [
+        "crypto-security"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "crypto-security"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill crypto-security.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-09",
+      "kind": "single_skill",
+      "task": "Диагностировать Linux VPS: systemd service, логи, ресурсы и контейнер.",
+      "required_skills": [
+        "devops-vps"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "devops-vps"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill devops-vps.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-10",
+      "kind": "single_skill",
+      "task": "Отредактировать DOCX и PDF, сохранив структуру и форматирование.",
+      "required_skills": [
+        "documents-office"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "documents-office"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill documents-office.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-11",
+      "kind": "single_skill",
+      "task": "Оформить GitHub-портфолио: README, Pages и представление проектов.",
+      "required_skills": [
+        "github-portfolio"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "github-portfolio"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill github-portfolio.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-12",
+      "kind": "single_skill",
+      "task": "Создать Google Sheets с формулами, сводной таблицей и Apps Script.",
+      "required_skills": [
+        "google-sheets"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "google-sheets"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill google-sheets.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-13",
+      "kind": "single_skill",
+      "task": "Написать готовый текст лендинга на основе подтверждённых фактов.",
+      "required_skills": [
+        "marketing-copywriting"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "marketing-copywriting"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill marketing-copywriting.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-14",
+      "kind": "single_skill",
+      "task": "Подготовить карточку товара для маркетплейса: заголовок, характеристики, описание.",
+      "required_skills": [
+        "marketplace-listings"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "marketplace-listings"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill marketplace-listings.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-15",
+      "kind": "single_skill",
+      "task": "Разработать бота для мессенджера MAX с командами и webhook.",
+      "required_skills": [
+        "max-bots"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "max-bots"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill max-bots.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-16",
+      "kind": "single_skill",
+      "task": "Обработать фото товара: удалить фон, выровнять свет и подготовить композицию.",
+      "required_skills": [
+        "product-images"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "product-images"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill product-images.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-17",
+      "kind": "single_skill",
+      "task": "Определить аудиторию, позиционирование, ценность и отличия нового продукта.",
+      "required_skills": [
+        "product-marketing"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "product-marketing"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill product-marketing.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-18",
+      "kind": "single_skill",
+      "task": "Написать и отладить Python-модуль с тестами.",
+      "required_skills": [
+        "python-development"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "python-development"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill python-development.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-19",
+      "kind": "single_skill",
+      "task": "Проверить техническое утверждение по первоисточникам и лицензиям.",
+      "required_skills": [
+        "research-fact-checking"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "research-fact-checking"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill research-fact-checking.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-20",
+      "kind": "single_skill",
+      "task": "Провести SEO-аудит сайта: метаданные, индексация, скорость и доступность.",
+      "required_skills": [
+        "seo-audit"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "seo-audit"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill seo-audit.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-21",
+      "kind": "single_skill",
+      "task": "Провести аудит безопасности Linux-сервера: SSH, firewall, обновления, бэкапы.",
+      "required_skills": [
+        "server-security"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "server-security"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill server-security.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-22",
+      "kind": "single_skill",
+      "task": "Подготовить конкретный пост для Telegram и короткий тред для X.",
+      "required_skills": [
+        "social-media"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "social-media"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill social-media.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-23",
+      "kind": "single_skill",
+      "task": "Исправить Telegram-бота на aiogram: handlers, webhook и клавиатуры.",
+      "required_skills": [
+        "telegram-bots"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "telegram-bots"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill telegram-bots.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-24",
+      "kind": "single_skill",
+      "task": "Сверить сделки, логи и PnL торгового бота, найти ошибки исполнения.",
+      "required_skills": [
+        "trading-bot-audit"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "trading-bot-audit"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill trading-bot-audit.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "single-25",
+      "kind": "single_skill",
+      "task": "Сверстать адаптивную страницу на HTML/CSS/JS и проверить интерфейс.",
+      "required_skills": [
+        "web-development"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "web-development"
+      ],
+      "rationale": "Прямое соответствие назначению канонического Skill web-development.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "multi-01",
+      "kind": "multi_skill",
+      "task": "Сначала определить позиционирование продукта, затем написать готовый текст лендинга.",
+      "required_skills": [
+        "product-marketing",
+        "marketing-copywriting"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [
+        "social-media",
+        "content-planning"
+      ],
+      "expected_decision": "select",
+      "expected_order": [
+        "product-marketing",
+        "marketing-copywriting"
+      ],
+      "rationale": "Сначала позиционирование, затем конкретный текст; граница явно описана в Skill manifests.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "multi-02",
+      "kind": "multi_skill",
+      "task": "Подготовить карточку товара и отдельно обработать фото: удалить фон и улучшить свет.",
+      "required_skills": [
+        "marketplace-listings",
+        "product-images"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "product-images",
+        "marketplace-listings"
+      ],
+      "rationale": "Нужны текстово-структурная карточка и отдельная обработка изображений.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "multi-03",
+      "kind": "multi_skill",
+      "task": "Проверить Python-проект на уязвимости, затем исправить подтверждённую ошибку и добавить регрессионный тест.",
+      "required_skills": [
+        "code-audit",
+        "python-development"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "code-audit",
+        "python-development"
+      ],
+      "rationale": "Аудит и диагностика предшествуют исправлению и тестированию.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "multi-04",
+      "kind": "multi_skill",
+      "task": "Проверить криптобота: сверить логи, сделки и PnL, а также оценить защиту ключей и резервное восстановление.",
+      "required_skills": [
+        "trading-bot-audit",
+        "crypto-security"
+      ],
+      "acceptable_skills": [],
+      "excluded_skills": [],
+      "expected_decision": "select",
+      "expected_order": [
+        "trading-bot-audit",
+        "crypto-security"
+      ],
+      "order_is_advisory": true,
+      "rationale": "Сочетает аудит исполнения и отдельную оценку security controls; порядок не является зависимостью.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "ambiguous-01",
+      "kind": "ambiguous",
+      "task": "Помоги с криптой: хочу понять, что происходит и что делать.",
+      "required_skills": [],
+      "acceptable_skills": [
+        "crypto-market-analysis",
+        "crypto-research",
+        "crypto-futures-risk"
+      ],
+      "excluded_skills": [],
+      "expected_decision": "abstain_or_clarify",
+      "expected_order": [],
+      "rationale": "Неясно, нужен обзор рынка, исследование актива/стратегии или расчёт риска позиции.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "ambiguous-02",
+      "kind": "ambiguous",
+      "task": "Нужно улучшить продвижение бизнеса в интернете.",
+      "required_skills": [],
+      "acceptable_skills": [
+        "product-marketing",
+        "marketing-copywriting",
+        "content-planning",
+        "social-media",
+        "seo-audit"
+      ],
+      "excluded_skills": [],
+      "expected_decision": "abstain_or_clarify",
+      "expected_order": [],
+      "rationale": "Формулировка охватывает несколько разных направлений; требуется уточнить желаемый результат.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "negative-01",
+      "kind": "out_of_scope",
+      "task": "Сколько будет 17 умножить на 23? Просто дай результат.",
+      "required_skills": [],
+      "acceptable_skills": [],
+      "excluded_skills": [
+        "automation-vps",
+        "business-kwork",
+        "code-audit",
+        "content-planning",
+        "crypto-futures-risk",
+        "crypto-market-analysis",
+        "crypto-research",
+        "crypto-security",
+        "devops-vps",
+        "documents-office",
+        "github-portfolio",
+        "google-sheets",
+        "marketing-copywriting",
+        "marketplace-listings",
+        "max-bots",
+        "product-images",
+        "product-marketing",
+        "python-development",
+        "research-fact-checking",
+        "seo-audit",
+        "server-security",
+        "social-media",
+        "telegram-bots",
+        "trading-bot-audit",
+        "web-development"
+      ],
+      "expected_decision": "abstain",
+      "expected_order": [],
+      "rationale": "Обычная арифметика не требует специализированного Skill.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "negative-02",
+      "kind": "out_of_scope",
+      "task": "Расскажи анекдот про кота.",
+      "required_skills": [],
+      "acceptable_skills": [],
+      "excluded_skills": [
+        "automation-vps",
+        "business-kwork",
+        "code-audit",
+        "content-planning",
+        "crypto-futures-risk",
+        "crypto-market-analysis",
+        "crypto-research",
+        "crypto-security",
+        "devops-vps",
+        "documents-office",
+        "github-portfolio",
+        "google-sheets",
+        "marketing-copywriting",
+        "marketplace-listings",
+        "max-bots",
+        "product-images",
+        "product-marketing",
+        "python-development",
+        "research-fact-checking",
+        "seo-audit",
+        "server-security",
+        "social-media",
+        "telegram-bots",
+        "trading-bot-audit",
+        "web-development"
+      ],
+      "expected_decision": "abstain",
+      "expected_order": [],
+      "rationale": "Развлекательный запрос не требует Skill из каталога.",
+      "needs_human_review": false
+    },
+    {
+      "case_id": "review-01",
+      "kind": "ambiguous",
+      "task": "Автоматизировать публикацию контента в нескольких сервисах, включая расписание и генерацию текстов.",
+      "required_skills": [],
+      "acceptable_skills": [
+        "automation-vps",
+        "content-planning",
+        "social-media",
+        "marketing-copywriting"
+      ],
+      "excluded_skills": [],
+      "expected_decision": "human_review",
+      "expected_order": [],
+      "rationale": "Граница между интеграционной автоматизацией, календарём и созданием текстов недостаточно ясна.",
+      "needs_human_review": true
+    }
+  ]
+}
