@@ -134,6 +134,9 @@ def execute_with_adapter(
 
     for item in plan:
         envelope = item["envelope"]
+        if artifacts:
+            envelope["input_ref"] = artifacts[-1]["output_ref"]
+            envelope["prior_stage_output_ref"] = artifacts[-1]["output_ref"]
         missing = envelope["permissions"]["missing_approvals"]
         if missing:
             stopped_reason = f"approval_required:{envelope['stage']['id']}:{','.join(missing)}"
