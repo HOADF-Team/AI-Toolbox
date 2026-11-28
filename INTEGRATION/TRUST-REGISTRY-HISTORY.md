@@ -105,7 +105,7 @@ The independent authority signs the canonical JSON bytes of this statement using
 
 `verify_rfc3161_timestamp(data, timestamp_response, trusted_ca_file, untrusted_chain_file=None)` verifies an RFC 3161 timestamp response with OpenSSL's timestamp verifier. The verifier checks the message imprint against the exact supplied bytes, validates the TSA certificate chain against the host-supplied CA trust bundle, and extracts the TSA-authenticated `genTime`.
 
-For lifecycle history anchors, pass the exact canonical statement bytes (the same bytes signed by the external anchor authority) to the timestamp authority. Then verify both the Ed25519 anchor signature and the timestamp response:
+For lifecycle history anchors, pass the raw Ed25519 signature bytes (base64-decoded from `anchor.signature`) to the timestamp authority. Then verify both the Ed25519 anchor signature and the timestamp response:
 
 ```python
 report = verify_history_anchor(
@@ -119,7 +119,7 @@ report = verify_history_anchor(
 )
 ```
 
-The timestamp response and CA bundle must be supplied together. The optional untrusted chain file may provide intermediates, but it is not trusted as a root. The host must provision the trust bundle independently, retain the response outside the editable history store, and define its TSA trust and certificate-rotation policy. OpenSSL validates the timestamp token's signature, message imprint, TSA certificate purpose, and chain against the supplied trust store.
+The timestamp response and CA bundle must be supplied together. The TSA request must timestamp the raw Ed25519 signature bytes decoded from `anchor.signature` (not merely the public checkpoint statement). The verifier first validates that signature against the canonical statement, then validates the RFC 3161 message imprint against those exact signature bytes. This proves that this exact signature value existed no later than the TSA's authenticated `genTime`. The optional untrusted chain file may provide intermediates, but it is not trusted as a root. The host must provision the trust bundle independently, retain the response outside the editable history store, and define its TSA trust and certificate-rotation policy. OpenSSL validates the timestamp token's signature, message imprint, TSA certificate purpose, and chain against the supplied trust store.
 
 The report distinguishes the auditor's `anchored_at` assertion from the verified TSA `timestamp.gen_time`. Without a valid RFC 3161 response, the result is only `signed_checkpoint_verified`; it is not a trusted-time result.
 
