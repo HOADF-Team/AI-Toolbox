@@ -74,7 +74,7 @@ class TrustRegistryTests(unittest.TestCase):
     def test_revoked_key_is_rejected(self) -> None:
         entry = {**self.entry, "status": "revoked"}
         self.write_registry([entry])
-        with self.assertRaisesRegex(TrustRegistryError, "signing_key_not_active"):
+        with self.assertRaisesRegex(TrustRegistryError, "signing_key_revoked"):
             self.resolve()
 
     def test_retired_key_is_rejected(self) -> None:
