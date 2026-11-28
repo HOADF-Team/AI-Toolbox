@@ -43,3 +43,8 @@ jobs:
         run: python scripts/validate_crypto_security_skill.py --skill Personal-AI-Library/skills/crypto-security/SKILL.md
       - name: Validate reusable workflow catalog
         run: python scripts/validate_workflow_catalog.py --pretty
+      - name: Validate Skill interface registry and workflow compatibility
+        run: |
+          python scripts/validate_skill_interfaces.py --pretty
+          python scripts/validate_workflow_compatibility.py --pretty
+          python -m unittest TESTS.test_skill_interfaces -v
