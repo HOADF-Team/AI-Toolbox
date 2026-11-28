@@ -1,0 +1,47 @@
+{
+  "profile_id": "hoadf-python-json-v1",
+  "profile": {
+    "encoding": "UTF-8",
+    "key_order": "Python Unicode code-point lexicographic order",
+    "separators": [",", ":"],
+    "ensure_ascii": false,
+    "allow_nan": false,
+    "number_format": "Python json.dumps reference output; cross-language implementations must reproduce exact bytes",
+    "scope": "Project-specific reference profile; not RFC 8785/JCS"
+  },
+  "vectors": [
+    {
+      "id": "nested-unicode",
+      "value": {
+        "z": "雪☃",
+        "a": {"β": "значение", "alpha": "café"},
+        "list": [null, true, false, 0, 7]
+      },
+      "canonical_utf8": "{\"a\":{\"alpha\":\"café\",\"β\":\"значение\"},\"list\":[null,true,false,0,7],\"z\":\"雪☃\"}",
+      "sha256": "94181d32f7d98eb93e41394965308257b11f34e8f064d7e2c0256ad9b08974da"
+    },
+    {
+      "id": "number-format-profile",
+      "value": {
+        "positive_float": 1.0,
+        "negative_zero": -0.0,
+        "small_exponent": 1e-7,
+        "large_exponent": 1e20,
+        "integer": 42
+      },
+      "canonical_utf8": "{\"integer\":42,\"large_exponent\":1e+20,\"negative_zero\":-0.0,\"positive_float\":1.0,\"small_exponent\":1e-07}",
+      "sha256": "93839717f1e62f31a22697cec88e06f2cf951b59588df5182733bedb4f5fa2b5"
+    },
+    {
+      "id": "escaping-and-arrays",
+      "value": {
+        "quote": "a\"b",
+        "slash": "a/b",
+        "newline": "line1\nline2",
+        "items": [{"b": 2, "a": 1}, ["x", "y"]]
+      },
+      "canonical_utf8": "{\"items\":[{\"a\":1,\"b\":2},[\"x\",\"y\"]],\"newline\":\"line1\\nline2\",\"quote\":\"a\\\"b\",\"slash\":\"a/b\"}",
+      "sha256": "53151826867d52553e63fc22dc0b0d50d2bbd84c6ae1bfd4300fc546e09fe37d"
+    }
+  ]
+}
