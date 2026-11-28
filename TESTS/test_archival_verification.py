@@ -232,7 +232,7 @@ class ArchivalVerificationTests(unittest.TestCase):
     def _intermediate_chain_file(self, tsa: LocalRfc3161TSA) -> Path:
         intermediate = tsa.issue_intermediate_ca()
         chain = self.root / "tsa-intermediate-chain.pem"
-        chain.write_bytes(intermediate.read_bytes() + b"\\n" + tsa.tsa_cert.read_bytes())
+        chain.write_bytes(intermediate.read_bytes() + b"\n" + tsa.tsa_cert.read_bytes())
         return chain
 
     def test_tsa_intermediate_certificate_is_checked_with_issuer_crl(self) -> None:
