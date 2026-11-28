@@ -274,3 +274,12 @@ The archival verification test suite also exercises fail-closed cases with ephem
 Revocation is intentionally conservative: once a key is recorded as revoked in the authenticated history/current registry, archival verification rejects signatures from that key even if a timestamp predates the recorded revocation. This is the current compromise-response policy; it avoids treating a possibly compromised key as safe merely because a token claims an earlier signing time.
 
 These tests use generated local keys and a local RFC 3161 TSA fixture only. They do not contact an external TSA or require network services.
+
+
+## Versioned verification policy
+
+New cryptographic archives may declare `verification_policy_version: 2` in `archive.json`. Version 2 requires both `verification_policy.require_trusted_timestamp: true` and `verification_policy.require_tsa_revocation: true`. The exporter rejects a version-2 archive request that omits either requirement or declares an unsupported policy version.
+
+The verifier derives effective requirements from archive metadata and host configuration. For version 2, timestamp and TSA/intermediate-CA revocation checks are mandatory even when the host configuration omits these flags or sets them to false. Both historical and current issuer CRL bundles must be provided by the verifier host; otherwise verification fails closed. Host configuration can add requirements but cannot downgrade version-2 requirements.
+
+Archives without `verification_policy_version` remain in legacy mode and retain prior host-controlled policy behavior. Unknown policy versions are rejected rather than interpreted as legacy. The version field is covered by the archive manifest digest, so changing it without rebuilding the manifest is detected by package verification.

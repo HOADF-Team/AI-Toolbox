@@ -268,6 +268,7 @@ class RuntimeArchiveEndToEndTests(unittest.TestCase):
             "ai_toolbox_revision": "b" * 40,
             "created_at": now.isoformat().replace("+00:00", "Z"),
             "run_status": "completed",
+            "verification_policy_version": 2,
             "verification_policy": {
                 "require_trusted_timestamp": True,
                 "require_tsa_revocation": True,
@@ -326,6 +327,24 @@ class RuntimeArchiveEndToEndTests(unittest.TestCase):
         self.assertTrue(anchor_public.is_file())
         self.assertTrue(tsa_ca.is_file())
         self.assertEqual(report["tsa_revocation_policy"], "historical_and_current_crl_verified")
+
+    def test_version_2_policy_cannot_be_downgraded_by_host_flags(self) -> None:
+        archive, _, _, context = self._run_and_export()
+        policy = dict(context["trust_policy"])
+        policy["require_trusted_timestamps"] = False
+        policy["require_tsa_revocation"] = False
+        report = verify_runtime_archive_cryptographically(archive, policy)
+        self.assertEqual(report["status"], "runtime_archive_cryptographically_verified")
+        self.assertEqual(report["tsa_revocation_policy"], "historical_and_current_crl_verified")
+
+    def test_version_2_policy_fails_closed_without_host_crls(self) -> None:
+        archive, _, _, context = self._run_and_export()
+        policy = dict(context["trust_policy"])
+        policy.pop("historical_tsa_crl_file")
+        policy.pop("current_tsa_crl_file")
+        policy["require_tsa_revocation"] = False
+        with self.assertRaisesRegex(ValueError, "tsa_revocation_crls_required"):
+            verify_runtime_archive_cryptographically(archive, policy)
 
     def test_tampered_archived_stage_signature_fails_closed(self) -> None:
         archive, _, _, context = self._run_and_export()
