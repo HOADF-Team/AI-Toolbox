@@ -234,19 +234,70 @@ def execute_with_adapter(
     integrity_policy: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run an injected adapter; optional host trust policy enforces signatures and evidence hashes."""
-    granted = approvals or {}
+    contract_stages = contract.get("stages")
+    granted = approvals if approvals is not None else {}
     artifacts: list[dict[str, Any]] = []
     stage_reports: list[dict[str, Any]] = []
     stopped_reason: str | None = None
 
-    for item in plan:
-        envelope = item["envelope"]
+    if not isinstance(contract_stages, list) or not contract_stages:
+        stopped_reason = "invalid_contract_stages"
+    elif not isinstance(plan, list) or len(plan) != len(contract_stages):
+        stopped_reason = "invalid_plan_stage_count"
+    elif not isinstance(granted, dict) or any(
+        not isinstance(action, str) or not action
+        or not isinstance(approval_id, str) or not approval_id.strip()
+        for action, approval_id in granted.items()
+    ):
+        stopped_reason = "invalid_approval_map"
+
+    for index, item in enumerate(plan if stopped_reason is None else []):
+        expected_stage = contract_stages[index]
+        if not isinstance(expected_stage, dict) or not isinstance(item, dict):
+            stopped_reason = "invalid_plan_stage"
+            break
+        stage_id = expected_stage.get("id")
+        skill_id = expected_stage.get("skill_id", stage_id)
+        if not isinstance(stage_id, str) or not stage_id or not isinstance(skill_id, str) or not skill_id:
+            stopped_reason = "invalid_contract_stage_identity"
+            break
+        supplied_envelope = item.get("envelope")
+        if not isinstance(supplied_envelope, dict):
+            stopped_reason = f"invalid_plan_envelope:{stage_id}"
+            break
+        supplied_stage = supplied_envelope.get("stage")
+        if not isinstance(supplied_stage, dict) or (
+            supplied_stage.get("id") != stage_id or supplied_stage.get("skill_id") != skill_id
+        ):
+            stopped_reason = f"plan_contract_stage_mismatch:{stage_id}"
+            break
+        requested = expected_stage.get("required_approvals", [])
+        if not isinstance(requested, list) or any(
+            not isinstance(action, str) or not action for action in requested
+        ) or len(set(requested)) != len(requested):
+            stopped_reason = f"invalid_required_approvals:{stage_id}"
+            break
+        stage_approvals = {
+            action: granted[action]
+            for action in requested
+            if action in granted
+        }
+        missing = [
+            action for action in requested
+            if action not in stage_approvals
+        ]
+        envelope = dict(supplied_envelope)
+        envelope["stage"] = dict(supplied_stage)
+        envelope["permissions"] = {
+            "requested_approvals": list(requested),
+            "granted_approvals": stage_approvals,
+            "missing_approvals": missing,
+        }
         if artifacts:
             envelope["input_ref"] = artifacts[-1]["output_ref"]
             envelope["prior_stage_output_ref"] = artifacts[-1]["output_ref"]
-        missing = envelope["permissions"]["missing_approvals"]
         if missing:
-            stopped_reason = f"approval_required:{envelope['stage']['id']}:{','.join(missing)}"
+            stopped_reason = f"approval_required:{stage_id}:{','.join(missing)}"
             break
         try:
             result = adapter(envelope)
@@ -256,7 +307,7 @@ def execute_with_adapter(
         if not isinstance(result, dict):
             stopped_reason = f"invalid_adapter_response:{envelope['stage']['id']}"
             break
-        errors = _validate_stage_result(result, envelope, granted, integrity_policy)
+        errors = _validate_stage_result(result, envelope, stage_approvals, integrity_policy)
         if errors:
             stopped_reason = f"invalid_stage_result:{envelope['stage']['id']}"
             stage_reports.append({"stage": envelope["stage"]["id"], "status": "invalid", "errors": errors})
