@@ -5,6 +5,7 @@ import copy
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 import sys
 from pathlib import Path
 
@@ -19,6 +20,7 @@ from trust_registry_history import (  # noqa: E402
     registry_snapshot_sha256,
     verify_registry_history,
     verify_history_anchor,
+    verify_rfc3161_timestamp,
 )
 
 
@@ -76,7 +78,7 @@ class TrustRegistryHistoryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             records, anchor, public_key = self._signed_anchor(Path(temp_dir))
             report = verify_history_anchor(records, anchor, public_key, "external-anchor-2026")
-        self.assertEqual(report["status"], "externally_anchored")
+        self.assertEqual(report["status"], "signed_checkpoint_verified")
         self.assertEqual(report["history"]["event_count"], 2)
         self.assertEqual(report["log_id"], "security-key-lifecycle")
 
@@ -101,6 +103,55 @@ class TrustRegistryHistoryTests(unittest.TestCase):
             changed["checkpoint"]["head_sha256"] = "f" * 64
             with self.assertRaisesRegex(RegistryHistoryError, "history_anchor_signature_verification_failed"):
                 verify_history_anchor(records, changed, public_key, "external-anchor-2026")
+
+
+    def test_rfc3161_timestamp_requires_valid_response_and_trusted_ca(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            response = root / "response.tsr"
+            ca_file = root / "trusted-ca.pem"
+            response.write_bytes(b"synthetic timestamp response")
+            ca_file.write_text("synthetic trusted CA", encoding="utf-8")
+            verified = subprocess.CompletedProcess(
+                args=["openssl"], returncode=0, stdout="Verification: OK", stderr=""
+            )
+            details = subprocess.CompletedProcess(
+                args=["openssl"], returncode=0,
+                stdout="Time Stamp: Nov 28 11:22:33 2026 GMT", stderr=""
+            )
+            with patch("trust_registry_history.subprocess.run", side_effect=[verified, details]) as run:
+                report = verify_rfc3161_timestamp(b"exact signed statement", response, ca_file)
+            self.assertEqual(report["status"], "verified")
+            self.assertEqual(report["gen_time"], "2026-11-28T11:22:33+00:00")
+            self.assertEqual(run.call_count, 2)
+            self.assertIn("-CAfile", run.call_args_list[0].args[0])
+
+    def test_rfc3161_timestamp_rejects_untrusted_or_invalid_response(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            response = root / "response.tsr"
+            ca_file = root / "trusted-ca.pem"
+            response.write_bytes(b"synthetic timestamp response")
+            ca_file.write_text("synthetic trusted CA", encoding="utf-8")
+            failed = subprocess.CompletedProcess(
+                args=["openssl"], returncode=1, stdout="", stderr="verification failure"
+            )
+            with patch("trust_registry_history.subprocess.run", return_value=failed):
+                with self.assertRaisesRegex(
+                    RegistryHistoryError, "rfc3161_signature_or_trust_verification_failed"
+                ):
+                    verify_rfc3161_timestamp(b"exact signed statement", response, ca_file)
+
+    def test_history_anchor_requires_timestamp_response_and_ca_together(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            records, anchor, public_key = self._signed_anchor(Path(temp_dir))
+            with self.assertRaisesRegex(
+                RegistryHistoryError, "timestamp_response_and_ca_must_be_supplied_together"
+            ):
+                verify_history_anchor(
+                    records, anchor, public_key, "external-anchor-2026",
+                    timestamp_response=Path(temp_dir) / "missing.tsr",
+                )
 
     def test_valid_add_and_retirement_chain_passes_checkpoint(self) -> None:
         records, checkpoint = self.chain()
