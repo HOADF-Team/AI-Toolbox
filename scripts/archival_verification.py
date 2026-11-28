@@ -48,12 +48,8 @@ def verify_archived_bundle(
         raise RegistryHistoryError("timestamp_response_and_ca_must_be_supplied_together")
     if require_trusted_timestamp and not timestamp_paths_supplied:
         raise RegistryHistoryError("trusted_timestamp_required")
-    if timestamp_paths_supplied and (
-        not isinstance(timestamp_response, Path) or not isinstance(timestamp_ca_file, Path)
-    ):
-        raise RegistryHistoryError("timestamp_response_and_ca_must_be_path_objects")
     timestamp_precheck: dict[str, str] | None = None
-    if timestamp_paths_supplied:
+    if timestamp_response is not None and timestamp_ca_file is not None:
         signature_text = bundle.get("signature")
         if not isinstance(signature_text, str) or not signature_text:
             raise IntegrityVerificationError("signature_required")
