@@ -165,7 +165,9 @@ Example registry entry fields for a retired key:
 }
 ```
 
-The audit helper uses the signed execution-context `issued_at` timestamp for statement version 1.1, or the envelope's signed `created_at` field for legacy statement version 1.0. It then verifies the Ed25519 signature, envelope digest, and local evidence digests.
+Without a trusted timestamp response, the audit helper retains the compatibility behavior of using the signed execution-context `issued_at` timestamp for statement version 1.1, or the envelope's signed `created_at` field for legacy statement version 1.0. These are signer assertions, not trusted time.
+
+For trusted historical verification, pass `timestamp_response` and `timestamp_ca_file` to `verify_archived_bundle(..., require_trusted_timestamp=True)`. The verifier first checks the RFC 3161 message imprint against the exact raw Ed25519 signature bytes, then uses the TSA-authenticated `genTime`—not signer-supplied `issued_at` or `created_at`—to evaluate the historical key's `not_before`, `not_after`, and `retired_at` window. It then verifies the Ed25519 signature and the timestamp again as part of the complete integrity report. Revoked keys remain rejected regardless of timestamp. For statement version 1.1, the TSA `genTime` must also fall inside the signed execution-context interval. The timestamp response and CA trust bundle must be host-provisioned and retained independently.
 
 **Revoked keys are never accepted**, including for historical verification. This deliberately sacrifices some archival availability after suspected compromise rather than treating signatures from a compromised key as trustworthy. Planned retirement and compromise revocation are different lifecycle events.
 

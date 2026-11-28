@@ -4,6 +4,8 @@ This is an audit-only path. It never authorizes an artifact for a live runtime h
 """
 from __future__ import annotations
 
+import base64
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +15,7 @@ from trust_registry_history import (
     RegistryHistoryError,
     registry_snapshot_sha256,
     verify_registry_history,
+    verify_rfc3161_timestamp,
 )
 
 
@@ -26,6 +29,11 @@ def verify_archived_bundle(
     history_checkpoint: dict[str, Any] | None = None,
     require_history: bool = False,
     registry_snapshots: dict[str, dict[str, Any]] | None = None,
+    timestamp_response: Path | None = None,
+    timestamp_ca_file: Path | None = None,
+    timestamp_untrusted_chain_file: Path | None = None,
+    require_trusted_timestamp: bool = False,
+    now: datetime | None = None,
 ) -> dict[str, Any]:
     """Verify an archived signature using the key's signed-time validity and retirement record."""
     if not isinstance(envelope, dict) or not isinstance(bundle, dict):
@@ -33,6 +41,28 @@ def verify_archived_bundle(
     statement = bundle.get("statement")
     if not isinstance(statement, dict):
         raise IntegrityVerificationError("integrity_statement_required")
+    if not isinstance(require_trusted_timestamp, bool):
+        raise RegistryHistoryError("invalid_require_trusted_timestamp_policy")
+    timestamp_paths_supplied = timestamp_response is not None or timestamp_ca_file is not None
+    if timestamp_paths_supplied and (timestamp_response is None or timestamp_ca_file is None):
+        raise RegistryHistoryError("timestamp_response_and_ca_must_be_supplied_together")
+    if require_trusted_timestamp and not timestamp_paths_supplied:
+        raise RegistryHistoryError("trusted_timestamp_required")
+    timestamp_precheck: dict[str, str] | None = None
+    if timestamp_response is not None and timestamp_ca_file is not None:
+        signature_text = bundle.get("signature")
+        if not isinstance(signature_text, str) or not signature_text:
+            raise IntegrityVerificationError("signature_required")
+        try:
+            signature_bytes = base64.b64decode(signature_text, validate=True)
+        except (ValueError, TypeError) as exc:
+            raise IntegrityVerificationError("signature_is_not_valid_base64") from exc
+        timestamp_precheck = verify_rfc3161_timestamp(
+            signature_bytes,
+            timestamp_response,
+            timestamp_ca_file,
+            timestamp_untrusted_chain_file,
+        )
     execution_context = statement.get("execution_context")
     if statement.get("statement_version") == "1.1":
         required = {
@@ -54,12 +84,18 @@ def verify_archived_bundle(
     if not isinstance(artifact_type, str) or not artifact_type:
         raise IntegrityVerificationError("artifact_type_required")
 
+    if timestamp_precheck is not None:
+        # TSA-authenticated time, not signer-supplied issued_at/created_at,
+        # governs the historical key-validity decision.
+        signed_at = timestamp_precheck["gen_time"]
+
     resolved = resolve_trusted_key(
         registry_path,
         key_root,
         str(bundle.get("key_id", "")),
         str(producer.get("id", "")),
         artifact_type,
+        now=now,
         verification_mode="historical",
         signed_at=signed_at if isinstance(signed_at, str) else None,
     )
@@ -69,6 +105,11 @@ def verify_archived_bundle(
         Path(resolved["trusted_public_key"]),
         resolved["trusted_key_id"],
         evidence_root,
+        timestamp_response=timestamp_response,
+        timestamp_ca_file=timestamp_ca_file,
+        timestamp_untrusted_chain_file=timestamp_untrusted_chain_file,
+        require_trusted_timestamp=require_trusted_timestamp,
+        now=now,
     )
     history_report = None
     if not isinstance(require_history, bool):

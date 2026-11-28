@@ -292,6 +292,8 @@ def _validate_stage_result(
                     raise IntegrityVerificationError("invalid_require_trusted_timestamp_policy")
                 if require_trusted_timestamp and "trust_registry_path" not in integrity_policy:
                     raise IntegrityVerificationError("trusted_timestamp_requires_trust_registry")
+                if require_trusted_timestamp and not require_execution_context:
+                    raise IntegrityVerificationError("trusted_timestamp_requires_execution_context")
                 timestamp_responses = integrity_policy.get("timestamp_responses", {})
                 if not isinstance(timestamp_responses, dict) or any(
                     not isinstance(key, str) or not key

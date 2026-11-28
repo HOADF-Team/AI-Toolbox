@@ -269,6 +269,20 @@ def verify_integrity_bundle(
             raise IntegrityVerificationError("verification_time_must_include_timezone")
         if generation_time > verification_time:
             raise IntegrityVerificationError("trusted_timestamp_from_future")
+        if statement.get("statement_version") == "1.1":
+            signed_context = statement.get("execution_context")
+            required_context_fields = {
+                "run_id", "workflow_id", "stage_id", "skill_id",
+                "input_ref", "issued_at", "expires_at",
+            }
+            if not isinstance(signed_context, dict) or set(signed_context) != required_context_fields:
+                raise IntegrityVerificationError("trusted_timestamp_requires_valid_execution_context")
+            issued_at = _parse_aware_time(signed_context.get("issued_at"), "issued_at")
+            expires_at = _parse_aware_time(signed_context.get("expires_at"), "expires_at")
+            if expires_at <= issued_at:
+                raise IntegrityVerificationError("invalid_execution_context_expiry")
+            if generation_time < issued_at or generation_time >= expires_at:
+                raise IntegrityVerificationError("trusted_timestamp_outside_execution_context_window")
 
     return {
         "status": "verified",
