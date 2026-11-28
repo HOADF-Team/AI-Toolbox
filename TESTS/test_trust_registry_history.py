@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import base64
 import copy
+import subprocess
+import tempfile
 import unittest
 import sys
 from pathlib import Path
@@ -12,8 +15,10 @@ from trust_registry_history import (  # noqa: E402
     RegistryHistoryError,
     build_history_checkpoint,
     build_history_record,
+    build_history_anchor_statement,
     registry_snapshot_sha256,
     verify_registry_history,
+    verify_history_anchor,
 )
 
 
@@ -35,6 +40,67 @@ class TrustRegistryHistoryTests(unittest.TestCase):
         )
         records = [first, second]
         return records, build_history_checkpoint(records)
+
+
+    def _signed_anchor(self, root: Path):
+        private_key = root / "anchor-private.pem"
+        public_key = root / "anchor-public.pem"
+        subprocess.run(
+            ["openssl", "genpkey", "-algorithm", "ED25519", "-out", str(private_key)],
+            check=True, capture_output=True, timeout=15,
+        )
+        subprocess.run(
+            ["openssl", "pkey", "-in", str(private_key), "-pubout", "-out", str(public_key)],
+            check=True, capture_output=True, timeout=15,
+        )
+        records, checkpoint = self.chain()
+        statement = build_history_anchor_statement(
+            "security-key-lifecycle", checkpoint, "2026-11-28T12:00:00Z", "external-anchor-2026"
+        )
+        statement_path = root / "anchor.json"
+        signature_path = root / "anchor.sig"
+        from artifact_integrity import canonical_json_bytes
+        statement_path.write_bytes(canonical_json_bytes(statement))
+        subprocess.run(
+            ["openssl", "pkeyutl", "-sign", "-inkey", str(private_key), "-rawin",
+             "-in", str(statement_path), "-out", str(signature_path)],
+            check=True, capture_output=True, timeout=15,
+        )
+        anchor = {
+            **statement,
+            "signature": base64.b64encode(signature_path.read_bytes()).decode("ascii"),
+        }
+        return records, anchor, public_key
+
+    def test_signed_external_anchor_authenticates_history_checkpoint(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            records, anchor, public_key = self._signed_anchor(Path(temp_dir))
+            report = verify_history_anchor(records, anchor, public_key, "external-anchor-2026")
+        self.assertEqual(report["status"], "externally_anchored")
+        self.assertEqual(report["history"]["event_count"], 2)
+        self.assertEqual(report["log_id"], "security-key-lifecycle")
+
+    def test_signed_external_anchor_rejects_tampered_history(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            records, anchor, public_key = self._signed_anchor(Path(temp_dir))
+            changed = copy.deepcopy(records)
+            changed[0]["event"]["reason"] = "tampered"
+            with self.assertRaisesRegex(RegistryHistoryError, "history_event_hash_mismatch"):
+                verify_history_anchor(changed, anchor, public_key, "external-anchor-2026")
+
+    def test_signed_external_anchor_rejects_wrong_anchor_key_id(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            records, anchor, public_key = self._signed_anchor(Path(temp_dir))
+            with self.assertRaisesRegex(RegistryHistoryError, "untrusted_history_anchor_key_id"):
+                verify_history_anchor(records, anchor, public_key, "other-anchor")
+
+    def test_signed_external_anchor_rejects_changed_checkpoint(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            records, anchor, public_key = self._signed_anchor(Path(temp_dir))
+            changed = copy.deepcopy(anchor)
+            changed["checkpoint"]["head_sha256"] = "f" * 64
+            with self.assertRaisesRegex(RegistryHistoryError, "history_anchor_signature_verification_failed"):
+                verify_history_anchor(records, changed, public_key, "external-anchor-2026")
 
     def test_valid_add_and_retirement_chain_passes_checkpoint(self) -> None:
         records, checkpoint = self.chain()
