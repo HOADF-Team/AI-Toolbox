@@ -293,64 +293,128 @@ def verify_rfc3161_timestamp(
                 chain_bytes += untrusted_chain_file.read_bytes()
             chain_path.write_bytes(chain_bytes)
 
-            historical_command = [
-                "openssl", "verify", "-CAfile", str(trusted_ca_file),
-                "-untrusted", str(chain_path), "-CRLfile", str(historical_tsa_crl_file),
-                "-crl_check", "-attime", attime, str(signer_path),
-            ]
-            try:
-                historical = subprocess.run(
-                    historical_command, check=False, capture_output=True,
-                    text=True, timeout=20,
-                )
-            except (OSError, subprocess.TimeoutExpired) as exc:
-                raise RegistryHistoryError("historical_tsa_revocation_check_unavailable") from exc
-            if historical.returncode != 0:
-                raise RegistryHistoryError("historical_tsa_revocation_or_crl_verification_failed")
+            # Treat CRL inputs as PEM bundles. Validate every non-root
+            # certificate supplied for the TSA path independently. This avoids
+            # -crl_check_all, which would also require a CRL for the trust anchor.
+            certificate_blocks = re.findall(
+                rb"-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----",
+                chain_path.read_bytes(), flags=re.DOTALL,
+            )
+            root_blocks = re.findall(
+                rb"-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----",
+                trusted_ca_file.read_bytes(), flags=re.DOTALL,
+            )
 
-            try:
-                crl_details = subprocess.run(
-                    ["openssl", "crl", "-in", str(current_tsa_crl_file),
-                     "-noout", "-lastupdate", "-nextupdate"],
-                    check=False, capture_output=True, text=True, timeout=20,
+            def certificate_fingerprint(block: bytes, label: str) -> str:
+                cert_file = work / f"{label}.pem"
+                cert_file.write_bytes(block + b"\\n")
+                try:
+                    result = subprocess.run(
+                        ["openssl", "x509", "-in", str(cert_file), "-noout", "-fingerprint", "-sha256"],
+                        check=False, capture_output=True, text=True, timeout=20,
+                    )
+                except (OSError, subprocess.TimeoutExpired) as exc:
+                    raise RegistryHistoryError("tsa_certificate_inspection_unavailable") from exc
+                if result.returncode != 0 or "=" not in result.stdout:
+                    raise RegistryHistoryError("tsa_certificate_inspection_failed")
+                return result.stdout.strip().split("=", 1)[1].replace(":", "").lower()
+
+            trusted_fingerprints = {
+                certificate_fingerprint(block, f"trusted-root-{index}")
+                for index, block in enumerate(root_blocks)
+            }
+            signer_blocks = re.findall(
+                rb"-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----",
+                signer_path.read_bytes(), flags=re.DOTALL,
+            )
+            if len(signer_blocks) != 1:
+                raise RegistryHistoryError("rfc3161_signer_certificate_invalid")
+            candidate_certificates: dict[str, bytes] = {}
+            for index, block in enumerate(signer_blocks + certificate_blocks):
+                fingerprint = certificate_fingerprint(block, f"tsa-chain-cert-{index}")
+                if fingerprint not in trusted_fingerprints:
+                    candidate_certificates[fingerprint] = block
+            if not candidate_certificates:
+                raise RegistryHistoryError("rfc3161_non_root_chain_missing")
+
+            def crl_bundle_dates(path: Path, label: str) -> list[tuple[datetime, datetime]]:
+                blocks = re.findall(
+                    rb"-----BEGIN X509 CRL-----.*?-----END X509 CRL-----",
+                    path.read_bytes(), flags=re.DOTALL,
                 )
-            except (OSError, subprocess.TimeoutExpired) as exc:
-                raise RegistryHistoryError("current_tsa_crl_parser_unavailable") from exc
-            if crl_details.returncode != 0:
-                raise RegistryHistoryError("current_tsa_crl_invalid")
-            crl_dates: dict[str, datetime] = {}
-            for line in crl_details.stdout.splitlines():
-                if "=" not in line:
-                    continue
-                field, value = line.split("=", 1)
-                if field in {"lastUpdate", "nextUpdate"}:
+                if not blocks:
+                    raise RegistryHistoryError(f"{label}_crl_bundle_empty_or_not_pem")
+                dates: list[tuple[datetime, datetime]] = []
+                for index, block in enumerate(blocks):
+                    crl_path = work / f"{label}-{index}.crl"
+                    crl_path.write_bytes(block + b"\\n")
                     try:
-                        parsed = parsedate_to_datetime(value.strip())
-                    except (TypeError, ValueError, OverflowError) as exc:
-                        raise RegistryHistoryError("current_tsa_crl_dates_invalid") from exc
-                    if parsed.tzinfo is None:
-                        raise RegistryHistoryError("current_tsa_crl_dates_invalid")
-                    crl_dates[field] = parsed.astimezone(timezone.utc)
-            if set(crl_dates) != {"lastUpdate", "nextUpdate"}:
-                raise RegistryHistoryError("current_tsa_crl_validity_window_missing")
-            if not crl_dates["lastUpdate"] <= audit_time < crl_dates["nextUpdate"]:
+                        parsed_crl = subprocess.run(
+                            ["openssl", "crl", "-in", str(crl_path), "-noout", "-lastupdate", "-nextupdate"],
+                            check=False, capture_output=True, text=True, timeout=20,
+                        )
+                    except (OSError, subprocess.TimeoutExpired) as exc:
+                        raise RegistryHistoryError(f"{label}_crl_parser_unavailable") from exc
+                    if parsed_crl.returncode != 0:
+                        raise RegistryHistoryError(f"{label}_crl_invalid")
+                    values: dict[str, datetime] = {}
+                    for line in parsed_crl.stdout.splitlines():
+                        if "=" not in line:
+                            continue
+                        field, value = line.split("=", 1)
+                        if field in {"lastUpdate", "nextUpdate"}:
+                            try:
+                                parsed_date = parsedate_to_datetime(value.strip())
+                            except (TypeError, ValueError, OverflowError) as exc:
+                                raise RegistryHistoryError(f"{label}_crl_dates_invalid") from exc
+                            if parsed_date.tzinfo is None:
+                                raise RegistryHistoryError(f"{label}_crl_dates_invalid")
+                            values[field] = parsed_date.astimezone(timezone.utc)
+                    if set(values) != {"lastUpdate", "nextUpdate"}:
+                        raise RegistryHistoryError(f"{label}_crl_validity_window_missing")
+                    dates.append((values["lastUpdate"], values["nextUpdate"]))
+                return dates
+
+            historical_dates = crl_bundle_dates(historical_tsa_crl_file, "historical_tsa")
+            if any(not start_time <= generation_time < end_time for start_time, end_time in historical_dates):
+                raise RegistryHistoryError("historical_tsa_crl_stale_or_not_yet_valid")
+            current_dates = crl_bundle_dates(current_tsa_crl_file, "current_tsa")
+            if any(not start_time <= audit_time < end_time for start_time, end_time in current_dates):
                 raise RegistryHistoryError("current_tsa_crl_stale_or_not_yet_valid")
 
-            current_command = [
-                "openssl", "verify", "-CAfile", str(trusted_ca_file),
-                "-untrusted", str(chain_path), "-CRLfile", str(current_tsa_crl_file),
-                "-crl_check", "-no_check_time", str(signer_path),
-            ]
-            try:
-                current = subprocess.run(
-                    current_command, check=False, capture_output=True,
-                    text=True, timeout=20,
-                )
-            except (OSError, subprocess.TimeoutExpired) as exc:
-                raise RegistryHistoryError("current_tsa_revocation_check_unavailable") from exc
-            if current.returncode != 0:
-                raise RegistryHistoryError("current_tsa_certificate_revoked_or_crl_invalid")
-            revocation_status = "historical_and_current_crl_verified"
+            for index, certificate in enumerate(candidate_certificates.values()):
+                target_path = work / f"tsa-chain-target-{index}.pem"
+                target_path.write_bytes(certificate + b"\\n")
+                historical_command = [
+                    "openssl", "verify", "-CAfile", str(trusted_ca_file),
+                    "-untrusted", str(chain_path), "-CRLfile", str(historical_tsa_crl_file),
+                    "-crl_check", "-attime", attime, str(target_path),
+                ]
+                try:
+                    historical = subprocess.run(
+                        historical_command, check=False, capture_output=True,
+                        text=True, timeout=20,
+                    )
+                except (OSError, subprocess.TimeoutExpired) as exc:
+                    raise RegistryHistoryError("historical_tsa_revocation_check_unavailable") from exc
+                if historical.returncode != 0:
+                    raise RegistryHistoryError("historical_tsa_revocation_or_crl_verification_failed")
+
+                current_command = [
+                    "openssl", "verify", "-CAfile", str(trusted_ca_file),
+                    "-untrusted", str(chain_path), "-CRLfile", str(current_tsa_crl_file),
+                    "-crl_check", "-no_check_time", str(target_path),
+                ]
+                try:
+                    current = subprocess.run(
+                        current_command, check=False, capture_output=True,
+                        text=True, timeout=20,
+                    )
+                except (OSError, subprocess.TimeoutExpired) as exc:
+                    raise RegistryHistoryError("current_tsa_revocation_check_unavailable") from exc
+                if current.returncode != 0:
+                    raise RegistryHistoryError("current_tsa_certificate_or_intermediate_revoked_or_crl_invalid")
+            revocation_status = "historical_and_current_crl_verified_for_tsa_and_intermediates"
 
     return {
         "status": "verified",
