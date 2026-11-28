@@ -1,0 +1,148 @@
+{
+  "schema_version": "1.0",
+  "catalog_id": "hoadf-handoff-payload-schemas",
+  "semantics": "Draft field-level payload schemas for synthetic workflow fixtures. They are validation contracts for declared demo artifacts, not guarantees of model output.",
+  "artifacts": [
+    {
+      "artifact_type": "security.risk_assessment",
+      "field": "risk",
+      "type": "string",
+      "required": true
+    },
+    {
+      "artifact_type": "security.risk_assessment",
+      "field": "decision",
+      "type": "string",
+      "required": true
+    },
+    {
+      "artifact_type": "security.containment_recommendations",
+      "field": "incident_events",
+      "type": "array",
+      "required": true,
+      "items": {
+        "type": "object",
+        "required": [
+          "event",
+          "mode"
+        ],
+        "properties": {
+          "event": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "recommendation_only"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "artifact_type": "security.containment_recommendations",
+      "field": "automatic_actions",
+      "type": "array",
+      "required": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    {
+      "artifact_type": "code.audit_findings",
+      "field": "execution",
+      "type": "string",
+      "required": true,
+      "enum": [
+        "not_executed"
+      ]
+    },
+    {
+      "artifact_type": "code.audit_findings",
+      "field": "findings",
+      "type": "array",
+      "required": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    {
+      "artifact_type": "code.patch_proposal",
+      "field": "patch_status",
+      "type": "string",
+      "required": true,
+      "enum": [
+        "proposed_not_applied"
+      ]
+    },
+    {
+      "artifact_type": "code.patch_proposal",
+      "field": "patch_summary",
+      "type": "string",
+      "required": true
+    },
+    {
+      "artifact_type": "code.regression_plan",
+      "field": "regression_test_plan",
+      "type": "array",
+      "required": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    {
+      "artifact_type": "code.regression_plan",
+      "field": "fixture_dependencies_installed",
+      "type": "boolean",
+      "required": true,
+      "enum": [
+        false
+      ]
+    },
+    {
+      "artifact_type": "infrastructure.diagnostic_report",
+      "field": "systemd_findings",
+      "type": "array",
+      "required": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    {
+      "artifact_type": "infrastructure.diagnostic_report",
+      "field": "remote_access",
+      "type": "string",
+      "required": true,
+      "enum": [
+        "not_checked"
+      ]
+    },
+    {
+      "artifact_type": "infrastructure.diagnostic_report",
+      "field": "ssh_attempted",
+      "type": "boolean",
+      "required": true,
+      "enum": [
+        false
+      ]
+    },
+    {
+      "artifact_type": "infrastructure.hardening_plan",
+      "field": "hardening_proposal",
+      "type": "array",
+      "required": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    {
+      "artifact_type": "infrastructure.hardening_plan",
+      "field": "production_changes",
+      "type": "string",
+      "required": true,
+      "enum": [
+        "not_performed"
+      ]
+    }
+  ]
+}
