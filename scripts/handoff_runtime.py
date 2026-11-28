@@ -133,7 +133,8 @@ def _validate_stage_result(
                 errors.append("artifact_provenance_payload_identity_mismatch")
             if payload.get("output_ref") != result.get("output_ref"):
                 errors.append("artifact_provenance_output_ref_mismatch")
-            if artifact_provenance.get("inputs", [{}])[0].get("ref") != envelope["input_ref"]:
+            inputs = artifact_provenance.get("inputs", [])
+            if not inputs or inputs[0].get("ref") != envelope["input_ref"]:
                 errors.append("artifact_provenance_input_ref_mismatch")
     actions = result.get("actions_taken", [])
     if not isinstance(actions, list):
