@@ -293,7 +293,7 @@ class ArchivalVerificationTests(unittest.TestCase):
         current_crl = tsa.generate_crl()
         data = current_crl.read_bytes()
         current_crl.write_bytes(data[:-2] + bytes([data[-2] ^ 1]) + data[-1:])
-        with self.assertRaisesRegex(ValueError, "current_tsa_certificate_revoked_or_crl_invalid"):
+        with self.assertRaisesRegex(ValueError, "current_tsa_crl_invalid"):
             verify_rfc3161_timestamp(
                 signature, response, tsa.ca_cert, tsa.tsa_cert,
                 tsa.historical_crl, current_crl, True,
