@@ -21,6 +21,16 @@ python scripts/validate_handoff_chain.py \
   --output handoff-report.json
 ```
 
+Run the Skill selection contract tests and validate the sample planner proposal:
+
+```bash
+python -m unittest TESTS.test_skill_selection -v
+python scripts/validate_skill_selection.py \
+  --selection TESTS/fixtures/inter-skill-demo/skill-selection.json \
+  --contract TESTS/fixtures/inter-skill-demo/workflow-contract.json \
+  --pretty
+```
+
 Run the runtime adapter protocol tests:
 
 ```bash
