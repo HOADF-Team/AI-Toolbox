@@ -142,13 +142,91 @@ def build_history_anchor_statement(
     }
 
 
+def verify_rfc3161_timestamp(
+    data: bytes,
+    timestamp_response: Path,
+    trusted_ca_file: Path,
+    untrusted_chain_file: Path | None = None,
+) -> dict[str, str]:
+    """Verify an RFC 3161 response and return its TSA-authenticated generation time.
+
+    The response must be verified against a host-provisioned CA trust bundle.
+    The optional untrusted file supplies intermediate/TSA certificates; it is
+    never used as a trust root.
+    """
+    if not isinstance(data, bytes) or not data:
+        raise RegistryHistoryError("timestamped_data_must_be_nonempty_bytes")
+    for path, error_code in (
+        (timestamp_response, "timestamp_response_unavailable"),
+        (trusted_ca_file, "timestamp_trust_bundle_unavailable"),
+    ):
+        if not isinstance(path, Path) or path.is_symlink() or not path.is_file():
+            raise RegistryHistoryError(error_code)
+    if untrusted_chain_file is not None and (
+        not isinstance(untrusted_chain_file, Path)
+        or untrusted_chain_file.is_symlink()
+        or not untrusted_chain_file.is_file()
+    ):
+        raise RegistryHistoryError("timestamp_untrusted_chain_unavailable")
+
+    with tempfile.TemporaryDirectory(prefix="rfc3161-verify-") as temp_dir:
+        data_path = Path(temp_dir) / "timestamped-data.bin"
+        data_path.write_bytes(data)
+        command = [
+            "openssl", "ts", "-verify", "-in", str(timestamp_response),
+            "-data", str(data_path), "-CAfile", str(trusted_ca_file),
+        ]
+        if untrusted_chain_file is not None:
+            command.extend(["-untrusted", str(untrusted_chain_file)])
+        try:
+            verified = subprocess.run(
+                command, check=False, capture_output=True, text=True, timeout=20,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise RegistryHistoryError("rfc3161_verifier_unavailable") from exc
+        if verified.returncode != 0:
+            raise RegistryHistoryError("rfc3161_signature_or_trust_verification_failed")
+
+        try:
+            details = subprocess.run(
+                ["openssl", "ts", "-reply", "-in", str(timestamp_response), "-text"],
+                check=False, capture_output=True, text=True, timeout=20,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise RegistryHistoryError("rfc3161_response_parser_unavailable") from exc
+        if details.returncode != 0:
+            raise RegistryHistoryError("rfc3161_response_parse_failed")
+
+    generation_time: datetime | None = None
+    for line in details.stdout.splitlines():
+        stripped = line.strip()
+        if stripped.lower().startswith("time stamp:"):
+            value = stripped.split(":", 1)[1].strip()
+            try:
+                from email.utils import parsedate_to_datetime
+                generation_time = parsedate_to_datetime(value)
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise RegistryHistoryError("rfc3161_generation_time_invalid") from exc
+            break
+    if generation_time is None or generation_time.tzinfo is None:
+        raise RegistryHistoryError("rfc3161_generation_time_missing")
+    return {
+        "status": "verified",
+        "gen_time": generation_time.astimezone().isoformat(),
+        "verification": "openssl_ts_verify_with_host_supplied_ca",
+    }
+
+
 def verify_history_anchor(
     records: list[dict[str, Any]],
     anchor: dict[str, Any],
     trusted_public_key: Path,
     trusted_anchor_key_id: str,
+    timestamp_response: Path | None = None,
+    timestamp_ca_file: Path | None = None,
+    timestamp_untrusted_chain_file: Path | None = None,
 ) -> dict[str, Any]:
-    """Verify an externally retained Ed25519 signature over a history checkpoint."""
+    """Verify a signed history checkpoint and, optionally, its RFC 3161 timestamp."""
     if not isinstance(anchor, dict) or set(anchor) != {
         "anchor_version", "log_id", "anchor_key_id", "anchored_at", "checkpoint", "signature"
     }:
@@ -175,12 +253,13 @@ def verify_history_anchor(
         signature = base64.b64decode(signature_text, validate=True)
     except ValueError as exc:
         raise RegistryHistoryError("history_anchor_signature_invalid_base64") from exc
-    if not trusted_public_key.is_file():
+    if not isinstance(trusted_public_key, Path) or trusted_public_key.is_symlink() or not trusted_public_key.is_file():
         raise RegistryHistoryError("trusted_history_anchor_public_key_unavailable")
     with tempfile.TemporaryDirectory(prefix="history-anchor-") as temp_dir:
         statement_path = Path(temp_dir) / "anchor.json"
         signature_path = Path(temp_dir) / "anchor.sig"
-        statement_path.write_bytes(canonical_json_bytes(statement))
+        statement_bytes = canonical_json_bytes(statement)
+        statement_path.write_bytes(statement_bytes)
         signature_path.write_bytes(signature)
         try:
             completed = subprocess.run(
@@ -193,19 +272,29 @@ def verify_history_anchor(
             raise RegistryHistoryError("history_anchor_verifier_unavailable") from exc
         if completed.returncode != 0:
             raise RegistryHistoryError("history_anchor_signature_verification_failed")
+
+    if (timestamp_response is None) != (timestamp_ca_file is None):
+        raise RegistryHistoryError("timestamp_response_and_ca_must_be_supplied_together")
+    timestamp_report: dict[str, str] | None = None
+    if timestamp_response is not None and timestamp_ca_file is not None:
+        timestamp_report = verify_rfc3161_timestamp(
+            statement_bytes, timestamp_response, timestamp_ca_file,
+            timestamp_untrusted_chain_file,
+        )
     history_report = verify_registry_history(records, statement["checkpoint"])
     return {
-        "status": "externally_anchored",
+        "status": "signed_checkpoint_verified",
         "log_id": statement["log_id"],
         "anchor_key_id": trusted_anchor_key_id,
         "anchored_at": statement["anchored_at"],
+        "timestamp": timestamp_report,
         "checkpoint": statement["checkpoint"],
         "history": history_report,
         "limitations": [
             "The anchor signature authenticates the checkpoint statement and proves key possession.",
-            "The anchored_at value is the anchor signer's assertion, not an independent RFC 3161 trusted timestamp.",
-            "The host must retain the anchor and trusted public key outside the editable history store.",
-            "A valid anchor does not prove that the underlying lifecycle events are truthful.",
+            "Only a verified RFC 3161 response supplies an independently trusted generation time.",
+            "The host must retain the timestamp response and trust bundle independently.",
+            "A valid signature and timestamp do not prove that the underlying lifecycle events are truthful.",
         ],
     }
 
