@@ -234,14 +234,17 @@ def execute_with_adapter(
     integrity_policy: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run an injected adapter; optional host trust policy enforces signatures and evidence hashes."""
-    contract_stages = contract.get("stages")
-    expected_stage_count = len(contract_stages) if isinstance(contract_stages, list) else -1
+    raw_contract_stages = contract.get("stages")
+    contract_stages: list[Any] = (
+        raw_contract_stages if isinstance(raw_contract_stages, list) else []
+    )
+    expected_stage_count = len(contract_stages) if contract_stages else -1
     granted = approvals if approvals is not None else {}
     artifacts: list[dict[str, Any]] = []
     stage_reports: list[dict[str, Any]] = []
     stopped_reason: str | None = None
 
-    if not isinstance(contract_stages, list) or not contract_stages:
+    if not contract_stages:
         stopped_reason = "invalid_contract_stages"
     elif not isinstance(plan, list) or len(plan) != len(contract_stages):
         stopped_reason = "invalid_plan_stage_count"
