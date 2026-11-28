@@ -9,7 +9,12 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from artifact_integrity import (\n    IntegrityVerificationError,\n    canonical_json_bytes,\n    sha256_bytes,\n    verify_integrity_bundle,\n)
+from artifact_integrity import (
+    IntegrityVerificationError,
+    canonical_json_bytes,
+    sha256_bytes,
+    verify_integrity_bundle,
+)
 from artifact_provenance import validate_provenance_envelope
 from trust_registry import TrustRegistryError, resolve_trusted_key
 from handoff_contract import validate_handoff_chain
