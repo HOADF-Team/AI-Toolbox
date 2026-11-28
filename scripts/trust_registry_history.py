@@ -343,7 +343,7 @@ def verify_rfc3161_timestamp(
                     path.read_bytes(), flags=re.DOTALL,
                 )
                 if not blocks:
-                    raise RegistryHistoryError(f"{label}_crl_bundle_empty_or_not_pem")
+                    raise RegistryHistoryError(f"{label}_crl_invalid")
                 dates: list[tuple[datetime, datetime]] = []
                 for index, block in enumerate(blocks):
                     crl_path = work / f"{label}-{index}.crl"
