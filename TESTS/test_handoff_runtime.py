@@ -412,5 +412,31 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
         )
 
 
+    def test_symlinked_skill_manifest_is_rejected(self) -> None:
+        root = self.make_root()
+        manifest = root / "skills" / "crypto-security" / "SKILL.md"
+        outside = root / "outside-SKILL.md"
+        outside.write_text("# outside\n", encoding="utf-8")
+        manifest.unlink()
+        manifest.symlink_to(outside)
+        with self.assertRaisesRegex(RuntimeProtocolError, "symlink"):
+            build_workflow_plan(
+                self.contract, self.skill_map, root, "task", "ref", SKILLS_REVISION
+            )
+
+    def test_symlinked_skill_directory_is_rejected(self) -> None:
+        root = self.make_root()
+        skill_dir = root / "skills" / "crypto-security"
+        outside_dir = root / "outside-skill"
+        outside_dir.mkdir()
+        (outside_dir / "SKILL.md").write_text("# outside\n", encoding="utf-8")
+        skill_dir.rmdir()
+        skill_dir.symlink_to(outside_dir, target_is_directory=True)
+        with self.assertRaisesRegex(RuntimeProtocolError, "symlink"):
+            build_workflow_plan(
+                self.contract, self.skill_map, root, "task", "ref", SKILLS_REVISION
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
