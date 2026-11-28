@@ -11,6 +11,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(ROOT / "TESTS"))
+from local_tsa_fixture import issue_local_rfc3161_timestamp  # noqa: E402
 from artifact_integrity import IntegrityVerificationError, verify_integrity_bundle  # noqa: E402
 from artifact_signing import create_integrity_bundle  # noqa: E402
 from trust_registry import public_key_fingerprint  # noqa: E402
@@ -137,6 +139,27 @@ class ArtifactSigningTests(unittest.TestCase):
             expected_execution_context=context, max_age_seconds=300,
         )
         self.assertEqual(report["replay_protection"], "run_stage_bound_and_time_limited")
+
+    def test_artifact_verifier_accepts_real_local_rfc3161_signature_timestamp(self) -> None:
+        bundle = self.sign()
+        signature = base64.b64decode(bundle["signature"], validate=True)
+        response, ca_bundle, tsa_cert = issue_local_rfc3161_timestamp(
+            signature, self.root / "local-tsa"
+        )
+        report = verify_integrity_bundle(
+            self.envelope,
+            bundle,
+            self.public_key,
+            "test-signing-key",
+            self.evidence_root,
+            timestamp_response=response,
+            timestamp_ca_file=ca_bundle,
+            timestamp_untrusted_chain_file=tsa_cert,
+            require_trusted_timestamp=True,
+        )
+        self.assertEqual(report["status"], "verified")
+        self.assertEqual(report["trusted_timestamp"]["status"], "verified")
+        self.assertTrue(report["trusted_timestamp"]["gen_time"].endswith("+00:00"))
 
     def test_trusted_timestamp_must_fall_inside_signed_execution_window(self) -> None:
         context = {
