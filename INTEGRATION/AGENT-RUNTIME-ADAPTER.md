@@ -60,3 +60,8 @@ The host calls build_workflow_plan() with the contract, Skill map, trusted Perso
 ## Measuring planner selection quality
 
 For an external planner evaluation exchange, use [External AI runtime benchmark integration](EXTERNAL-RUNTIME-BENCHMARK.md). The benchmark bridge exports gold-label-free requests and scores complete response bundles from a separately operated host. It does not invoke or authenticate an LLM.
+
+
+### Creating signed bundles
+
+Use [Artifact signing](ARTIFACT-SIGNING.md) to create the Ed25519 integrity bundle after resolving the active key through the host-managed trust registry. The helper does not store or manage private keys and does not prevent cross-run replay.
