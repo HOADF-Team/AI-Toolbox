@@ -346,7 +346,7 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
             report = execute_with_adapter(
                 self.contract, self.plan(), adapter, integrity_policy=policy
             )
-        self.assertEqual(report["status"], "completed")
+        self.assertEqual(report["status"], "completed", report)
         self.assertEqual(len(calls), 4)
         self.assertEqual(report["handoff_validation"]["status"], "passed")
         self.assertTrue(all(
