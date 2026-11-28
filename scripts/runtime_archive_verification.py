@@ -117,15 +117,30 @@ def verify_runtime_archive_cryptographically(
     tsa_ca = Path(tsa_ca_value)
     tsa_chain_value = trust_policy.get("timestamp_untrusted_chain_file")
     tsa_chain = Path(tsa_chain_value) if tsa_chain_value else None
+    historical_crl_value = trust_policy.get("historical_tsa_crl_file")
+    current_crl_value = trust_policy.get("current_tsa_crl_file")
+    historical_crl = Path(historical_crl_value) if historical_crl_value else None
+    current_crl = Path(current_crl_value) if current_crl_value else None
     require_timestamps = trust_policy.get("require_trusted_timestamps", True)
+    require_tsa_revocation = trust_policy.get("require_tsa_revocation", False)
     if not isinstance(require_timestamps, bool):
         raise RuntimeArchiveVerificationError("invalid_timestamp_policy")
+    if not isinstance(require_tsa_revocation, bool):
+        raise RuntimeArchiveVerificationError("invalid_tsa_revocation_policy")
+    if (historical_crl is None) != (current_crl is None):
+        raise RuntimeArchiveVerificationError("historical_and_current_tsa_crls_must_be_supplied_together")
+    if require_tsa_revocation and historical_crl is None:
+        raise RuntimeArchiveVerificationError("tsa_revocation_crls_required")
     if anchor_key.is_symlink() or not anchor_key.is_file():
         raise RuntimeArchiveVerificationError("external_history_anchor_key_unavailable")
     if tsa_ca.is_symlink() or not tsa_ca.is_file():
         raise RuntimeArchiveVerificationError("external_tsa_trust_bundle_unavailable")
     if tsa_chain is not None and (tsa_chain.is_symlink() or not tsa_chain.is_file()):
         raise RuntimeArchiveVerificationError("external_tsa_chain_unavailable")
+    if historical_crl is not None and (historical_crl.is_symlink() or not historical_crl.is_file()):
+        raise RuntimeArchiveVerificationError("external_historical_tsa_crl_unavailable")
+    if current_crl is not None and (current_crl.is_symlink() or not current_crl.is_file()):
+        raise RuntimeArchiveVerificationError("external_current_tsa_crl_unavailable")
 
     root = Path(archive_root)
     package_report = verify_runtime_archive(root)
@@ -153,6 +168,8 @@ def verify_runtime_archive_cryptographically(
         raise RuntimeArchiveVerificationError("archive_verification_policy_invalid")
     if archive_policy.get("require_trusted_timestamp") is True and not require_timestamps:
         raise RuntimeArchiveVerificationError("archive_timestamp_policy_downgrade")
+    if archive_policy.get("require_tsa_revocation") is True and not require_tsa_revocation:
+        raise RuntimeArchiveVerificationError("archive_tsa_revocation_policy_downgrade")
 
     registry_path = _safe_file(root, "trust/registry.json")
     key_root = _safe_directory(root, "trust/keys")
@@ -170,6 +187,10 @@ def verify_runtime_archive_cryptographically(
         timestamp_response=anchor_timestamp,
         timestamp_ca_file=tsa_ca if require_timestamps else None,
         timestamp_untrusted_chain_file=tsa_chain if require_timestamps else None,
+        historical_tsa_crl_file=historical_crl if require_tsa_revocation else None,
+        current_tsa_crl_file=current_crl if require_tsa_revocation else None,
+        require_tsa_revocation=require_tsa_revocation,
+        now=now,
     )
     if anchor_report.get("status") != "signed_checkpoint_verified":
         raise RuntimeArchiveVerificationError("registry_history_anchor_not_verified")
@@ -241,6 +262,9 @@ def verify_runtime_archive_cryptographically(
             timestamp_untrusted_chain_file=tsa_chain if require_timestamps else None,
             require_trusted_timestamp=require_timestamps,
             now=now,
+            historical_tsa_crl_file=historical_crl if require_tsa_revocation else None,
+            current_tsa_crl_file=current_crl if require_tsa_revocation else None,
+            require_tsa_revocation=require_tsa_revocation,
         )
         if report.get("status") != "archived_verified":
             raise RuntimeArchiveVerificationError(f"stage_archival_verification_failed:{stage_id}")
@@ -261,6 +285,10 @@ def verify_runtime_archive_cryptographically(
         "stages": stage_reports,
         "handoff_validation": chain_report,
         "verification_scope": "offline_audit_only",
+        "tsa_revocation_policy": (
+            "historical_and_current_crl_verified"
+            if require_tsa_revocation else "not_required_by_host_policy"
+        ),
         "limitations": [
             "The host-supplied history-anchor public key and TSA trust bundle are the trust roots.",
             "Embedded registry keys are accepted only after historical registry and anchor verification.",
