@@ -169,12 +169,18 @@ class RuntimeArchiveCryptographicVerificationTests(unittest.TestCase):
     def test_signed_execution_context_mismatch_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             archive, anchor_key, tsa_ca = self.make_archive(Path(temp), bad_context=True)
-            with patch(
-                "runtime_archive_verification.verify_history_anchor",
-                return_value={
-                    "status": "signed_checkpoint_verified",
-                    "checkpoint": {"event_count": 0, "head_sha256": "0" * 64},
-                },
+            with (
+                patch(
+                    "runtime_archive_verification.verify_history_anchor",
+                    return_value={
+                        "status": "signed_checkpoint_verified",
+                        "checkpoint": {"event_count": 0, "head_sha256": "0" * 64},
+                    },
+                ),
+                patch(
+                    "runtime_archive_verification.validate_provenance_envelope",
+                    return_value={"status": "passed", "errors": []},
+                ),
             ):
                 with patch("runtime_archive_verification.verify_archived_bundle") as stage_verifier:
                     with self.assertRaisesRegex(
