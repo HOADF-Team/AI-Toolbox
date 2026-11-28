@@ -78,22 +78,36 @@ def verify_archived_bundle(
             raise RegistryHistoryError("authenticated_registry_history_and_snapshots_required")
         history_report = verify_registry_history(history_records, history_checkpoint)
         key_id = resolved["trusted_key_id"]
-        key_events = [event for event in history_report["events"] if event["key_id"] == key_id]
-        if any(event["action"] == "key_revoked" for event in key_events):
+        key_events = [
+            event for event in history_report["events"]
+            if event["key_id"] == key_id
+            or (event["action"] == "key_rotated" and event.get("replacement_key_id") == key_id)
+        ]
+        if any(
+            event["action"] == "key_revoked" and event["key_id"] == key_id
+            for event in key_events
+        ):
             raise RegistryHistoryError("registry_history_key_revoked")
         lifecycle = history_report["key_lifecycle"].get(key_id)
         if lifecycle != resolved["status"]:
             raise RegistryHistoryError("registry_history_lifecycle_mismatch")
-        additions = [event for event in key_events if event["action"] == "key_added"]
+        additions = [
+            event for event in key_events
+            if (event["action"] == "key_added" and event["key_id"] == key_id)
+            or (event["action"] == "key_rotated" and event.get("replacement_key_id") == key_id)
+        ]
         if len(additions) != 1:
             raise RegistryHistoryError("registry_history_key_addition_missing_or_duplicated")
+        retirements = [
+            event for event in key_events
+            if event["key_id"] == key_id and event["action"] in {"key_retired", "key_rotated"}
+        ]
         if resolved["status"] == "retired":
-            retirements = [event for event in key_events if event["action"] == "key_retired"]
             if len(retirements) != 1 or retirements[0]["effective_at"] != resolved["retired_at"]:
                 raise RegistryHistoryError("registry_history_retirement_mismatch")
-        required_events = additions + [
-            event for event in key_events if event["action"] == "key_retired"
-        ]
+        elif retirements:
+            raise RegistryHistoryError("registry_history_active_key_has_retirement_event")
+        required_events = additions + retirements
         for event in required_events:
             digest = event["registry_sha256"]
             snapshot = registry_snapshots.get(digest)
@@ -111,9 +125,10 @@ def verify_archived_bundle(
             snapshot_entry = matches[0]
             if snapshot_entry.get("public_key_sha256") != resolved["public_key_sha256"]:
                 raise RegistryHistoryError("historical_registry_public_key_changed")
-            if event["action"] == "key_added" and snapshot_entry.get("status") != "active":
+            is_addition = event in additions
+            if is_addition and snapshot_entry.get("status") != "active":
                 raise RegistryHistoryError("historical_key_addition_snapshot_not_active")
-            if event["action"] == "key_retired":
+            if event in retirements:
                 if snapshot_entry.get("status") != "retired":
                     raise RegistryHistoryError("historical_key_retirement_snapshot_not_retired")
                 if snapshot_entry.get("retired_at") != event["effective_at"]:
