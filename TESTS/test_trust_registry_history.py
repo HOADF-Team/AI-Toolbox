@@ -225,19 +225,21 @@ class TrustRegistryHistoryTests(unittest.TestCase):
             ca_file = root / "trusted-ca.pem"
             response.write_bytes(b"synthetic timestamp response")
             ca_file.write_text("synthetic trusted CA", encoding="utf-8")
-            verified = subprocess.CompletedProcess(
-                args=["openssl"], returncode=0, stdout="Verification: OK", stderr=""
-            )
             details = subprocess.CompletedProcess(
                 args=["openssl"], returncode=0,
                 stdout="Time Stamp: Nov 28 11:22:33 2026 GMT", stderr=""
             )
-            with patch("trust_registry_history.subprocess.run", side_effect=[verified, details]) as run:
+            verified = subprocess.CompletedProcess(
+                args=["openssl"], returncode=0, stdout="Verification: OK", stderr=""
+            )
+            with patch("trust_registry_history.subprocess.run", side_effect=[details, verified]) as run:
                 report = verify_rfc3161_timestamp(b"exact signed statement", response, ca_file)
             self.assertEqual(report["status"], "verified")
             self.assertEqual(report["gen_time"], "2026-11-28T11:22:33+00:00")
             self.assertEqual(run.call_count, 2)
-            self.assertIn("-CAfile", run.call_args_list[0].args[0])
+            verification_command = run.call_args_list[1].args[0]
+            self.assertIn("-CAfile", verification_command)
+            self.assertIn("-attime", verification_command)
 
     def test_rfc3161_timestamp_rejects_untrusted_or_invalid_response(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -251,7 +253,7 @@ class TrustRegistryHistoryTests(unittest.TestCase):
             )
             with patch("trust_registry_history.subprocess.run", return_value=failed):
                 with self.assertRaisesRegex(
-                    RegistryHistoryError, "rfc3161_signature_or_trust_verification_failed"
+                    RegistryHistoryError, "rfc3161_response_parse_failed"
                 ):
                     verify_rfc3161_timestamp(b"exact signed statement", response, ca_file)
 

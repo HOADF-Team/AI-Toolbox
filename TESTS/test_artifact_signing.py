@@ -162,7 +162,7 @@ class ArtifactSigningTests(unittest.TestCase):
         self.assertEqual(report["trusted_timestamp"]["status"], "verified")
         self.assertEqual(
             report["trusted_timestamp"]["verification"],
-            "openssl_ts_verify_with_host_supplied_ca",
+            "openssl_ts_verify_with_host_supplied_ca_at_authenticated_gen_time",
         )
         self.assertTrue(report["trusted_timestamp"]["gen_time"].endswith("+00:00"))
 

@@ -148,11 +148,13 @@ def verify_rfc3161_timestamp(
     trusted_ca_file: Path,
     untrusted_chain_file: Path | None = None,
 ) -> dict[str, str]:
-    """Verify an RFC 3161 response and return its TSA-authenticated generation time.
+    """Verify an RFC 3161 token and validate its TSA chain at authenticated genTime.
 
-    The response must be verified against a host-provisioned CA trust bundle.
-    The optional untrusted file supplies intermediate/TSA certificates; it is
-    never used as a trust root.
+    genTime is parsed before certificate validation only to select OpenSSL's
+    historical verification instant. The timestamp token signature and imprint
+    are then verified by OpenSSL at that instant, binding genTime to the TSA key.
+    Trust roots are supplied by the verifier host; untrusted certificates can
+    complete a chain but can never become trust anchors.
     """
     if not isinstance(data, bytes) or not data:
         raise RegistryHistoryError("timestamped_data_must_be_nonempty_bytes")
@@ -172,9 +174,37 @@ def verify_rfc3161_timestamp(
     with tempfile.TemporaryDirectory(prefix="rfc3161-verify-") as temp_dir:
         data_path = Path(temp_dir) / "timestamped-data.bin"
         data_path.write_bytes(data)
+        try:
+            details = subprocess.run(
+                ["openssl", "ts", "-reply", "-in", str(timestamp_response), "-text"],
+                check=False, capture_output=True, text=True, timeout=20,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise RegistryHistoryError("rfc3161_response_parser_unavailable") from exc
+        if details.returncode != 0:
+            raise RegistryHistoryError("rfc3161_response_parse_failed")
+
+        generation_time: datetime | None = None
+        for line in details.stdout.splitlines():
+            stripped = line.strip()
+            if stripped.lower().startswith("time stamp:"):
+                value = stripped.split(":", 1)[1].strip()
+                try:
+                    from email.utils import parsedate_to_datetime
+                    generation_time = parsedate_to_datetime(value)
+                except (TypeError, ValueError, OverflowError) as exc:
+                    raise RegistryHistoryError("rfc3161_generation_time_invalid") from exc
+                break
+        if generation_time is None or generation_time.tzinfo is None:
+            raise RegistryHistoryError("rfc3161_generation_time_missing")
+        generation_time = generation_time.astimezone(timezone.utc)
+        # OpenSSL -attime takes Unix seconds. This preliminary value is not
+        # trusted until the subsequent signature/imprint verification succeeds.
+        attime = str(int(generation_time.timestamp()))
         command = [
             "openssl", "ts", "-verify", "-in", str(timestamp_response),
             "-data", str(data_path), "-CAfile", str(trusted_ca_file),
+            "-attime", attime,
         ]
         if untrusted_chain_file is not None:
             command.extend(["-untrusted", str(untrusted_chain_file)])
@@ -187,35 +217,11 @@ def verify_rfc3161_timestamp(
         if verified.returncode != 0:
             raise RegistryHistoryError("rfc3161_signature_or_trust_verification_failed")
 
-        try:
-            details = subprocess.run(
-                ["openssl", "ts", "-reply", "-in", str(timestamp_response), "-text"],
-                check=False, capture_output=True, text=True, timeout=20,
-            )
-        except (OSError, subprocess.TimeoutExpired) as exc:
-            raise RegistryHistoryError("rfc3161_response_parser_unavailable") from exc
-        if details.returncode != 0:
-            raise RegistryHistoryError("rfc3161_response_parse_failed")
-
-    generation_time: datetime | None = None
-    for line in details.stdout.splitlines():
-        stripped = line.strip()
-        if stripped.lower().startswith("time stamp:"):
-            value = stripped.split(":", 1)[1].strip()
-            try:
-                from email.utils import parsedate_to_datetime
-                generation_time = parsedate_to_datetime(value)
-            except (TypeError, ValueError, OverflowError) as exc:
-                raise RegistryHistoryError("rfc3161_generation_time_invalid") from exc
-            break
-    if generation_time is None or generation_time.tzinfo is None:
-        raise RegistryHistoryError("rfc3161_generation_time_missing")
     return {
         "status": "verified",
-        "gen_time": generation_time.astimezone(timezone.utc).isoformat(),
-        "verification": "openssl_ts_verify_with_host_supplied_ca",
+        "gen_time": generation_time.isoformat(),
+        "verification": "openssl_ts_verify_with_host_supplied_ca_at_authenticated_gen_time",
     }
-
 
 def verify_history_anchor(
     records: list[dict[str, Any]],
