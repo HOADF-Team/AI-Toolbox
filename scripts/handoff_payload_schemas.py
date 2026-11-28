@@ -5,10 +5,13 @@ Only a deliberately small JSON-schema subset is supported. No Skills or models r
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
 _TYPES = {"object", "array", "string", "boolean", "integer", "number", "null"}
+_ARTIFACT_TOKEN = re.compile(r"^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$")
+_SCHEMA_KEYS = {"type", "enum", "items", "properties", "required"}
 
 
 def _matches_type(value: Any, expected: str) -> bool:
@@ -63,13 +66,63 @@ def _validate_value(value: Any, spec: dict[str, Any], path: str) -> list[str]:
     return errors
 
 
+def _validate_schema_spec(spec: Any, path: str) -> list[str]:
+    """Validate the supported schema subset without validating an instance."""
+    if not isinstance(spec, dict):
+        return [f"{path}:schema_must_be_object"]
+    errors: list[str] = []
+    unknown = set(spec) - _SCHEMA_KEYS
+    if unknown:
+        errors.append(f"{path}:unsupported_schema_keywords:{sorted(unknown)}")
+    expected = spec.get("type")
+    if expected not in _TYPES:
+        return errors + [f"{path}:unsupported_type"]
+    if "enum" in spec:
+        values = spec["enum"]
+        if not isinstance(values, list) or not values:
+            errors.append(f"{path}:enum_must_be_nonempty_array")
+        elif any(not _matches_type(value, expected) for value in values):
+            errors.append(f"{path}:enum_value_type_mismatch")
+        elif len(values) != len({json.dumps(value, sort_keys=True) for value in values}):
+            errors.append(f"{path}:duplicate_enum_value")
+    if "items" in spec:
+        if expected != "array":
+            errors.append(f"{path}:items_only_valid_for_array")
+        errors.extend(_validate_schema_spec(spec["items"], f"{path}.items"))
+    if "properties" in spec or "required" in spec:
+        if expected != "object":
+            errors.append(f"{path}:object_keywords_only_valid_for_object")
+        properties = spec.get("properties", {})
+        required = spec.get("required", [])
+        if not isinstance(properties, dict):
+            errors.append(f"{path}:properties_must_be_object")
+        else:
+            for name, child in properties.items():
+                if not isinstance(name, str) or not name:
+                    errors.append(f"{path}:invalid_property_name")
+                errors.extend(_validate_schema_spec(child, f"{path}.properties.{name}"))
+        if not isinstance(required, list) or any(not isinstance(name, str) for name in required):
+            errors.append(f"{path}:required_must_be_string_array")
+        elif len(required) != len(set(required)):
+            errors.append(f"{path}:duplicate_required_property")
+        elif isinstance(properties, dict):
+            missing = sorted(set(required) - set(properties))
+            if missing:
+                errors.append(f"{path}:required_property_not_declared:{missing}")
+    return errors
+
+
 def validate_payload_schemas(catalog: dict[str, Any]) -> dict[str, Any]:
     errors: list[str] = []
     if not isinstance(catalog, dict) or catalog.get("schema_version") != "1.0":
         return {"status": "failed", "errors": ["unsupported_payload_schema_version"]}
+    catalog_id = catalog.get("catalog_id")
+    if not isinstance(catalog_id, str) or not catalog_id.strip():
+        errors.append("missing_catalog_id")
     entries = catalog.get("artifacts")
     if not isinstance(entries, list) or not entries:
-        return {"status": "failed", "errors": ["artifacts_must_be_non_empty_array"]}
+        return {"schema_version": "1.0", "status": "failed",
+                "errors": errors + ["artifacts_must_be_non_empty_array"]}
     seen: set[tuple[str, str]] = set()
     for index, entry in enumerate(entries):
         prefix = f"artifact_schema_{index}"
@@ -77,24 +130,25 @@ def validate_payload_schemas(catalog: dict[str, Any]) -> dict[str, Any]:
             errors.append(f"{prefix}:must_be_object")
             continue
         artifact_type, field = entry.get("artifact_type"), entry.get("field")
-        if not isinstance(artifact_type, str) or not artifact_type.strip():
+        if not isinstance(artifact_type, str) or not _ARTIFACT_TOKEN.fullmatch(artifact_type):
             errors.append(f"{prefix}:invalid_artifact_type")
-        if not isinstance(field, str) or not field.strip():
+        if not isinstance(field, str) or not _ARTIFACT_TOKEN.fullmatch(field):
             errors.append(f"{prefix}:invalid_field")
         if isinstance(artifact_type, str) and isinstance(field, str):
             key = (artifact_type, field)
             if key in seen:
                 errors.append(f"{prefix}:duplicate_field_schema")
             seen.add(key)
-        probe = {key: value for key, value in entry.items() if key not in {"artifact_type", "field", "required"}}
-        errors.extend(_validate_value(None, probe, prefix) if probe.get("type") == "null" else
-                      ([] if probe.get("type") in _TYPES else [f"{prefix}:unsupported_type"]))
-    return {"schema_version": "1.0", "catalog_id": catalog.get("catalog_id"),
+        if "required" in entry and not isinstance(entry["required"], bool):
+            errors.append(f"{prefix}:required_must_be_boolean")
+        spec = {key: value for key, value in entry.items()
+                if key not in {"artifact_type", "field", "required"}}
+        errors.extend(_validate_schema_spec(spec, prefix))
+    return {"schema_version": "1.0", "catalog_id": catalog_id,
             "status": "passed" if not errors else "failed", "artifact_schema_count": len(entries),
             "errors": errors,
             "limitations": ["Supports only a small documented JSON Schema subset.",
                             "Schema validity does not establish semantic correctness or runtime conformance."]}
-
 
 def validate_stage_payloads(
     workflow: dict[str, Any], interfaces: dict[str, Any], schemas: dict[str, Any],
