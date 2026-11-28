@@ -277,8 +277,10 @@ def verify_history_anchor(
         raise RegistryHistoryError("timestamp_response_and_ca_must_be_supplied_together")
     timestamp_report: dict[str, str] | None = None
     if timestamp_response is not None and timestamp_ca_file is not None:
+        # Timestamp the Ed25519 signature itself, not only its public statement.
+        # This proves that this exact signature value existed by the TSA genTime.
         timestamp_report = verify_rfc3161_timestamp(
-            statement_bytes, timestamp_response, timestamp_ca_file,
+            signature, timestamp_response, timestamp_ca_file,
             timestamp_untrusted_chain_file,
         )
     history_report = verify_registry_history(records, statement["checkpoint"])
