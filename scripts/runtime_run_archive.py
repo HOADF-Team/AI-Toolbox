@@ -111,13 +111,22 @@ def create_runtime_archive(
     """
     if not isinstance(metadata, dict) or not _REQUIRED_METADATA.issubset(metadata):
         raise RuntimeArchiveError("archive_metadata_missing_required_fields")
+    if {"archive_format", "archive_version"}.intersection(metadata):
+        raise RuntimeArchiveError("archive_metadata_uses_reserved_fields")
     if metadata.get("run_status") not in {"completed", "blocked", "incomplete"}:
         raise RuntimeArchiveError("invalid_run_status")
-    if not isinstance(metadata.get("stage_ids"), list) or not metadata["stage_ids"]:
+    if (
+        not isinstance(metadata.get("stage_ids"), list) or not metadata["stage_ids"]
+        or any(not isinstance(item, str) or not item for item in metadata["stage_ids"])
+    ):
         raise RuntimeArchiveError("archive_stage_ids_required")
     if len(set(metadata["stage_ids"])) != len(metadata["stage_ids"]):
         raise RuntimeArchiveError("duplicate_archive_stage_id")
-    if not isinstance(metadata.get("skill_ids"), list) or len(metadata["skill_ids"]) != len(metadata["stage_ids"]):
+    if (
+        not isinstance(metadata.get("skill_ids"), list)
+        or len(metadata["skill_ids"]) != len(metadata["stage_ids"])
+        or any(not isinstance(item, str) or not item for item in metadata["skill_ids"])
+    ):
         raise RuntimeArchiveError("archive_skill_ids_must_match_stages")
     if not isinstance(metadata.get("verification_policy"), dict):
         raise RuntimeArchiveError("archive_verification_policy_required")
@@ -138,8 +147,6 @@ def create_runtime_archive(
         if relative in {"archive.json", MANIFEST_NAME}:
             raise RuntimeArchiveError("reserved_archive_path")
         normalized[relative] = source_name
-    if "archive.json" not in normalized:
-        raise RuntimeArchiveError("archive_metadata_file_required")
 
     metadata_bytes = _json_bytes({
         "archive_format": ARCHIVE_FORMAT,
