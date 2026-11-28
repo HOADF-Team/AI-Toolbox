@@ -98,7 +98,10 @@ def verify_integrity_bundle(
     for item in evidence:
         if not isinstance(item, dict):
             raise IntegrityVerificationError("evidence_manifest_entry_must_be_object")
-        path = _safe_evidence_file(root, item.get("path"))
+        relative_path = item.get("path")
+        if not isinstance(relative_path, str):
+            raise IntegrityVerificationError("evidence_path_required")
+        path = _safe_evidence_file(root, relative_path)
         actual = sha256_bytes(path.read_bytes())
         if item.get("sha256") != actual:
             raise IntegrityVerificationError("evidence_digest_mismatch")
