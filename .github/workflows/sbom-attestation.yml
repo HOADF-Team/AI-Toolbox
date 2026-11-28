@@ -35,7 +35,6 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 1
-          persist-credentials: false
 
       - name: Validate Skills and Toolbox dependency map against Personal-AI-Library main
         shell: bash
