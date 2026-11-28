@@ -44,6 +44,8 @@ def build_workflow_plan(
         if not isinstance(stage_id, str) or not stage_id or stage_id in seen:
             raise RuntimeProtocolError(f"invalid or duplicate stage id: {stage_id!r}")
         seen.add(stage_id)
+        if not isinstance(skill_id, str) or not skill_id or any(ch not in "abcdefghijklmnopqrstuvwxyz0123456789-" for ch in skill_id):
+            raise RuntimeProtocolError(f"invalid Skill ID: {skill_id!r}")
         if skill_id not in catalog_ids:
             raise RuntimeProtocolError(f"unknown Skill ID in catalog map: {skill_id!r}")
         manifest_rel = Path("skills") / skill_id / "SKILL.md"
