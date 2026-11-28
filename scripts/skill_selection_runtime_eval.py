@@ -127,7 +127,7 @@ def validate_runtime_responses(
         if case_id in proposals:
             raise RuntimeExchangeError(f"duplicate_case_id:{case_id}")
         decision = response.get("decision")
-        if decision not in DECISIONS:
+        if not isinstance(decision, str) or decision not in DECISIONS:
             raise RuntimeExchangeError(f"invalid_decision:{case_id}")
         selected = response.get("selected_skills")
         if not isinstance(selected, list) or any(not isinstance(item, str) for item in selected):
@@ -222,7 +222,7 @@ def main() -> int:
             )
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(
-            json.dumps(result, ensure_ascii=False, indent=2) + "\\n",
+            json.dumps(result, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
     except (OSError, ValueError, json.JSONDecodeError) as exc:
