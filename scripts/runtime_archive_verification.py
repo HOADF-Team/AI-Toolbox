@@ -15,7 +15,7 @@ from archival_verification import verify_archived_bundle
 from handoff_contract import validate_handoff_chain
 from handoff_runtime import stage_result_sha256
 from artifact_provenance import validate_provenance_envelope
-from runtime_run_archive import RuntimeArchiveError, verify_runtime_archive
+from runtime_run_archive import verify_runtime_archive
 from trust_registry_history import verify_history_anchor
 
 
