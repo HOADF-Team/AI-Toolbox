@@ -61,3 +61,10 @@ Run:
 ```bash
 python -m unittest TESTS.test_trust_registry_history -v
 ```
+
+
+## Enforcing history during archival verification
+
+The audit-only `verify_archived_bundle(..., require_history=True)` option requires both the complete event records and a separately authenticated checkpoint. It checks that the chain's lifecycle state agrees with the current host registry, that a retired key has exactly one retirement event matching `retired_at`, and that no revocation event exists for the key. A missing, truncated, altered, or contradictory history blocks archival verification.
+
+This is still not an authorization path for live workflow stages. The host must authenticate the checkpoint and retain the relevant registry snapshots; a valid hash chain alone does not establish that the lifecycle action was authorized.

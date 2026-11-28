@@ -174,3 +174,6 @@ python -m unittest TESTS.test_trust_registry TESTS.test_archival_verification -v
 The optional hash-chain helper in [TRUST-REGISTRY-HISTORY.md](TRUST-REGISTRY-HISTORY.md) records key addition, retirement, revocation, and rotation events against canonical registry snapshot digests. It detects edits and truncation relative to an independently authenticated checkpoint. It does not create immutable storage or authenticate a checkpoint stored beside the log. The host must retain the checkpoint through a separate trusted channel.
 
 This history does not override revocation: revoked keys remain rejected by archival verification even when an earlier signature timestamp predates the revocation event.
+
+
+For strict archival verification, pass the independently authenticated lifecycle records and checkpoint to `verify_archived_bundle(..., require_history=True)`. The verifier then requires history to agree with the registry's key status and retirement timestamp and rejects any key with a revocation event. See [Trust registry history](TRUST-REGISTRY-HISTORY.md).

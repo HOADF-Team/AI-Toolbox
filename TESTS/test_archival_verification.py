@@ -14,6 +14,9 @@ from archival_verification import verify_archived_bundle  # noqa: E402
 from artifact_integrity import IntegrityVerificationError  # noqa: E402
 from artifact_signing import create_integrity_bundle  # noqa: E402
 from trust_registry import public_key_fingerprint  # noqa: E402
+from trust_registry_history import (  # noqa: E402
+    build_history_checkpoint, build_history_record,
+)
 
 
 class ArchivalVerificationTests(unittest.TestCase):
@@ -91,14 +94,39 @@ class ArchivalVerificationTests(unittest.TestCase):
             ttl_seconds=300,
         )
 
-    def verify(self, envelope=None, bundle=None):
+    def verify(
+        self, envelope=None, bundle=None, history_records=None,
+        history_checkpoint=None, require_history=False,
+    ):
         return verify_archived_bundle(
             envelope or self.envelope,
             bundle or self.sign(),
             self.registry_path,
             self.key_root,
             self.evidence_root,
+            history_records,
+            history_checkpoint,
+            require_history,
         )
+
+    def valid_history(self, retired_at=None):
+        registry_digest = "b" * 64
+        added = build_history_record({
+            "event_id": "archive-key-added",
+            "action": "key_added",
+            "key_id": "archive-key-2026",
+            "effective_at": "2026-01-01T00:00:00Z",
+            "registry_sha256": registry_digest,
+        }, 1)
+        retired = build_history_record({
+            "event_id": "archive-key-retired",
+            "action": "key_retired",
+            "key_id": "archive-key-2026",
+            "effective_at": retired_at or self.entry["retired_at"],
+            "registry_sha256": registry_digest,
+        }, 2, added["event_sha256"])
+        records = [added, retired]
+        return records, build_history_checkpoint(records)
 
     def test_retired_key_verifies_artifact_signed_before_retirement(self) -> None:
         report = self.verify()
@@ -139,6 +167,59 @@ class ArchivalVerificationTests(unittest.TestCase):
         changed = {**self.envelope, "payload": {"decision": "tampered"}}
         with self.assertRaisesRegex(IntegrityVerificationError, "artifact_envelope_digest_mismatch"):
             self.verify(envelope=changed, bundle=bundle)
+
+
+    def test_strict_archive_verification_requires_external_history_checkpoint(self) -> None:
+        with self.assertRaisesRegex(ValueError, "authenticated_registry_history_required"):
+            self.verify(require_history=True)
+
+    def test_retired_key_passes_with_matching_authenticated_history(self) -> None:
+        records, checkpoint = self.valid_history()
+        report = self.verify(
+            history_records=records,
+            history_checkpoint=checkpoint,
+            require_history=True,
+        )
+        self.assertEqual(report["status"], "archived_verified")
+        self.assertEqual(report["history_verification"]["status"], "verified")
+
+    def test_retirement_timestamp_must_match_history(self) -> None:
+        records, checkpoint = self.valid_history("2026-11-30T00:00:00Z")
+        with self.assertRaisesRegex(ValueError, "registry_history_retirement_mismatch"):
+            self.verify(
+                history_records=records,
+                history_checkpoint=checkpoint,
+                require_history=True,
+            )
+
+    def test_revocation_record_blocks_archival_verification(self) -> None:
+        records, _ = self.valid_history()
+        revoked = build_history_record({
+            "event_id": "archive-key-revoked",
+            "action": "key_revoked",
+            "key_id": "archive-key-2026",
+            "effective_at": "2026-12-02T00:00:00Z",
+            "registry_sha256": "c" * 64,
+            "reason": "compromise discovered",
+        }, 3, records[-1]["event_sha256"])
+        records.append(revoked)
+        checkpoint = build_history_checkpoint(records)
+        with self.assertRaisesRegex(ValueError, "registry_history_key_revoked"):
+            self.verify(
+                history_records=records,
+                history_checkpoint=checkpoint,
+                require_history=True,
+            )
+
+    def test_tampered_history_checkpoint_blocks_archival_verification(self) -> None:
+        records, checkpoint = self.valid_history()
+        bad_checkpoint = {**checkpoint, "head_sha256": "0" * 64}
+        with self.assertRaisesRegex(ValueError, "history_head_checkpoint_mismatch"):
+            self.verify(
+                history_records=records,
+                history_checkpoint=bad_checkpoint,
+                require_history=True,
+            )
 
 
 if __name__ == "__main__":
