@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.0",
+  "catalog_id": "hoadf-skill-interfaces",
+  "source_skills_revision": "b2c98066d7ea620d22ba814f44617ab5f70b4b3c",
+  "semantics": "Draft interface hypotheses derived from canonical SKILL.md instructions. Artifact types describe handoff data, not guaranteed machine capabilities or permissions.",
+  "interfaces": [
+    {
+      "skill_id": "crypto-security",
+      "status": "draft",
+      "accepts": [
+        "task.request",
+        "security.incident_context"
+      ],
+      "produces": [
+        "security.risk_assessment",
+        "security.containment_recommendations"
+      ],
+      "possible_side_effects": [
+        "network",
+        "remote",
+        "production",
+        "financial"
+      ],
+      "permission_gates": [
+        "credential_revocation",
+        "host_isolation",
+        "external_account_changes",
+        "financial_actions"
+      ]
+    },
+    {
+      "skill_id": "code-audit",
+      "status": "draft",
+      "accepts": [
+        "task.request",
+        "project.source_snapshot",
+        "security.risk_assessment"
+      ],
+      "produces": [
+        "code.audit_findings"
+      ],
+      "possible_side_effects": [
+        "local_write"
+      ],
+      "permission_gates": [
+        "execute_untrusted_code",
+        "modify_project_files",
+        "external_data_transfer"
+      ]
+    },
+    {
+      "skill_id": "python-development",
+      "status": "draft",
+      "accepts": [
+        "task.request",
+        "code.audit_findings",
+        "project.source_snapshot"
+      ],
+      "produces": [
+        "code.patch_proposal",
+        "code.regression_plan"
+      ],
+      "possible_side_effects": [
+        "local_write",
+        "network",
+        "production"
+      ],
+      "permission_gates": [
+        "modify_project_files",
+        "install_dependencies",
+        "network_access",
+        "production_changes"
+      ]
+    },
+    {
+      "skill_id": "devops-vps",
+      "status": "draft",
+      "accepts": [
+        "task.request",
+        "code.patch_proposal",
+        "security.risk_assessment",
+        "infrastructure.inventory"
+      ],
+      "produces": [
+        "infrastructure.diagnostic_report",
+        "infrastructure.hardening_plan"
+      ],
+      "possible_side_effects": [
+        "network",
+        "remote",
+        "production"
+      ],
+      "permission_gates": [
+        "ssh_access",
+        "service_restart",
+        "configuration_change",
+        "firewall_change",
+        "production_deploy"
+      ]
+    }
+  ]
+}

@@ -12,26 +12,74 @@
         {
           "id": "crypto-security",
           "skill_id": "crypto-security",
-          "required_fields": ["risk", "decision", "incident_events", "automatic_actions"],
-          "require_evidence": true
+          "required_fields": [
+            "risk",
+            "decision",
+            "incident_events",
+            "automatic_actions"
+          ],
+          "require_evidence": true,
+          "consumes": [
+            "task.request"
+          ],
+          "produces": [
+            "security.risk_assessment",
+            "security.containment_recommendations"
+          ]
         },
         {
           "id": "code-audit",
           "skill_id": "code-audit",
-          "required_fields": ["execution", "findings"],
-          "require_evidence": true
+          "required_fields": [
+            "execution",
+            "findings"
+          ],
+          "require_evidence": true,
+          "consumes": [
+            "project.source_snapshot",
+            "security.risk_assessment"
+          ],
+          "produces": [
+            "code.audit_findings"
+          ]
         },
         {
           "id": "python-development",
           "skill_id": "python-development",
-          "required_fields": ["patch_status", "patch_summary", "regression_test_plan", "fixture_dependencies_installed"],
-          "require_evidence": true
+          "required_fields": [
+            "patch_status",
+            "patch_summary",
+            "regression_test_plan",
+            "fixture_dependencies_installed"
+          ],
+          "require_evidence": true,
+          "consumes": [
+            "code.audit_findings"
+          ],
+          "produces": [
+            "code.patch_proposal",
+            "code.regression_plan"
+          ]
         },
         {
           "id": "devops-vps",
           "skill_id": "devops-vps",
-          "required_fields": ["systemd_findings", "hardening_proposal", "remote_access", "production_changes", "ssh_attempted"],
-          "require_evidence": true
+          "required_fields": [
+            "systemd_findings",
+            "hardening_proposal",
+            "remote_access",
+            "production_changes",
+            "ssh_attempted"
+          ],
+          "require_evidence": true,
+          "consumes": [
+            "code.patch_proposal",
+            "security.risk_assessment"
+          ],
+          "produces": [
+            "infrastructure.diagnostic_report",
+            "infrastructure.hardening_plan"
+          ]
         }
       ],
       "rules": [
@@ -41,7 +89,10 @@
           "path": "incident_events",
           "type": "ordered_values",
           "item_field": "event",
-          "values": ["credential_revocation_recommended", "host_isolation_recommended"]
+          "values": [
+            "credential_revocation_recommended",
+            "host_isolation_recommended"
+          ]
         },
         {
           "id": "no_automatic_position_or_order_action",
@@ -95,6 +146,10 @@
       "constraints": [
         "Synthetic fixture only; do not execute or deploy it.",
         "No remote access, production changes, or financial actions are authorized."
+      ],
+      "external_inputs": [
+        "task.request",
+        "project.source_snapshot"
       ]
     }
   ]
