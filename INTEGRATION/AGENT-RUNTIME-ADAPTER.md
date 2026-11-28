@@ -82,3 +82,8 @@ Use `scripts/archival_verification.py` only when auditing stored artifacts signe
 The host adapter must compute `stage_result_sha256(result)` from the complete stage-result object before adding `artifact_provenance` or `integrity_bundle`. Store the digest in `artifact_provenance.payload.stage_result_sha256`. The digest covers all stage-result fields, including status, evidence claims, actions taken, output references, and domain-specific results; it excludes only `artifact_provenance`, `integrity_bundle`, and the runtime-generated `integrity_verification` field to avoid a circular digest. The runtime recomputes the digest and rejects any mismatch. When cryptographic integrity policy is enabled, the provenance envelope containing this digest is then signed, binding the complete result to the signature.
 
 This detects post-signing changes to the stage-result object. It does not prove that the original agent-reported claims are true.
+
+
+### Approval enforcement at execution time
+
+The reference runtime re-derives each stage's required approvals from the workflow contract passed to `execute_with_adapter`; it does not trust a plan's cached `missing_approvals` or `granted_approvals` fields. The adapter is not called until every approval required by that exact stage is present in the execution-time approval map. Action records are checked against approvals scoped to the current stage, so an approval for the same action in a different stage cannot authorize it here. The host still must authenticate the approval channel and ensure the approval is specific to the exact operation, target, and time window.
