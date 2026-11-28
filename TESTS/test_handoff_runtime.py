@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -12,6 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SKILLS_REVISION = "a" * 40
 FIXTURE = ROOT / "TESTS" / "fixtures" / "inter-skill-demo"
 sys.path.insert(0, str(ROOT / "scripts"))
+from artifact_signing import create_integrity_bundle  # noqa: E402
+from trust_registry import public_key_fingerprint  # noqa: E402
 from handoff_runtime import RuntimeProtocolError, build_workflow_plan, execute_with_adapter  # noqa: E402
 
 
@@ -242,6 +246,108 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
         report = execute_with_adapter(
             self.contract, self.plan(), signed_result, integrity_policy=policy
         )
+        self.assertIn("artifact_integrity_verification_failed", report["stages"][0]["errors"])
+
+
+    def _signed_chain_fixture(self, root: Path, tamper_signature: bool = False):
+        key_root = root / "keys"
+        evidence_root = root / "evidence"
+        key_root.mkdir()
+        evidence_root.mkdir()
+        private_key = root / "signing-private.pem"
+        public_key = key_root / "signing-public.pem"
+        subprocess.run(
+            ["openssl", "genpkey", "-algorithm", "ED25519", "-out", str(private_key)],
+            check=True, capture_output=True, timeout=15,
+        )
+        os.chmod(private_key, 0o600)
+        subprocess.run(
+            ["openssl", "pkey", "-in", str(private_key), "-pubout", "-out", str(public_key)],
+            check=True, capture_output=True, timeout=15,
+        )
+        key_id = "synthetic-chain-key"
+        fingerprint = public_key_fingerprint(public_key)
+        registry_path = root / "trust-registry.json"
+        registry_path.write_text(json.dumps({
+            "registry_version": "1.0",
+            "keys": [{
+                "key_id": key_id,
+                "algorithm": "Ed25519",
+                "public_key_file": "signing-public.pem",
+                "public_key_sha256": fingerprint,
+                "status": "active",
+                "not_before": "2026-01-01T00:00:00Z",
+                "not_after": "2027-01-01T00:00:00Z",
+                "allowed_producers": [
+                    "crypto-security", "code-audit", "python-development", "devops-vps"
+                ],
+                "allowed_artifact_types": ["workflow.stage_result"],
+            }],
+        }), encoding="utf-8")
+        base_adapter, calls = self.adapter_for()
+        run_id = "synthetic-chain-run-001"
+
+        def signed_adapter(envelope: dict[str, Any]) -> dict[str, Any]:
+            result = base_adapter(envelope)
+            stage_id = envelope["stage"]["id"]
+            evidence_path = evidence_root / f"{stage_id}.txt"
+            evidence_path.write_text(f"synthetic evidence for {stage_id}\n", encoding="utf-8")
+            result["integrity_bundle"] = create_integrity_bundle(
+                envelope=result["artifact_provenance"],
+                key_id=key_id,
+                private_key=private_key,
+                trusted_public_key=public_key,
+                expected_public_key_sha256=fingerprint,
+                evidence_root=evidence_root,
+                evidence_paths={"fixture:agent-reported-evidence": evidence_path.name},
+                execution_context={
+                    "run_id": run_id,
+                    "workflow_id": envelope["workflow_id"],
+                    "stage_id": stage_id,
+                    "skill_id": envelope["stage"]["skill_id"],
+                    "input_ref": envelope["input_ref"],
+                },
+                ttl_seconds=300,
+            )
+            if tamper_signature and len(calls) == 1:
+                result["integrity_bundle"]["signature"] = "AA=="
+            return result
+
+        policy = {
+            "trust_registry_path": str(registry_path),
+            "key_root": str(key_root),
+            "evidence_root": str(evidence_root),
+            "require_execution_context": True,
+            "run_id": run_id,
+            "max_signature_age_seconds": 300,
+        }
+        return signed_adapter, policy, calls
+
+    def test_signed_four_skill_chain_verifies_each_stage_and_handoff(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            adapter, policy, calls = self._signed_chain_fixture(Path(temp_dir))
+            report = execute_with_adapter(
+                self.contract, self.plan(), adapter, integrity_policy=policy
+            )
+        self.assertEqual(report["status"], "completed")
+        self.assertEqual(len(calls), 4)
+        self.assertEqual(report["handoff_validation"]["status"], "passed")
+        self.assertTrue(all(
+            item["integrity_verification"]["replay_protection"]
+            == "run_stage_bound_and_time_limited"
+            for item in report["artifacts"]
+        ))
+
+    def test_tampered_signature_stops_signed_four_skill_chain(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            adapter, policy, calls = self._signed_chain_fixture(
+                Path(temp_dir), tamper_signature=True
+            )
+            report = execute_with_adapter(
+                self.contract, self.plan(), adapter, integrity_policy=policy
+            )
+        self.assertEqual(report["status"], "incomplete")
+        self.assertEqual(len(calls), 1)
         self.assertIn("artifact_integrity_verification_failed", report["stages"][0]["errors"])
 
 
