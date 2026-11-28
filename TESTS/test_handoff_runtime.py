@@ -60,6 +60,23 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
                 "agent": "test-adapter",
             }
             result.setdefault("actions_taken", [])
+            result["artifact_provenance"] = {
+                "envelope_version": "1.0",
+                "artifact_id": f"artifact.{envelope['stage']['id']}.result",
+                "artifact_type": "workflow.stage_result",
+                "producer": {"kind": "skill", "id": envelope["stage"]["skill_id"],
+                             "version": "fixture", "revision": envelope["skill"]["manifest_revision"]},
+                "source": {"repository": "HOADF-Team/Personal-AI-Library",
+                           "revision": envelope["skill"]["manifest_revision"]},
+                "created_at": "2026-11-28T10:00:00Z",
+                "inputs": [{"ref": envelope["input_ref"], "artifact_type": "workflow.stage_input"}],
+                "payload": {"stage": result["stage"], "skill_id": result["skill_id"],
+                            "output_ref": result["output_ref"]},
+                "evidence": ["fixture:agent-reported-evidence"],
+                "verification": {"status": "structurally_validated", "method": "runtime-contract",
+                                 "checked_at": "2026-11-28T10:01:00Z",
+                                 "limitations": ["synthetic mock; producer and evidence not authenticated"]},
+            }
             return result
         return adapter, calls
 
@@ -133,6 +150,24 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
             return result
         report = execute_with_adapter(self.contract, self.plan(), wrong_revision)
         self.assertIn("skill_manifest_ref_mismatch", report["stages"][0]["errors"])
+
+    def test_missing_artifact_provenance_envelope_is_rejected(self) -> None:
+        adapter, _ = self.adapter_for()
+        def missing(envelope: dict[str, Any]) -> dict[str, Any]:
+            result = adapter(envelope)
+            del result["artifact_provenance"]
+            return result
+        report = execute_with_adapter(self.contract, self.plan(), missing)
+        self.assertIn("missing_artifact_provenance_envelope", report["stages"][0]["errors"])
+
+    def test_artifact_provenance_cannot_claim_different_output_ref(self) -> None:
+        adapter, _ = self.adapter_for()
+        def mismatched(envelope: dict[str, Any]) -> dict[str, Any]:
+            result = adapter(envelope)
+            result["artifact_provenance"]["payload"]["output_ref"] = "forged:ref"
+            return result
+        report = execute_with_adapter(self.contract, self.plan(), mismatched)
+        self.assertIn("artifact_provenance_output_ref_mismatch", report["stages"][0]["errors"])
 
     def test_stage_output_cannot_claim_wrong_skill(self) -> None:
         adapter, _ = self.adapter_for()
