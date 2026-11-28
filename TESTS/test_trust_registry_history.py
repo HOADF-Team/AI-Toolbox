@@ -12,6 +12,7 @@ from trust_registry_history import (  # noqa: E402
     RegistryHistoryError,
     build_history_checkpoint,
     build_history_record,
+    registry_snapshot_sha256,
     verify_registry_history,
 )
 
@@ -132,6 +133,12 @@ class TrustRegistryHistoryTests(unittest.TestCase):
         self.assertEqual(checkpoint["head_sha256"], GENESIS_HASH)
         report = verify_registry_history([], checkpoint)
         self.assertEqual(report["status"], "verified")
+
+
+    def test_registry_snapshot_digest_is_canonical(self) -> None:
+        first = {"registry_version": "1.0", "keys": []}
+        second = {"keys": [], "registry_version": "1.0"}
+        self.assertEqual(registry_snapshot_sha256(first), registry_snapshot_sha256(second))
 
 
 if __name__ == "__main__":
