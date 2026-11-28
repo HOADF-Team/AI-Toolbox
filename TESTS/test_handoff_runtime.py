@@ -178,6 +178,16 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
         report = execute_with_adapter(self.contract, self.plan(), wrong)
         self.assertIn("invalid_stage_result", report["stopped_reason"])
 
+    def test_integrity_policy_blocks_unsigned_stage_result(self) -> None:
+        adapter, _ = self.adapter_for()
+        policy = {
+            "trusted_public_key": "/tmp/not-a-real-trusted-key.pem",
+            "trusted_key_id": "production-trust-anchor",
+            "evidence_root": "/tmp/not-a-real-evidence-root",
+        }
+        report = execute_with_adapter(self.contract, self.plan(), adapter, integrity_policy=policy)
+        self.assertIn("missing_integrity_bundle", report["stages"][0]["errors"])
+
 
 if __name__ == "__main__":
     unittest.main()

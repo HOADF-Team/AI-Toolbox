@@ -35,6 +35,11 @@ The host must require explicit, scoped user approval before any installation, co
 
 The reference engine verifies only that an action's approval ID matches the caller-supplied approval map. It does not authenticate the user, approval channel, or action execution. The host remains responsible for authorization and enforcement.
 
+
+### Optional cryptographic integrity policy
+
+A host that has provisioned a trusted Ed25519 public key and local evidence store can enable fail-closed artifact verification by passing `integrity_policy` to `execute_with_adapter`. The policy contains `trusted_public_key`, `trusted_key_id`, and `evidence_root`. Each stage result must then include a signed `integrity_bundle`; the runtime verifies the signature, envelope digest, and evidence-file hashes before accepting the stage. A missing or invalid bundle stops the chain. Without a configured policy, only the existing structural and consistency checks run; no cryptographic verification is claimed. See [Artifact provenance](ARTIFACT-PROVENANCE.md) for the signed bundle format and trust limitations.
+
 ## Evidence, failure behavior, and limitations
 
 The artifact provenance envelope is required for every stage result. Structural validation checks its schema and binds key identifiers to the stage result; it does not authenticate producer identity, resolve the source revision, or prove evidence. Evidence locations and observations are agent-reported. The adapter checks basic structure and required provenance fields; it does not authenticate evidence, attest model identity, or verify that an action occurred. Use explicit classifications in final reports: **Observed**, **Inferred**, **Recommended**, and **Not checked**.

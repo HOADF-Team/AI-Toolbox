@@ -9,6 +9,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from artifact_integrity import IntegrityVerificationError, verify_integrity_bundle
 from artifact_provenance import validate_provenance_envelope
 from handoff_contract import validate_handoff_chain
 
@@ -90,7 +91,8 @@ def build_workflow_plan(
 
 
 def _validate_stage_result(
-    result: dict[str, Any], envelope: dict[str, Any], approvals: dict[str, str]
+    result: dict[str, Any], envelope: dict[str, Any], approvals: dict[str, str],
+    integrity_policy: dict[str, Any] | None = None,
 ) -> list[str]:
     errors: list[str] = []
     stage = envelope["stage"]
@@ -137,6 +139,21 @@ def _validate_stage_result(
             inputs = artifact_provenance.get("inputs", [])
             if not inputs or inputs[0].get("ref") != envelope["input_ref"]:
                 errors.append("artifact_provenance_input_ref_mismatch")
+    if integrity_policy is not None and isinstance(artifact_provenance, dict):
+        bundle = result.get("integrity_bundle")
+        if not isinstance(bundle, dict):
+            errors.append("missing_integrity_bundle")
+        else:
+            try:
+                report = verify_integrity_bundle(
+                    artifact_provenance, bundle,
+                    Path(integrity_policy["trusted_public_key"]),
+                    str(integrity_policy["trusted_key_id"]),
+                    Path(integrity_policy["evidence_root"]),
+                )
+                result["integrity_verification"] = report
+            except (IntegrityVerificationError, KeyError, TypeError, OSError):
+                errors.append("artifact_integrity_verification_failed")
     actions = result.get("actions_taken", [])
     if not isinstance(actions, list):
         errors.append("invalid_actions_taken")
@@ -159,8 +176,9 @@ def execute_with_adapter(
     plan: list[dict[str, Any]],
     adapter: Callable[[dict[str, Any]], dict[str, Any]],
     approvals: dict[str, str] | None = None,
+    integrity_policy: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Run an injected adapter sequentially; stop on invalid, blocked, or failed output."""
+    """Run an injected adapter; optional host trust policy enforces signatures and evidence hashes."""
     granted = approvals or {}
     artifacts: list[dict[str, Any]] = []
     stage_reports: list[dict[str, Any]] = []
@@ -183,7 +201,7 @@ def execute_with_adapter(
         if not isinstance(result, dict):
             stopped_reason = f"invalid_adapter_response:{envelope['stage']['id']}"
             break
-        errors = _validate_stage_result(result, envelope, granted)
+        errors = _validate_stage_result(result, envelope, granted, integrity_policy)
         if errors:
             stopped_reason = f"invalid_stage_result:{envelope['stage']['id']}"
             stage_reports.append({"stage": envelope["stage"]["id"], "status": "invalid", "errors": errors})
@@ -221,6 +239,7 @@ def execute_with_adapter(
             "The adapter is an integration boundary, not an LLM or Skill execution engine.",
             "The host runtime must load the canonical Skill manifest and supply the adapter implementation.",
             "A mock adapter tests protocol mechanics only, not model reasoning or real actions.",
-            "Evidence and agent identity are caller-supplied and are not cryptographically authenticated.",
+            "Without an integrity_policy, artifact signatures and evidence hashes are not verified.",
+            "With an integrity_policy, Ed25519 signatures are checked against its trusted public key and local evidence root; this does not prove evidence truthfulness.",
         ],
     }
