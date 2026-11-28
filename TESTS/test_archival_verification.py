@@ -5,6 +5,7 @@ import os
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 import sys
 
@@ -97,6 +98,7 @@ class ArchivalVerificationTests(unittest.TestCase):
     def verify(
         self, envelope=None, bundle=None, history_records=None,
         history_checkpoint=None, require_history=False, registry_snapshots=None,
+        **timestamp_policy,
     ):
         return verify_archived_bundle(
             envelope or self.envelope,
@@ -108,6 +110,7 @@ class ArchivalVerificationTests(unittest.TestCase):
             history_checkpoint,
             require_history,
             registry_snapshots,
+            **timestamp_policy,
         )
 
     def valid_history(self, retired_at=None):
@@ -170,6 +173,59 @@ class ArchivalVerificationTests(unittest.TestCase):
         bundle = self.sign(execution_context=context)
         report = self.verify(bundle=bundle)
         self.assertEqual(report["status"], "archived_verified")
+
+    def _timestamp_files(self):
+        response = self.root / "archive.tsr"
+        ca_bundle = self.root / "tsa-ca.pem"
+        response.write_bytes(b"synthetic timestamp response")
+        ca_bundle.write_text("synthetic TSA trust fixture\n", encoding="utf-8")
+        return response, ca_bundle
+
+    def test_required_archive_timestamp_uses_tsa_time_for_key_validity(self) -> None:
+        response, ca_bundle = self._timestamp_files()
+        timestamp = {
+            "status": "verified",
+            "gen_time": "2026-06-02T12:00:00+00:00",
+            "verification": "openssl_ts_verify_with_host_supplied_ca",
+        }
+        with patch("archival_verification.verify_rfc3161_timestamp", return_value=timestamp), patch(
+            "trust_registry_history.verify_rfc3161_timestamp", return_value=timestamp
+        ):
+            report = self.verify(
+                timestamp_response=response,
+                timestamp_ca_file=ca_bundle,
+                require_trusted_timestamp=True,
+            )
+        self.assertEqual(report["status"], "archived_verified")
+        self.assertEqual(report["trusted_timestamp"]["gen_time"], timestamp["gen_time"])
+
+    def test_archive_uses_tsa_time_instead_of_signer_created_at(self) -> None:
+        response, ca_bundle = self._timestamp_files()
+        earlier_envelope = {**self.envelope, "created_at": "2026-02-01T12:00:00Z"}
+        self.write_registry({
+            **self.entry,
+            "retired_at": "2026-05-01T00:00:00Z",
+        })
+        timestamp = {
+            "status": "verified",
+            "gen_time": "2026-06-02T12:00:00+00:00",
+            "verification": "openssl_ts_verify_with_host_supplied_ca",
+        }
+        with patch("archival_verification.verify_rfc3161_timestamp", return_value=timestamp), patch(
+            "trust_registry_history.verify_rfc3161_timestamp", return_value=timestamp
+        ):
+            with self.assertRaisesRegex(ValueError, "historical_signature_after_key_retirement"):
+                self.verify(
+                    envelope=earlier_envelope,
+                    bundle=self.sign(envelope=earlier_envelope),
+                    timestamp_response=response,
+                    timestamp_ca_file=ca_bundle,
+                    require_trusted_timestamp=True,
+                )
+
+    def test_required_archive_timestamp_cannot_be_omitted(self) -> None:
+        with self.assertRaisesRegex(ValueError, "trusted_timestamp_required"):
+            self.verify(require_trusted_timestamp=True)
 
     def test_tampered_envelope_is_rejected(self) -> None:
         bundle = self.sign()
