@@ -48,6 +48,9 @@ class RuntimeArchiveEndToEndTests(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.temp.cleanup()
+        verification_temp = getattr(self, "verification_temp", None)
+        if verification_temp is not None:
+            verification_temp.cleanup()
 
     def _keypair(self, private_key: Path, public_key: Path) -> None:
         subprocess.run(
@@ -268,17 +271,32 @@ class RuntimeArchiveEndToEndTests(unittest.TestCase):
         }
         archive = self.root / "portable-archive"
         create_cryptographic_runtime_archive(staging, archive, metadata, files)
+        # Transfer only the archive and independently provisioned public trust roots.
+        # Destroy the producer workspace before invoking the offline verifier.
+        self.verification_temp = tempfile.TemporaryDirectory()
+        verification_root = Path(self.verification_temp.name)
+        media_root = verification_root / "removable-media"
+        media_root.mkdir()
+        transferred_archive = media_root / "runtime-archive"
+        shutil.copytree(archive, transferred_archive)
+        host_root = verification_root / "host-trust"
+        host_root.mkdir()
+        host_anchor_public = host_root / "history-anchor-public.pem"
+        host_tsa_ca = host_root / "tsa-root.pem"
+        host_tsa_chain = host_root / "tsa-signer.pem"
+        shutil.copyfile(anchor_public, host_anchor_public)
+        shutil.copyfile(tsa.ca_cert, host_tsa_ca)
+        shutil.copyfile(tsa.tsa_cert, host_tsa_chain)
         host_trust = {
-            "history_anchor_public_key": anchor_public,
+            "history_anchor_public_key": host_anchor_public,
             "history_anchor_key_id": anchor_key_id,
-            "timestamp_ca_file": tsa.ca_cert,
-            "timestamp_untrusted_chain_file": tsa.tsa_cert,
+            "timestamp_ca_file": host_tsa_ca,
+            "timestamp_untrusted_chain_file": host_tsa_chain,
             "require_trusted_timestamps": True,
         }
-        return archive, anchor_public, tsa.ca_cert, {
+        self.temp.cleanup()
+        return transferred_archive, host_anchor_public, host_tsa_ca, {
             "trust_policy": host_trust,
-            "timestamp_chain": tsa.tsa_cert,
-            "run_report": run_report,
         }
 
     def test_four_stage_run_exports_and_verifies_offline(self) -> None:
