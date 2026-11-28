@@ -175,7 +175,7 @@ def execute_with_adapter(
     return {
         "schema_version": "1.0",
         "workflow_id": contract.get("workflow_id", "unnamed"),
-        "status": "completed" if complete else ("blocked" if stopped_reason and "approval_required" in stopped_reason else "incomplete"),
+        "status": "completed" if complete else ("blocked" if stopped_reason and ("approval_required" in stopped_reason or "stage_blocked" in stopped_reason) else "incomplete"),
         "stages": stage_reports,
         "artifacts": artifacts,
         "handoff_validation": chain_report,
