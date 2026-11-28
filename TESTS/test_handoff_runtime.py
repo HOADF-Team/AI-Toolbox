@@ -42,7 +42,7 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
             path.write_text(f"# {skill_id}\n", encoding="utf-8")
         return root
 
-    def plan(self, approvals: dict[str, str] | None = None) -> list[dict[str, Any]]:
+    def plan(self, approvals: dict[str, dict[str, dict[str, Any]]] | None = None) -> list[dict[str, Any]]:
         return build_workflow_plan(
             self.contract, self.skill_map, self.make_root(),
             "Review the synthetic security fixture", "scenario:demo", SKILLS_REVISION, approvals,
@@ -133,9 +133,12 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
 
     def test_action_without_matching_approval_is_rejected(self) -> None:
         values = [dict(x) for x in self.source_artifacts]
-        values[0]["actions_taken"] = [{"action": "remote_access", "approval_id": "forged"}]
+        scope = {"target_ref": "vps://prod-1", "operation": "read-only-diagnostics", "resource": "journal"}
+        values[0]["actions_taken"] = [{"stage_id": "crypto-security", "action": "remote_access", "approval_id": "forged", "scope": scope}]
+        approval = {"stage_id": "crypto-security", "action": "remote_access", "approval_id": "approved-1", "scope": scope, "expires_at": "2026-11-28T23:59:59Z"}
+        approvals = {"crypto-security": {"remote_access": approval}}
         adapter, _ = self.adapter_for(values)
-        report = execute_with_adapter(self.contract, self.plan(), adapter, {"remote_access": "approved-1"})
+        report = execute_with_adapter(self.contract, self.plan(approvals), adapter, approvals)
         self.assertEqual(report["status"], "incomplete")
         self.assertIn("invalid_stage_result", report["stopped_reason"])
 
@@ -392,19 +395,12 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
         values[0]["actions_taken"] = [
             {"action": "remote_access", "approval_id": "approved-remote"}
         ]
-        plan = build_workflow_plan(
-            contract,
-            self.skill_map,
-            self.make_root(),
-            "task",
-            "ref",
-            SKILLS_REVISION,
-            {"remote_access": "approved-remote"},
-        )
+        scope = {"target_ref": "vps://prod-1", "operation": "read-only-diagnostics"}
+        approval = {"stage_id": "code-audit", "action": "remote_access", "approval_id": "approved-remote", "scope": scope, "expires_at": "2026-11-28T23:59:59Z"}
+        approvals = {"code-audit": {"remote_access": approval}}
+        plan = build_workflow_plan(contract, self.skill_map, self.make_root(), "task", "ref", SKILLS_REVISION, approvals)
         adapter, calls = self.adapter_for(values)
-        report = execute_with_adapter(
-            contract, plan, adapter, {"remote_access": "approved-remote"}
-        )
+        report = execute_with_adapter(contract, plan, adapter, approvals)
         self.assertEqual(calls, ["crypto-security"])
         self.assertIn(
             "action_without_matching_approval:remote_access",
