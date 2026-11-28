@@ -57,6 +57,12 @@ class SkillInterfaceTests(unittest.TestCase):
         report = validate_workflow_compatibility(bad, self.catalog)
         self.assertIn("code-audit.inputs_available", report["errors"])
 
+    def test_malformed_binding_fails_closed(self) -> None:
+        bad = copy.deepcopy(self.workflow)
+        bad["stages"][0]["consumes"] = [{"untrusted": "object"}]
+        report = validate_workflow_compatibility(bad, self.catalog)
+        self.assertIn("crypto-security.bindings_shape", report["errors"])
+
     def test_wrong_output_type_fails(self) -> None:
         bad = copy.deepcopy(self.workflow)
         bad["stages"][0]["produces"] = ["financial.transfer"]
