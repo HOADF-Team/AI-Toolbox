@@ -268,6 +268,7 @@ class RuntimeArchiveEndToEndTests(unittest.TestCase):
             "ai_toolbox_revision": "b" * 40,
             "created_at": now.isoformat().replace("+00:00", "Z"),
             "run_status": "completed",
+            "verification_policy_version": 2,
             "verification_policy": {
                 "require_trusted_timestamp": True,
                 "require_tsa_revocation": True,
