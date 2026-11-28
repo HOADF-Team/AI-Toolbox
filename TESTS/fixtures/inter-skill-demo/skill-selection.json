@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "workflow_id": "security-review-four-skill-chain",
+  "task_ref": "scenario:demo",
+  "selection_rationale": "A synthetic incident review needs threat triage, source inspection, safe remediation planning, and server-configuration assessment in that order.",
+  "selected_skills": [
+    {
+      "stage_id": "crypto-security",
+      "skill_id": "crypto-security",
+      "rationale": "Establish incident priorities and credential/host safety constraints before technical changes.",
+      "depends_on": []
+    },
+    {
+      "stage_id": "code-audit",
+      "skill_id": "code-audit",
+      "rationale": "Inspect the supplied source and identify vulnerabilities without executing the fixture.",
+      "depends_on": ["crypto-security"]
+    },
+    {
+      "stage_id": "python-development",
+      "skill_id": "python-development",
+      "rationale": "Propose a minimal remediation and regression tests based on the audit findings.",
+      "depends_on": ["code-audit"]
+    },
+    {
+      "stage_id": "devops-vps",
+      "skill_id": "devops-vps",
+      "rationale": "Assess service configuration and propose hardening after application-level findings are known.",
+      "depends_on": ["python-development"]
+    }
+  ]
+}
