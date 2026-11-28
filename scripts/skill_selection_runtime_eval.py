@@ -84,6 +84,71 @@ def build_runtime_requests(
     }
 
 
+def validate_request_bundle(
+    benchmark: dict[str, Any],
+    request_bundle: dict[str, Any],
+    skill_map: dict[str, Any],
+) -> None:
+    """Ensure the request exchange matches this benchmark without exposing gold labels."""
+    if request_bundle.get("exchange_type") != "skill-selection-benchmark-requests":
+        raise RuntimeExchangeError("unsupported request bundle")
+    if request_bundle.get("benchmark_id") != benchmark.get("benchmark_id"):
+        raise RuntimeExchangeError("benchmark_id mismatch")
+    run = request_bundle.get("run")
+    if not isinstance(run, dict) or not isinstance(run.get("skills_revision"), str):
+        raise RuntimeExchangeError("request bundle is missing pinned Skill revision")
+    revision = run["skills_revision"]
+    if not SHA_RE.fullmatch(revision):
+        raise RuntimeExchangeError("request bundle has invalid Skill revision")
+
+    skill_ids = sorted(
+        item["id"] for item in skill_map.get("skills", [])
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    )
+    if request_bundle.get("candidate_skill_ids") != skill_ids:
+        raise RuntimeExchangeError("candidate Skill catalog mismatch")
+    expected_refs = {
+        skill_id: (
+            "https://github.com/HOADF-Team/Personal-AI-Library/blob/"
+            f"{revision}/skills/{skill_id}/SKILL.md"
+        )
+        for skill_id in skill_ids
+    }
+    expected_cases = {
+        case["case_id"]: case["task"]
+        for case in benchmark["cases"]
+        if not case["needs_human_review"]
+    }
+    raw_requests = request_bundle.get("requests")
+    if not isinstance(raw_requests, list):
+        raise RuntimeExchangeError("requests must be an array")
+    actual_cases: dict[str, str] = {}
+    forbidden_fields = {
+        "required_skills", "acceptable_skills", "excluded_skills",
+        "expected_decision", "expected_order", "needs_human_review",
+    }
+    for index, request in enumerate(raw_requests):
+        if not isinstance(request, dict):
+            raise RuntimeExchangeError(f"request_{index}_must_be_object")
+        if forbidden_fields.intersection(request):
+            raise RuntimeExchangeError("gold annotations found in request bundle")
+        case_id = request.get("case_id")
+        task = request.get("task")
+        if not isinstance(case_id, str) or case_id in actual_cases:
+            raise RuntimeExchangeError(f"invalid_or_duplicate_request_case:{case_id}")
+        if not isinstance(task, str):
+            raise RuntimeExchangeError(f"invalid_request_task:{case_id}")
+        if request.get("available_skill_ids") != skill_ids:
+            raise RuntimeExchangeError(f"request_skill_catalog_mismatch:{case_id}")
+        if request.get("canonical_manifest_refs") != expected_refs:
+            raise RuntimeExchangeError(f"manifest_refs_mismatch:{case_id}")
+        actual_cases[case_id] = task
+    if actual_cases != expected_cases:
+        raise RuntimeExchangeError("request case set or task text does not match benchmark")
+    if request_bundle.get("gold_labels_included") is not False:
+        raise RuntimeExchangeError("request bundle must explicitly exclude gold labels")
+
+
 def validate_runtime_responses(
     request_bundle: dict[str, Any],
     response_bundle: dict[str, Any],
@@ -162,6 +227,7 @@ def evaluate_runtime_exchange(
     skill_map: dict[str, Any],
 ) -> dict[str, Any]:
     """Score one complete, provenance-labelled response set from an external planner."""
+    validate_request_bundle(benchmark, request_bundle, skill_map)
     proposals = validate_runtime_responses(request_bundle, response_bundle, skill_map)
     scoring = score_benchmark(benchmark, proposals, skill_map)
     if scoring.get("status") != "scored":

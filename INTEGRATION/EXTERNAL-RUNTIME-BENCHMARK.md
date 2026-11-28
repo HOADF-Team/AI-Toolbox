@@ -62,7 +62,7 @@ python scripts/skill_selection_runtime_eval.py score \
   --output /tmp/skill-selection-report.json
 ```
 
-The report records caller-supplied runtime identity/version, pinned Skill revision, response coverage, micro/macro metrics, per-Skill metrics, abstention and order scores, and limitations.
+The report records caller-supplied runtime identity/version, pinned Skill revision, response coverage, micro/macro metrics, per-Skill metrics, decision accuracy, abstention and order scores, and limitations.
 
 ## Host adapter responsibilities
 
@@ -86,3 +86,5 @@ The host integration should implement these steps without giving the model acces
 - A high score is a regression signal, not proof of safe autonomous operation or permission to act.
 
 This bridge makes real planner evaluation possible once an actual host supplies its responses. Until then, unit tests use deterministic synthetic responses and do not represent measured LLM quality.
+
+The evaluator verifies that the request bundle still matches the pinned benchmark tasks and catalog, rejects hidden gold-label fields, and checks that every manifest reference resolves to the same pinned Skill revision before accepting responses.

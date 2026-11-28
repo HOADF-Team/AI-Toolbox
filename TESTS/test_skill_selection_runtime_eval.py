@@ -13,6 +13,7 @@ from skill_selection_runtime_eval import (  # noqa: E402
     RuntimeExchangeError,
     build_runtime_requests,
     evaluate_runtime_exchange,
+    validate_request_bundle,
     validate_runtime_responses,
 )
 
@@ -65,6 +66,27 @@ class RuntimeBenchmarkBridgeTests(unittest.TestCase):
         self.assertNotIn("acceptable_skills", serialized)
         self.assertNotIn("excluded_skills", serialized)
         self.assertEqual(len(self.requests["requests"]), 33)
+
+    def test_tampered_request_task_is_rejected(self) -> None:
+        requests = json.loads(json.dumps(self.requests))
+        requests["requests"][0]["task"] = "Changed task text"
+        with self.assertRaisesRegex(RuntimeExchangeError, "request case set"):
+            validate_request_bundle(self.benchmark, requests, self.skill_map)
+
+    def test_gold_annotation_in_request_is_rejected(self) -> None:
+        requests = json.loads(json.dumps(self.requests))
+        requests["requests"][0]["required_skills"] = ["automation-vps"]
+        with self.assertRaisesRegex(RuntimeExchangeError, "gold annotations"):
+            validate_request_bundle(self.benchmark, requests, self.skill_map)
+
+    def test_manifest_revision_is_bound_to_request_refs(self) -> None:
+        requests = json.loads(json.dumps(self.requests))
+        requests["requests"][0]["canonical_manifest_refs"]["automation-vps"] = (
+            "https://github.com/HOADF-Team/Personal-AI-Library/blob/main/"
+            "skills/automation-vps/SKILL.md"
+        )
+        with self.assertRaisesRegex(RuntimeExchangeError, "manifest_refs_mismatch"):
+            validate_request_bundle(self.benchmark, requests, self.skill_map)
 
     def test_invalid_revision_is_rejected(self) -> None:
         with self.assertRaisesRegex(RuntimeExchangeError, "40-character"):
