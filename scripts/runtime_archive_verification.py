@@ -23,7 +23,7 @@ class RuntimeArchiveVerificationError(ValueError):
     """Raised when an archive lacks authenticated, complete run evidence."""
 
 
-_STAGE_ID = re.compile(r"[a-z0-9][a-z0-9-]{0,63}\\Z")
+_STAGE_ID = re.compile(r"[a-z0-9][a-z0-9-]{0,63}$")
 
 
 def _safe_file(root: Path, relative: str) -> Path:
@@ -49,7 +49,7 @@ def _safe_file(root: Path, relative: str) -> Path:
 
 
 def _safe_directory(root: Path, relative: str) -> Path:
-    if not isinstance(relative, str) or not relative or "\\\\" in relative:
+    if not isinstance(relative, str) or not relative or chr(92) in relative:
         raise RuntimeArchiveVerificationError("unsafe_archive_reference")
     rel = Path(relative)
     if rel.is_absolute() or any(part in {"", ".", ".."} for part in rel.parts):
