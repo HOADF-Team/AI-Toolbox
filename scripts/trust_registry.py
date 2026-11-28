@@ -121,6 +121,11 @@ def resolve_trusted_key(
             raise TrustRegistryError("signing_key_outside_validity_window")
     else:
         signed_time = _parse_time(signed_at, "signed_at")
+        current = now or datetime.now().astimezone()
+        if current.tzinfo is None or current.utcoffset() is None:
+            raise TrustRegistryError("verification_time_must_include_timezone")
+        if signed_time > current:
+            raise TrustRegistryError("historical_signature_from_future")
         if signed_time < not_before or signed_time >= not_after:
             raise TrustRegistryError("historical_signature_outside_key_validity")
         if status == "retired":
