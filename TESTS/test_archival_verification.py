@@ -6,7 +6,7 @@ import os
 import subprocess
 import tempfile
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 from pathlib import Path
 import sys
@@ -203,6 +203,31 @@ class ArchivalVerificationTests(unittest.TestCase):
             )
         self.assertEqual(report["status"], "archived_verified")
         self.assertEqual(report["trusted_timestamp"]["gen_time"], timestamp["gen_time"])
+
+    def test_rfc3161_chain_validation_uses_token_generation_time(self) -> None:
+        response, ca_bundle = self._timestamp_files()
+        generation_time = datetime(2026, 6, 2, 12, 0, 0)
+        details = subprocess.CompletedProcess(
+            ["openssl", "ts", "-reply"], 0,
+            stdout="Time stamp: Jun  2 12:00:00 2026 GMT\\n", stderr="",
+        )
+        verified = subprocess.CompletedProcess(
+            ["openssl", "ts", "-verify"], 0, stdout="Verification: OK\\n", stderr="",
+        )
+        with patch("trust_registry_history.subprocess.run", side_effect=[details, verified]) as run:
+            report = verify_rfc3161_timestamp(
+                b"exact signed bytes", response, ca_bundle
+            )
+        verification_command = run.call_args_list[1].args[0]
+        self.assertIn("-attime", verification_command)
+        self.assertEqual(
+            verification_command[verification_command.index("-attime") + 1],
+            str(int(generation_time.replace(tzinfo=timezone.utc).timestamp())),
+        )
+        self.assertEqual(
+            report["verification"],
+            "openssl_ts_verify_with_host_supplied_ca_at_authenticated_gen_time",
+        )
 
     def test_archival_verifier_accepts_real_local_rfc3161_timestamp(self) -> None:
         bundle = self.sign()
