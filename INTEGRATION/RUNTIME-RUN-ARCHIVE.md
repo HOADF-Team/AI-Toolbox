@@ -181,3 +181,10 @@ assert verify_runtime_archive(Path("./run-archive"))["status"] == "archive_integ
 The source map is an allowlist: no directory is recursively copied and no secret/private key is automatically collected. The caller must explicitly select only public trust material and evidence required by policy. The archive destination must not already exist.
 
 **Important v1 boundary:** the implemented verifier currently authenticates only the package's internal file set and SHA-256 consistency. The manifest is not signed and does not authenticate itself. The implementation does not yet invoke `verify_archived_bundle`, validate RFC 3161 responses, authenticate trust-registry history, or validate the complete handoff chain. Do not describe a v1 pass as cryptographic proof of a runtime run. Those checks remain the next implementation milestone.
+
+
+## Cryptographic audit verification
+
+Version 1 packages files and checks local file integrity only. To verify signed stage artifacts, TSA timestamps, and registry history against independently supplied trust roots, see [Cryptographic verification of portable runtime archives](RUNTIME-ARCHIVE-CRYPTO-VERIFICATION.md) and `scripts/runtime_archive_verification.py`.
+
+This second layer is retrospective and audit-only; it does not authorize a live runtime handoff.
