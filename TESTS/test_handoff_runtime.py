@@ -113,7 +113,7 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
     def test_mock_adapter_executes_full_sequence_and_validates_handoffs(self) -> None:
         adapter, calls = self.adapter_for()
         report = execute_with_adapter(self.contract, self.plan(), adapter)
-        self.assertEqual(report["status"], "completed")
+        self.assertEqual(report["status"], "completed", report)
         self.assertEqual(len(calls), 4)
         self.assertEqual(report["handoff_validation"]["status"], "passed")
 
