@@ -155,6 +155,7 @@ def resolve_trusted_key(
         "status": status,
         "verification_mode": verification_mode,
         "valid_until": not_after.isoformat(),
+        "retired_at": entry.get("retired_at"),
         "producer_id": producer_id,
         "artifact_type": artifact_type,
     }
