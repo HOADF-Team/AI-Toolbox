@@ -23,7 +23,7 @@ def prepare_workflow_from_planner(
     skill_map: dict[str, Any],
     skills_root: Path,
     skills_revision: str,
-    approvals: dict[str, str] | None = None,
+    approvals: dict[str, dict[str, dict[str, Any]]] | None = None,
 ) -> dict[str, Any]:
     """Validate a planner choice and prepare matching canonical Skill envelopes.
 
@@ -161,7 +161,7 @@ def prepare_workflow_from_catalog(
     skill_map: dict[str, Any],
     skills_root: Path,
     skills_revision: str,
-    approvals: dict[str, str] | None = None,
+    approvals: dict[str, dict[str, dict[str, Any]]] | None = None,
 ) -> dict[str, Any]:
     """Load a validated workflow catalog and prepare only an eligible exact match."""
     from workflow_catalog import WorkflowCatalogError, load_workflow_catalog
