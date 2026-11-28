@@ -307,7 +307,7 @@ def verify_rfc3161_timestamp(
 
             def certificate_fingerprint(block: bytes, label: str) -> str:
                 cert_file = work / f"{label}.pem"
-                cert_file.write_bytes(block + b"\\n")
+                cert_file.write_bytes(block + b"\n")
                 try:
                     result = subprocess.run(
                         ["openssl", "x509", "-in", str(cert_file), "-noout", "-fingerprint", "-sha256"],
@@ -347,7 +347,7 @@ def verify_rfc3161_timestamp(
                 dates: list[tuple[datetime, datetime]] = []
                 for index, block in enumerate(blocks):
                     crl_path = work / f"{label}-{index}.crl"
-                    crl_path.write_bytes(block + b"\\n")
+                    crl_path.write_bytes(block + b"\n")
                     try:
                         parsed_crl = subprocess.run(
                             ["openssl", "crl", "-in", str(crl_path), "-noout", "-lastupdate", "-nextupdate"],
@@ -384,7 +384,7 @@ def verify_rfc3161_timestamp(
 
             for index, certificate in enumerate(candidate_certificates.values()):
                 target_path = work / f"tsa-chain-target-{index}.pem"
-                target_path.write_bytes(certificate + b"\\n")
+                target_path.write_bytes(certificate + b"\n")
                 historical_command = [
                     "openssl", "verify", "-CAfile", str(trusted_ca_file),
                     "-untrusted", str(chain_path), "-CRLfile", str(historical_tsa_crl_file),
