@@ -146,10 +146,12 @@ class ArtifactIntegrityTests(unittest.TestCase):
 
     def test_duplicate_envelope_evidence_references_are_rejected(self) -> None:
         bad = {**self.envelope, "evidence": ["evidence:scan", "evidence:scan"]}
+        bad_bundle = copy.deepcopy(self.bundle)
+        bad_bundle["statement"]["envelope_sha256"] = sha256_bytes(canonical_json_bytes(bad))
         with self.assertRaisesRegex(
             IntegrityVerificationError, "duplicate_envelope_evidence_reference"
         ):
-            self.verify(envelope=bad)
+            self.verify(envelope=bad, bundle=bad_bundle)
 
     def test_duplicate_manifest_evidence_references_are_rejected(self) -> None:
         bad = copy.deepcopy(self.bundle)
