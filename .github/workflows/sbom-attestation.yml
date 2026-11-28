@@ -3,12 +3,6 @@ name: SBOM and build provenance attestations
 on:
   push:
     branches: [main]
-    paths:
-      - "scripts/**"
-      - "TESTS/**"
-      - "requirements*.txt"
-      - ".github/workflows/**"
-      - "pyproject.toml"
   workflow_dispatch:
 
 permissions:
