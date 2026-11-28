@@ -169,19 +169,26 @@ class RuntimeArchiveCryptographicVerificationTests(unittest.TestCase):
     def test_signed_execution_context_mismatch_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             archive, anchor_key, tsa_ca = self.make_archive(Path(temp), bad_context=True)
-            with patch("runtime_archive_verification.verify_history_anchor") as anchor_verifier:
-                with self.assertRaisesRegex(
-                    RuntimeArchiveVerificationError, "signed_execution_context_mismatch"
-                ):
-                    verify_runtime_archive_cryptographically(
-                        archive,
-                        {
-                            "history_anchor_public_key": anchor_key,
-                            "history_anchor_key_id": "external-anchor",
-                            "timestamp_ca_file": tsa_ca,
-                        },
-                    )
-            anchor_verifier.assert_not_called()
+            with patch(
+                "runtime_archive_verification.verify_history_anchor",
+                return_value={
+                    "status": "signed_checkpoint_verified",
+                    "checkpoint": {"event_count": 0, "head_sha256": "0" * 64},
+                },
+            ):
+                with patch("runtime_archive_verification.verify_archived_bundle") as stage_verifier:
+                    with self.assertRaisesRegex(
+                        RuntimeArchiveVerificationError, "signed_execution_context_mismatch"
+                    ):
+                        verify_runtime_archive_cryptographically(
+                            archive,
+                            {
+                                "history_anchor_public_key": anchor_key,
+                                "history_anchor_key_id": "external-anchor",
+                                "timestamp_ca_file": tsa_ca,
+                            },
+                        )
+                    stage_verifier.assert_not_called()
 
     def test_incomplete_run_cannot_be_reported_as_verified(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
