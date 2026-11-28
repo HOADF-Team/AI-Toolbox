@@ -84,4 +84,47 @@ Run the tests with:
 python -m unittest TESTS.test_artifact_integrity TESTS.test_artifact_provenance TESTS.test_handoff_runtime -v
 ```
 
+
+## Host trust registry and key lifecycle
+
+The optional host-managed registry resolver is implemented in `scripts/trust_registry.py`. A minimal example is [trust-registry.example.json](../SECURITY/trust-registry.example.json).
+
+Each entry binds:
+- a unique `key_id` and the `Ed25519` algorithm;
+- a public-key file confined beneath a host-managed key directory;
+- SHA-256 of the DER-encoded SubjectPublicKeyInfo public key;
+- lifecycle status (`active`, `revoked`, or `retired`);
+- timezone-aware `not_before` and `not_after` timestamps;
+- explicit allowed producer IDs and artifact types.
+
+The resolver rejects duplicate IDs, unknown IDs, inactive/revoked/retired keys, keys outside their validity window, scope mismatches, changed key bytes, symlinks, and paths outside the key directory. A revoked key is rejected immediately regardless of signature validity. A retired key is also rejected for new verification; if historical verification is required, it should use a separate archival policy and must not silently reuse the active-key path.
+
+### Runtime configuration
+
+For registry-based verification, the host passes this policy to `execute_with_adapter`:
+
+```python
+integrity_policy = {
+    "trust_registry_path": "/host/policy/trust-registry.json",
+    "key_root": "/host/policy/public-keys",
+    "evidence_root": "/host/evidence",
+}
+```
+
+The runtime selects the key by the bundle's `key_id`, then checks the producer ID and artifact type from the provenance envelope against the registry entry before verifying the signature. The older explicit single-key policy remains supported for controlled compatibility, but a registry is the recommended host integration.
+
+### Rotation and revocation procedure
+
+1. Generate a new Ed25519 key pair in the host's approved secret-management environment; never commit the private key.
+2. Install the new public key in the host-managed key directory and calculate its DER public-key SHA-256 fingerprint.
+3. Add a new registry entry with a unique key ID, narrow producer/artifact scopes, and a bounded validity period.
+4. Deploy and verify the updated registry through the host's authenticated configuration channel.
+5. Switch authorized signers to the new key and confirm verification with a test artifact.
+6. Mark the old key `retired` after planned rotation, or `revoked` immediately after suspected compromise. Deploy the revocation update through the same trusted channel.
+7. Preserve historical audit records separately; do not keep compromised keys active merely to validate old signatures.
+
+The registry file itself is security-critical policy. A malicious party able to replace both the registry and its public keys can redefine trust. Therefore the host must authenticate registry distribution, protect write access, audit changes, and use an independently trusted configuration revision. The local resolver does not provide registry signing, remote distribution, private-key custody, HSM integration, automated rotation, or certificate transparency.
+
+Tests use ephemeral local keys only. No production trust anchor is included in this repository.
+
 Do not place credentials, private keys, tokens, customer data, or other secrets in an envelope, payload, logs, or evidence references. A passing structural check is not proof of correctness, provenance authenticity, or production safety.
