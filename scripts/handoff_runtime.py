@@ -163,7 +163,10 @@ def _validate_stage_result(
                     trusted_key_id = str(integrity_policy["trusted_key_id"])
                     resolved = {"status": "active", "key_id": trusted_key_id}
                 expected_execution_context = None
-                if integrity_policy.get("require_execution_context", False):
+                require_execution_context = integrity_policy.get("require_execution_context", False)
+                if not isinstance(require_execution_context, bool):
+                    raise IntegrityVerificationError("invalid_require_execution_context_policy")
+                if require_execution_context:
                     run_id = integrity_policy.get("run_id")
                     if not isinstance(run_id, str) or not run_id.strip():
                         raise IntegrityVerificationError("runtime_run_id_required")
