@@ -129,6 +129,9 @@ def verify_runtime_archive_cryptographically(
         raise RuntimeArchiveVerificationError("archive_stage_ids_invalid")
     if metadata.get("stage_ids") != expected_ids:
         raise RuntimeArchiveVerificationError("archive_stage_sequence_metadata_mismatch")
+    expected_skills = [item.get("skill_id", item["id"]) for item in stages]
+    if metadata.get("skill_ids") != expected_skills:
+        raise RuntimeArchiveVerificationError("archive_skill_sequence_metadata_mismatch")
     if metadata.get("workflow_id") != contract.get("workflow_id"):
         raise RuntimeArchiveVerificationError("archive_workflow_id_mismatch")
     if metadata.get("run_status") != "completed":
@@ -192,6 +195,8 @@ def verify_runtime_archive_cryptographically(
         payload = envelope.get("payload", {})
         if (
             envelope.get("producer", {}).get("id") != result["skill_id"]
+            or envelope.get("producer", {}).get("revision") != metadata["personal_ai_library_revision"]
+            or envelope.get("source", {}).get("revision") != metadata["personal_ai_library_revision"]
             or payload.get("stage") != stage_id
             or payload.get("skill_id") != result["skill_id"]
             or payload.get("output_ref") != result.get("output_ref")
