@@ -75,3 +75,10 @@ For signed stage results, the host should generate a unique run ID once per work
 ### Archival verification is not runtime authorization
 
 Use `scripts/archival_verification.py` only when auditing stored artifacts signed by a planned-retired key. It checks the signed timestamp against the original key validity and `retired_at` record. Revoked keys are always rejected. An `archived_verified` result is historical evidence only and must never be treated as a newly completed live Skill stage. See [Artifact provenance](ARTIFACT-PROVENANCE.md).
+
+
+### Bind the complete stage result to its provenance envelope
+
+The host adapter must compute `stage_result_sha256(result)` from the complete stage-result object before adding `artifact_provenance` or `integrity_bundle`. Store the digest in `artifact_provenance.payload.stage_result_sha256`. The digest covers all stage-result fields, including status, evidence claims, actions taken, output references, and domain-specific results; it excludes only `artifact_provenance`, `integrity_bundle`, and the runtime-generated `integrity_verification` field to avoid a circular digest. The runtime recomputes the digest and rejects any mismatch. When cryptographic integrity policy is enabled, the provenance envelope containing this digest is then signed, binding the complete result to the signature.
+
+This detects post-signing changes to the stage-result object. It does not prove that the original agent-reported claims are true.

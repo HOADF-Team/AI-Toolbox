@@ -16,7 +16,7 @@ FIXTURE = ROOT / "TESTS" / "fixtures" / "inter-skill-demo"
 sys.path.insert(0, str(ROOT / "scripts"))
 from artifact_signing import create_integrity_bundle  # noqa: E402
 from trust_registry import public_key_fingerprint  # noqa: E402
-from handoff_runtime import RuntimeProtocolError, build_workflow_plan, execute_with_adapter  # noqa: E402
+from handoff_runtime import RuntimeProtocolError, build_workflow_plan, execute_with_adapter, stage_result_sha256  # noqa: E402
 
 
 class RuntimeAdapterProtocolTests(unittest.TestCase):
@@ -76,7 +76,8 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
                 "created_at": "2026-11-28T10:00:00Z",
                 "inputs": [{"ref": envelope["input_ref"], "artifact_type": "workflow.stage_input"}],
                 "payload": {"stage": result["stage"], "skill_id": result["skill_id"],
-                            "output_ref": result["output_ref"]},
+                            "output_ref": result["output_ref"],
+                            "stage_result_sha256": stage_result_sha256(result)},
                 "evidence": ["fixture:agent-reported-evidence"],
                 "verification": {"status": "structurally_validated", "method": "runtime-contract",
                                  "checked_at": "2026-11-28T10:01:00Z",
@@ -349,6 +350,23 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
         self.assertEqual(report["status"], "incomplete")
         self.assertEqual(len(calls), 1)
         self.assertIn("artifact_integrity_verification_failed", report["stages"][0]["errors"])
+
+
+    def test_signed_provenance_binds_stage_evidence_claims(self) -> None:
+        adapter, _ = self.adapter_for()
+
+        def altered_evidence(envelope: dict[str, Any]) -> dict[str, Any]:
+            result = adapter(envelope)
+            result["evidence"] = [
+                {"location": "unverified://attacker-controlled", "observation": "fabricated claim"}
+            ]
+            return result
+
+        report = execute_with_adapter(self.contract, self.plan(), altered_evidence)
+        self.assertIn(
+            "artifact_provenance_stage_result_digest_mismatch",
+            report["stages"][0]["errors"],
+        )
 
 
 if __name__ == "__main__":

@@ -197,3 +197,8 @@ python -m unittest \
 ```
 
 This suite validates deterministic protocol mechanics with ephemeral local keys and synthetic artifacts. It does not execute an LLM or the four Skills and does not prove that a real host has configured or enforced the documented policies.
+
+
+### Binding the stage-result object
+
+For runtime handoffs, `artifact_provenance.payload.stage_result_sha256` must contain the SHA-256 digest returned by `stage_result_sha256(result)` from `scripts/handoff_runtime.py`. The digest covers the entire stage-result JSON except the provenance envelope, signature bundle, and runtime-generated verification report. The runtime recomputes it before accepting the handoff. This prevents a stage result's evidence, actions, or domain-specific claims from being changed independently of the provenance envelope. With Ed25519 verification enabled, the envelope digest also cryptographically binds this stage-result digest. The digest establishes integrity of the supplied bytes, not truthfulness of the agent's original observations.
