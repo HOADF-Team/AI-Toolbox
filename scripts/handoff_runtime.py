@@ -9,7 +9,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from handoff_contract import validate_handoff_chain
+from artifact_provenance import validate_provenance_envelope\nfrom handoff_contract import validate_handoff_chain
 
 
 class RuntimeProtocolError(ValueError):
@@ -113,6 +113,28 @@ def _validate_stage_result(
         errors.append("invalid_provenance")
     elif provenance.get("skill_manifest_ref") != envelope["skill"]["manifest_ref"]:
         errors.append("skill_manifest_ref_mismatch")
+    artifact_provenance = result.get("artifact_provenance")
+    if not isinstance(artifact_provenance, dict):
+        errors.append("missing_artifact_provenance_envelope")
+    else:
+        provenance_report = validate_provenance_envelope(artifact_provenance)
+        if provenance_report["status"] != "passed":
+            errors.extend(f"artifact_provenance:{error}" for error in provenance_report["errors"])
+        else:
+            expected_revision = envelope["skill"]["manifest_revision"]
+            if artifact_provenance["producer"]["id"] != stage["skill_id"]:
+                errors.append("artifact_provenance_producer_mismatch")
+            if artifact_provenance["producer"]["revision"] != expected_revision:
+                errors.append("artifact_provenance_revision_mismatch")
+            if artifact_provenance["source"]["revision"] != expected_revision:
+                errors.append("artifact_provenance_source_revision_mismatch")
+            payload = artifact_provenance["payload"]
+            if payload.get("stage") != stage["id"] or payload.get("skill_id") != stage["skill_id"]:
+                errors.append("artifact_provenance_payload_identity_mismatch")
+            if payload.get("output_ref") != result.get("output_ref"):
+                errors.append("artifact_provenance_output_ref_mismatch")
+            if artifact_provenance.get("inputs", [{}])[0].get("ref") != envelope["input_ref"]:
+                errors.append("artifact_provenance_input_ref_mismatch")
     actions = result.get("actions_taken", [])
     if not isinstance(actions, list):
         errors.append("invalid_actions_taken")
