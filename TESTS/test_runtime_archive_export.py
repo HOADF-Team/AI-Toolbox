@@ -34,8 +34,18 @@ class RuntimeArchiveExportTests(unittest.TestCase):
                 "status": "completed",
                 "decision": "synthetic-pass",
                 "evidence": [{"location": "fixture:proof", "observation": "synthetic only"}],
+                "artifact_provenance": {"producer": {"id": "alpha"}},
                 "integrity_bundle": {
                     "statement": {
+                        "execution_context": {
+                            "run_id": "run-export-001",
+                            "workflow_id": "export-test",
+                            "stage_id": "alpha",
+                            "skill_id": "alpha",
+                            "input_ref": "root",
+                            "issued_at": "2026-11-28T10:00:00Z",
+                            "expires_at": "2026-11-28T10:05:00Z",
+                        },
                         "evidence": [{
                             "ref": "proof",
                             "path": "proof.txt",
