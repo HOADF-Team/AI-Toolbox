@@ -177,3 +177,6 @@ This history does not override revocation: revoked keys remain rejected by archi
 
 
 For strict archival verification, pass the independently authenticated lifecycle records and checkpoint to `verify_archived_bundle(..., require_history=True)`. The verifier then requires history to agree with the registry's key status and retirement timestamp and rejects any key with a revocation event. See [Trust registry history](TRUST-REGISTRY-HISTORY.md).
+
+
+Strict archival verification also takes the retained registry snapshots referenced by the key-add and retirement events. Each snapshot is rehashed and checked against the event digest, key fingerprint, lifecycle status, and retirement timestamp. A hash chain without the referenced snapshots is not sufficient for strict archive acceptance.
