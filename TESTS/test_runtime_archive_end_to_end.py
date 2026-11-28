@@ -16,12 +16,15 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "TESTS"))
 
-from artifact_integrity import canonical_json_bytes  # noqa: E402
+from artifact_integrity import IntegrityVerificationError, canonical_json_bytes  # noqa: E402
 from artifact_signing import create_integrity_bundle  # noqa: E402
 from handoff_runtime import build_workflow_plan, execute_with_adapter  # noqa: E402
 from local_tsa_fixture import LocalRfc3161TSA  # noqa: E402
 from runtime_archive_export import create_cryptographic_runtime_archive  # noqa: E402
-from runtime_archive_verification import verify_runtime_archive_cryptographically  # noqa: E402
+from runtime_archive_verification import (  # noqa: E402
+    RuntimeArchiveVerificationError,
+    verify_runtime_archive_cryptographically,
+)
 from trust_registry import public_key_fingerprint  # noqa: E402
 from trust_registry_history import (  # noqa: E402
     build_history_anchor_statement,
@@ -310,7 +313,7 @@ class RuntimeArchiveEndToEndTests(unittest.TestCase):
         entry["size"] = len(data)
         entry["sha256"] = hashlib.sha256(data).hexdigest()
         manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
-        with self.assertRaises(Exception):
+        with self.assertRaises((IntegrityVerificationError, RuntimeArchiveVerificationError)):
             verify_runtime_archive_cryptographically(archive, context["trust_policy"])
 
 
