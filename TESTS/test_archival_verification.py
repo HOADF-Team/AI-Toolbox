@@ -209,10 +209,10 @@ class ArchivalVerificationTests(unittest.TestCase):
         generation_time = datetime(2026, 6, 2, 12, 0, 0)
         details = subprocess.CompletedProcess(
             ["openssl", "ts", "-reply"], 0,
-            stdout="Time stamp: Jun  2 12:00:00 2026 GMT\\n", stderr="",
+            stdout="Time stamp: Jun  2 12:00:00 2026 GMT\n", stderr="",
         )
         verified = subprocess.CompletedProcess(
-            ["openssl", "ts", "-verify"], 0, stdout="Verification: OK\\n", stderr="",
+            ["openssl", "ts", "-verify"], 0, stdout="Verification: OK\n", stderr="",
         )
         with patch("trust_registry_history.subprocess.run", side_effect=[details, verified]) as run:
             report = verify_rfc3161_timestamp(
