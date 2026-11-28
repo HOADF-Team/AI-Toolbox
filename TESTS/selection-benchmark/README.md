@@ -37,3 +37,6 @@ required_skills are necessary; acceptable_skills are plausible but nonessential 
 ## Safety
 
 Offline and read-only. No package installation, external service, production system, VPS, exchange, account, or credential is touched.
+
+
+For evaluating proposals from a real external planner without exposing gold labels, see [External AI runtime benchmark integration](../../INTEGRATION/EXTERNAL-RUNTIME-BENCHMARK.md).
