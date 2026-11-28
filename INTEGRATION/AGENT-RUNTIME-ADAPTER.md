@@ -46,3 +46,7 @@ No actual LLM/agent invocation is included. No Skill execution, model quality ev
 ## Reference usage
 
 The host calls build_workflow_plan() with the contract, Skill map, trusted Personal-AI-Library checkout root, task description, task reference, and full 40-character skills_revision commit SHA. It then supplies execute_with_adapter() with its own adapter callable. That callable is responsible for loading and reading the canonical Skill manifest and returning a structured result. The Toolbox provides no LLM implementation.
+
+## Measuring planner selection quality
+
+For an external planner evaluation exchange, use [External AI runtime benchmark integration](EXTERNAL-RUNTIME-BENCHMARK.md). The benchmark bridge exports gold-label-free requests and scores complete response bundles from a separately operated host. It does not invoke or authenticate an LLM.
