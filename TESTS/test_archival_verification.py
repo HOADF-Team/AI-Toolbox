@@ -15,7 +15,7 @@ from artifact_integrity import IntegrityVerificationError  # noqa: E402
 from artifact_signing import create_integrity_bundle  # noqa: E402
 from trust_registry import public_key_fingerprint  # noqa: E402
 from trust_registry_history import (  # noqa: E402
-    build_history_checkpoint, build_history_record,
+    build_history_checkpoint, build_history_record, registry_snapshot_sha256,
 )
 
 
@@ -96,7 +96,7 @@ class ArchivalVerificationTests(unittest.TestCase):
 
     def verify(
         self, envelope=None, bundle=None, history_records=None,
-        history_checkpoint=None, require_history=False,
+        history_checkpoint=None, require_history=False, registry_snapshots=None,
     ):
         return verify_archived_bundle(
             envelope or self.envelope,
@@ -107,26 +107,35 @@ class ArchivalVerificationTests(unittest.TestCase):
             history_records,
             history_checkpoint,
             require_history,
+            registry_snapshots,
         )
 
     def valid_history(self, retired_at=None):
-        registry_digest = "b" * 64
+        effective_retirement = retired_at or self.entry["retired_at"]
+        active_entry = {**self.entry, "status": "active"}
+        active_entry.pop("retired_at", None)
+        retired_entry = {**self.entry, "retired_at": effective_retirement}
+        added_snapshot = {"registry_version": "1.0", "keys": [active_entry]}
+        retired_snapshot = {"registry_version": "1.0", "keys": [retired_entry]}
+        added_digest = registry_snapshot_sha256(added_snapshot)
+        retired_digest = registry_snapshot_sha256(retired_snapshot)
         added = build_history_record({
             "event_id": "archive-key-added",
             "action": "key_added",
             "key_id": "archive-key-2026",
             "effective_at": "2026-01-01T00:00:00Z",
-            "registry_sha256": registry_digest,
+            "registry_sha256": added_digest,
         }, 1)
         retired = build_history_record({
             "event_id": "archive-key-retired",
             "action": "key_retired",
             "key_id": "archive-key-2026",
-            "effective_at": retired_at or self.entry["retired_at"],
-            "registry_sha256": registry_digest,
+            "effective_at": effective_retirement,
+            "registry_sha256": retired_digest,
         }, 2, added["event_sha256"])
         records = [added, retired]
-        return records, build_history_checkpoint(records)
+        snapshots = {added_digest: added_snapshot, retired_digest: retired_snapshot}
+        return records, build_history_checkpoint(records), snapshots
 
     def test_retired_key_verifies_artifact_signed_before_retirement(self) -> None:
         report = self.verify()
@@ -170,30 +179,34 @@ class ArchivalVerificationTests(unittest.TestCase):
 
 
     def test_strict_archive_verification_requires_external_history_checkpoint(self) -> None:
-        with self.assertRaisesRegex(ValueError, "authenticated_registry_history_required"):
+        with self.assertRaisesRegex(
+            ValueError, "authenticated_registry_history_and_snapshots_required"
+        ):
             self.verify(require_history=True)
 
     def test_retired_key_passes_with_matching_authenticated_history(self) -> None:
-        records, checkpoint = self.valid_history()
+        records, checkpoint, snapshots = self.valid_history()
         report = self.verify(
             history_records=records,
             history_checkpoint=checkpoint,
             require_history=True,
+            registry_snapshots=snapshots,
         )
         self.assertEqual(report["status"], "archived_verified")
         self.assertEqual(report["history_verification"]["status"], "verified")
 
     def test_retirement_timestamp_must_match_history(self) -> None:
-        records, checkpoint = self.valid_history("2026-11-30T00:00:00Z")
+        records, checkpoint, snapshots = self.valid_history("2026-11-30T00:00:00Z")
         with self.assertRaisesRegex(ValueError, "registry_history_retirement_mismatch"):
             self.verify(
                 history_records=records,
                 history_checkpoint=checkpoint,
                 require_history=True,
+                registry_snapshots=snapshots,
             )
 
     def test_revocation_record_blocks_archival_verification(self) -> None:
-        records, _ = self.valid_history()
+        records, _, snapshots = self.valid_history()
         revoked = build_history_record({
             "event_id": "archive-key-revoked",
             "action": "key_revoked",
@@ -209,16 +222,31 @@ class ArchivalVerificationTests(unittest.TestCase):
                 history_records=records,
                 history_checkpoint=checkpoint,
                 require_history=True,
+                registry_snapshots=snapshots,
             )
 
     def test_tampered_history_checkpoint_blocks_archival_verification(self) -> None:
-        records, checkpoint = self.valid_history()
+        records, checkpoint, snapshots = self.valid_history()
         bad_checkpoint = {**checkpoint, "head_sha256": "0" * 64}
         with self.assertRaisesRegex(ValueError, "history_head_checkpoint_mismatch"):
             self.verify(
                 history_records=records,
                 history_checkpoint=bad_checkpoint,
                 require_history=True,
+                registry_snapshots=snapshots,
+            )
+
+
+    def test_tampered_historical_registry_snapshot_is_rejected(self) -> None:
+        records, checkpoint, snapshots = self.valid_history()
+        digest = records[0]["event"]["registry_sha256"]
+        snapshots[digest]["keys"][0]["status"] = "revoked"
+        with self.assertRaisesRegex(ValueError, "registry_history_snapshot_digest_mismatch"):
+            self.verify(
+                history_records=records,
+                history_checkpoint=checkpoint,
+                require_history=True,
+                registry_snapshots=snapshots,
             )
 
 
