@@ -35,6 +35,42 @@ class RuntimeArchiveCLITests(unittest.TestCase):
             self.assertEqual(policy["timestamp_ca_file"], root / "tsa.pem")
             self.assertTrue(policy["require_trusted_timestamps"])
 
+    def test_trust_config_loads_paired_tsa_crls_for_strict_revocation(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for name in ("anchor.pub", "tsa.pem", "historical.crl", "current.crl"):
+                (root / name).write_text("PUBLIC TRUST MATERIAL", encoding="utf-8")
+            config = root / "trust.json"
+            config.write_text(json.dumps({
+                "history_anchor_public_key": "anchor.pub",
+                "history_anchor_key_id": "anchor-01",
+                "timestamp_ca_file": "tsa.pem",
+                "historical_tsa_crl_file": "historical.crl",
+                "current_tsa_crl_file": "current.crl",
+                "require_tsa_revocation": True,
+            }), encoding="utf-8")
+            policy = load_trust_policy(config)
+            self.assertTrue(policy["require_tsa_revocation"])
+            self.assertEqual(policy["historical_tsa_crl_file"], root / "historical.crl")
+            self.assertEqual(policy["current_tsa_crl_file"], root / "current.crl")
+
+    def test_trust_config_requires_both_crls_when_revocation_is_required(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "anchor.pub").write_text("public", encoding="utf-8")
+            (root / "tsa.pem").write_text("certificate", encoding="utf-8")
+            config = root / "trust.json"
+            config.write_text(json.dumps({
+                "history_anchor_public_key": "anchor.pub",
+                "history_anchor_key_id": "anchor",
+                "timestamp_ca_file": "tsa.pem",
+                "require_tsa_revocation": True,
+            }), encoding="utf-8")
+            with self.assertRaisesRegex(
+                RuntimeArchiveCLIError, "trust_config_tsa_revocation_crls_required"
+            ):
+                load_trust_policy(config)
+
     def test_trust_config_rejects_unknown_fields(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
