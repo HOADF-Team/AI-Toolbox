@@ -48,6 +48,28 @@ def _safe_file(root: Path, relative: str) -> Path:
     return resolved
 
 
+def _safe_directory(root: Path, relative: str) -> Path:
+    if not isinstance(relative, str) or not relative or "\\\\" in relative:
+        raise RuntimeArchiveVerificationError("unsafe_archive_reference")
+    rel = Path(relative)
+    if rel.is_absolute() or any(part in {"", ".", ".."} for part in rel.parts):
+        raise RuntimeArchiveVerificationError("unsafe_archive_reference")
+    base = root.resolve(strict=True)
+    current = base
+    for part in rel.parts:
+        current = current / part
+        if current.is_symlink():
+            raise RuntimeArchiveVerificationError("archive_symlink_not_allowed")
+    try:
+        resolved = current.resolve(strict=True)
+        resolved.relative_to(base)
+    except (OSError, ValueError) as exc:
+        raise RuntimeArchiveVerificationError("archive_directory_missing_or_outside_root") from exc
+    if not resolved.is_dir():
+        raise RuntimeArchiveVerificationError("archive_reference_not_directory")
+    return resolved
+
+
 def _read_json(root: Path, relative: str) -> Any:
     path = _safe_file(root, relative)
     try:
@@ -113,7 +135,7 @@ def verify_runtime_archive_cryptographically(
         raise RuntimeArchiveVerificationError("archive_run_not_completed")
 
     registry_path = _safe_file(root, "trust/registry.json")
-    key_root = _safe_file(root, "trust/keys/.anchor").parent
+    key_root = _safe_directory(root, "trust/keys")
     history = _read_json(root, "trust/history.json")
     checkpoint = _read_json(root, "trust/history-checkpoint.json")
     anchor = _read_json(root, "trust/history-anchor.json")
@@ -181,7 +203,7 @@ def verify_runtime_archive_cryptographically(
             timestamp_response = _safe_file(root, f"workflow/stages/{stage_id}/timestamp.tsr")
         report = verify_archived_bundle(
             envelope, bundle, registry_path, key_root,
-            _safe_file(root, f"workflow/stages/{stage_id}/evidence/.placeholder").parent,
+            _safe_directory(root, f"workflow/stages/{stage_id}/evidence"),
             history_records=history,
             history_checkpoint=checkpoint,
             require_history=True,
@@ -194,12 +216,7 @@ def verify_runtime_archive_cryptographically(
         )
         if report.get("status") != "archived_verified":
             raise RuntimeArchiveVerificationError(f"stage_archival_verification_failed:{stage_id}")
-        stage_results.append({
-            "stage": stage_id,
-            "input_ref": result.get("input_ref"),
-            "output_ref": result.get("output_ref"),
-            "evidence": result.get("evidence"),
-        })
+        stage_results.append(result)
         stage_reports.append({"stage": stage_id, "verification": report})
 
     chain_report = validate_handoff_chain(contract, stage_results)
