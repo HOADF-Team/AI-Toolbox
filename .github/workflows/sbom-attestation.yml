@@ -3,12 +3,6 @@ name: SBOM and build provenance attestations
 on:
   push:
     branches: [main]
-    paths:
-      - "scripts/**"
-      - "TESTS/**"
-      - "requirements*.txt"
-      - ".github/workflows/**"
-      - "pyproject.toml"
   workflow_dispatch:
 
 permissions:
@@ -31,10 +25,10 @@ jobs:
 
     steps:
       - name: Check out the exact source commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 1
           persist-credentials: false
+          fetch-depth: 1
 
       - name: Validate Skills and Toolbox dependency map against Personal-AI-Library main
         shell: bash
