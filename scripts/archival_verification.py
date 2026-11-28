@@ -9,7 +9,11 @@ from typing import Any
 
 from artifact_integrity import IntegrityVerificationError, verify_integrity_bundle
 from trust_registry import resolve_trusted_key
-from trust_registry_history import RegistryHistoryError, verify_registry_history
+from trust_registry_history import (
+    RegistryHistoryError,
+    registry_snapshot_sha256,
+    verify_registry_history,
+)
 
 
 def verify_archived_bundle(
@@ -21,6 +25,7 @@ def verify_archived_bundle(
     history_records: list[dict[str, Any]] | None = None,
     history_checkpoint: dict[str, Any] | None = None,
     require_history: bool = False,
+    registry_snapshots: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Verify an archived signature using the key's signed-time validity and retirement record."""
     if not isinstance(envelope, dict) or not isinstance(bundle, dict):
@@ -69,8 +74,8 @@ def verify_archived_bundle(
     if not isinstance(require_history, bool):
         raise RegistryHistoryError("invalid_require_history_policy")
     if require_history:
-        if history_records is None or history_checkpoint is None:
-            raise RegistryHistoryError("authenticated_registry_history_required")
+        if history_records is None or history_checkpoint is None or registry_snapshots is None:
+            raise RegistryHistoryError("authenticated_registry_history_and_snapshots_required")
         history_report = verify_registry_history(history_records, history_checkpoint)
         key_id = resolved["trusted_key_id"]
         key_events = [event for event in history_report["events"] if event["key_id"] == key_id]
@@ -86,6 +91,33 @@ def verify_archived_bundle(
             retirements = [event for event in key_events if event["action"] == "key_retired"]
             if len(retirements) != 1 or retirements[0]["effective_at"] != resolved["retired_at"]:
                 raise RegistryHistoryError("registry_history_retirement_mismatch")
+        required_events = additions + [
+            event for event in key_events if event["action"] == "key_retired"
+        ]
+        for event in required_events:
+            digest = event["registry_sha256"]
+            snapshot = registry_snapshots.get(digest)
+            if not isinstance(snapshot, dict) or registry_snapshot_sha256(snapshot) != digest:
+                raise RegistryHistoryError("registry_history_snapshot_digest_mismatch")
+            snapshot_keys = snapshot.get("keys")
+            if snapshot.get("registry_version") != "1.0" or not isinstance(snapshot_keys, list):
+                raise RegistryHistoryError("invalid_historical_registry_snapshot")
+            matches = [
+                item for item in snapshot_keys
+                if isinstance(item, dict) and item.get("key_id") == key_id
+            ]
+            if len(matches) != 1:
+                raise RegistryHistoryError("historical_registry_key_missing_or_duplicated")
+            snapshot_entry = matches[0]
+            if snapshot_entry.get("public_key_sha256") != resolved["public_key_sha256"]:
+                raise RegistryHistoryError("historical_registry_public_key_changed")
+            if event["action"] == "key_added" and snapshot_entry.get("status") != "active":
+                raise RegistryHistoryError("historical_key_addition_snapshot_not_active")
+            if event["action"] == "key_retired":
+                if snapshot_entry.get("status") != "retired":
+                    raise RegistryHistoryError("historical_key_retirement_snapshot_not_retired")
+                if snapshot_entry.get("retired_at") != event["effective_at"]:
+                    raise RegistryHistoryError("historical_key_retirement_snapshot_time_mismatch")
     report["status"] = "archived_verified"
     report["trust_resolution"] = resolved
     report["history_verification"] = history_report
