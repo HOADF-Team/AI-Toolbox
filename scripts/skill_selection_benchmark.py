@@ -157,9 +157,12 @@ def score_benchmark(
                 and bool(proposal["rationale"].strip())
             )
             for skill_id in required:
-                metrics = per_skill.setdefault(skill_id, {"tp": 0, "fn": 0})
+                metrics = per_skill.setdefault(skill_id, {"tp": 0, "fp": 0, "fn": 0})
                 metrics["tp"] += int(skill_id in chosen)
                 metrics["fn"] += int(skill_id not in chosen)
+            for skill_id in unnecessary:
+                metrics = per_skill.setdefault(skill_id, {"tp": 0, "fp": 0, "fn": 0})
+                metrics["fp"] += 1
 
         rows.append(
             {
@@ -191,12 +194,43 @@ def score_benchmark(
         if precision + recall
         else 0.0
     )
-    per_skill_recall = {
-        skill_id: round(values["tp"] / (values["tp"] + values["fn"]), 4)
-        if values["tp"] + values["fn"]
-        else 1.0
-        for skill_id, values in sorted(per_skill.items())
-    }
+    catalog_ids = sorted(
+        item["id"]
+        for item in catalog.get("skills", [])
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    )
+    per_skill_metrics = {}
+    for skill_id in catalog_ids:
+        values = per_skill.get(skill_id, {"tp": 0, "fp": 0, "fn": 0})
+        skill_precision = (
+            values["tp"] / (values["tp"] + values["fp"])
+            if values["tp"] + values["fp"]
+            else 1.0
+        )
+        skill_recall = (
+            values["tp"] / (values["tp"] + values["fn"])
+            if values["tp"] + values["fn"]
+            else 1.0
+        )
+        skill_f1 = (
+            2 * skill_precision * skill_recall / (skill_precision + skill_recall)
+            if skill_precision + skill_recall
+            else 0.0
+        )
+        per_skill_metrics[skill_id] = {
+            "precision": round(skill_precision, 4),
+            "recall": round(skill_recall, 4),
+            "f1": round(skill_f1, 4),
+        }
+    macro_precision = sum(
+        item["precision"] for item in per_skill_metrics.values()
+    ) / len(per_skill_metrics)
+    macro_recall = sum(
+        item["recall"] for item in per_skill_metrics.values()
+    ) / len(per_skill_metrics)
+    macro_f1 = sum(item["f1"] for item in per_skill_metrics.values()) / len(
+        per_skill_metrics
+    )
 
     return {
         "status": "scored",
@@ -210,6 +244,9 @@ def score_benchmark(
             "micro_precision": round(precision, 4),
             "micro_recall": round(recall, 4),
             "micro_f1": round(f1, 4),
+            "macro_precision": round(macro_precision, 4),
+            "macro_recall": round(macro_recall, 4),
+            "macro_f1": round(macro_f1, 4),
             "exact_match_rate": round(exact_matches / eligible, 4) if eligible else 0.0,
             "ordered_chain_accuracy": (
                 round(order_passed / order_checked, 4) if order_checked else None
@@ -226,7 +263,7 @@ def score_benchmark(
             "false_positives": false_positives,
             "false_negatives": false_negatives,
         },
-        "per_skill_recall": per_skill_recall,
+        "per_skill_metrics": per_skill_metrics,
         "case_results": rows,
         "limitations": [
             "Scores proposal JSON only; does not call an LLM or execute Skills.",
