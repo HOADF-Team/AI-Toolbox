@@ -420,6 +420,11 @@ def verify_history_anchor(
 
     if (timestamp_response is None) != (timestamp_ca_file is None):
         raise RegistryHistoryError("timestamp_response_and_ca_must_be_supplied_together")
+    if (historical_tsa_crl_file is not None or current_tsa_crl_file is not None):
+        if timestamp_response is None:
+            raise RegistryHistoryError("tsa_crls_require_timestamp_response")
+    if require_tsa_revocation and timestamp_response is None:
+        raise RegistryHistoryError("tsa_revocation_requires_trusted_timestamp")
     timestamp_report: dict[str, str] | None = None
     if timestamp_response is not None and timestamp_ca_file is not None:
         # Timestamp the Ed25519 signature itself, not only its public statement.
