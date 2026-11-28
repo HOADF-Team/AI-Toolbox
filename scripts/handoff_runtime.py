@@ -30,6 +30,7 @@ def build_workflow_plan(
         raise RuntimeProtocolError("task and task_ref must be non-empty")
     if len(skills_revision) != 40 or any(ch not in "0123456789abcdef" for ch in skills_revision.lower()):
         raise RuntimeProtocolError("skills_revision must be a full 40-character Git commit SHA")
+    skills_revision = skills_revision.lower()
     catalog_ids = {
         item.get("id") for item in skill_map.get("skills", [])
         if isinstance(item, dict) and isinstance(item.get("id"), str)
