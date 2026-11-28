@@ -35,7 +35,9 @@ jobs:
         run: |
           set -euo pipefail
           git clone --depth 1 --branch main https://github.com/HOADF-Team/Personal-AI-Library.git "$RUNNER_TEMP/Personal-AI-Library"
+          library_sha="$(git -C "$RUNNER_TEMP/Personal-AI-Library" rev-parse HEAD)"
           python3 scripts/validate_skill_map.py --skills-root "$RUNNER_TEMP/Personal-AI-Library/skills"
+          printf '### Canonical Skills source\n- Personal-AI-Library commit: `%s`\n' "$library_sha" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Install pinned Syft and verify the official release checksum
         shell: bash
@@ -88,12 +90,7 @@ jobs:
           digest="$(sha256sum "$archive" | cut -d ' ' -f 1)"
           echo "archive=$archive" >> "$GITHUB_OUTPUT"
           echo "sha256=$digest" >> "$GITHUB_OUTPUT"
-          {
-            echo "### Attested source"
-            echo "- Commit: `$GITHUB_SHA`"
-            echo "- Archive SHA-256: `$digest`"
-            echo "- SBOM: CycloneDX JSON"
-          } >> "$GITHUB_STEP_SUMMARY"
+          printf '### Attested source\n- Commit: `%s`\n- Archive SHA-256: `%s`\n- SBOM: CycloneDX JSON\n' "$GITHUB_SHA" "$digest" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Create signed CycloneDX SBOM attestation
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
