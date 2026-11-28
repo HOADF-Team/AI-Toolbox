@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from artifact_integrity import IntegrityVerificationError, verify_integrity_bundle
-from trust_registry import TrustRegistryError, resolve_trusted_key
+from trust_registry import resolve_trusted_key
 
 
 def verify_archived_bundle(
