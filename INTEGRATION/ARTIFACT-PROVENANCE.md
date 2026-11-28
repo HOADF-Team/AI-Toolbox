@@ -128,3 +128,8 @@ The registry file itself is security-critical policy. A malicious party able to 
 Tests use ephemeral local keys only. No production trust anchor is included in this repository.
 
 Do not place credentials, private keys, tokens, customer data, or other secrets in an envelope, payload, logs, or evidence references. A passing structural check is not proof of correctness, provenance authenticity, or production safety.
+
+
+### Signing helper
+
+The host-side bundle creation helper is documented in [ARTIFACT-SIGNING.md](ARTIFACT-SIGNING.md). It checks that the supplied private key matches the registry-resolved public-key fingerprint before signing. It does not provide key custody or replay protection.
