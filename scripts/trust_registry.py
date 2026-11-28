@@ -75,8 +75,10 @@ def resolve_trusted_key(
     producer_id: str,
     artifact_type: str,
     now: datetime | None = None,
+    verification_mode: str = "current",
+    signed_at: str | None = None,
 ) -> dict[str, Any]:
-    """Resolve an active key only when fingerprint, validity and scopes match."""
+    """Resolve a key under current-use or explicitly requested archival policy."""
     if not isinstance(key_id, str) or not _KEY_ID.fullmatch(key_id):
         raise TrustRegistryError("invalid_key_id")
     if not isinstance(producer_id, str) or not producer_id:
@@ -98,17 +100,35 @@ def resolve_trusted_key(
     entry = matches[0]
     if entry.get("algorithm") != "Ed25519":
         raise TrustRegistryError("unsupported_trusted_key_algorithm")
-    if entry.get("status") != "active":
+    if verification_mode not in {"current", "historical"}:
+        raise TrustRegistryError("invalid_verification_mode")
+    status = entry.get("status")
+    if status == "revoked":
+        raise TrustRegistryError("signing_key_revoked")
+    if verification_mode == "current" and status != "active":
         raise TrustRegistryError("signing_key_not_active")
-    current = now or datetime.now().astimezone()
-    if current.tzinfo is None or current.utcoffset() is None:
-        raise TrustRegistryError("verification_time_must_include_timezone")
+    if verification_mode == "historical" and status not in {"active", "retired"}:
+        raise TrustRegistryError("signing_key_not_archivable")
     not_before = _parse_time(entry.get("not_before"), "not_before")
     not_after = _parse_time(entry.get("not_after"), "not_after")
     if not_before >= not_after:
         raise TrustRegistryError("invalid_key_validity_window")
-    if current < not_before or current >= not_after:
-        raise TrustRegistryError("signing_key_outside_validity_window")
+    if verification_mode == "current":
+        current = now or datetime.now().astimezone()
+        if current.tzinfo is None or current.utcoffset() is None:
+            raise TrustRegistryError("verification_time_must_include_timezone")
+        if current < not_before or current >= not_after:
+            raise TrustRegistryError("signing_key_outside_validity_window")
+    else:
+        signed_time = _parse_time(signed_at, "signed_at")
+        if signed_time < not_before or signed_time >= not_after:
+            raise TrustRegistryError("historical_signature_outside_key_validity")
+        if status == "retired":
+            retired_at = _parse_time(entry.get("retired_at"), "retired_at")
+            if retired_at <= not_before:
+                raise TrustRegistryError("invalid_key_retirement_time")
+            if signed_time >= retired_at:
+                raise TrustRegistryError("historical_signature_after_key_retirement")
 
     producers = entry.get("allowed_producers")
     artifact_types = entry.get("allowed_artifact_types")
@@ -132,7 +152,8 @@ def resolve_trusted_key(
         "trusted_public_key": str(public_key),
         "trusted_key_id": key_id,
         "public_key_sha256": actual_fingerprint,
-        "status": "active",
+        "status": status,
+        "verification_mode": verification_mode,
         "valid_until": not_after.isoformat(),
         "producer_id": producer_id,
         "artifact_type": artifact_type,
