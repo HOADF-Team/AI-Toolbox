@@ -286,8 +286,7 @@ def _validate_stage_result(
             if not isinstance(action_id, str) or not action_id:
                 errors.append("invalid_action_id")
                 continue
-            stage_records = approvals.get(stage["id"], {})
-            approval = stage_records.get(action_id) if isinstance(stage_records, dict) else None
+            approval = approvals.get(action_id)
             approval_errors = _approval_errors(stage["id"], action_id, approval)
             if approval_errors:
                 errors.extend(f"action_approval:{action_id}:{error}" for error in approval_errors)
