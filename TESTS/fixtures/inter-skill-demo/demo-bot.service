@@ -1,0 +1,13 @@
+[Unit]
+Description=Synthetic demo trading service (insecure fixture)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 /opt/demo-bot/demo_bot.py
+EnvironmentFile=/etc/demo-bot/demo.env
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
