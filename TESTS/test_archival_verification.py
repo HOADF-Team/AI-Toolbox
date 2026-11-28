@@ -259,7 +259,7 @@ class ArchivalVerificationTests(unittest.TestCase):
         historical_crl = tsa.generate_crl(self.root / "intermediate-historical-before-revocation.crl")
         intermediate = self.root / "tsa-intermediate-chain.pem"
         intermediate_cert = self.root / "intermediate.pem"
-        intermediate_cert.write_bytes(intermediate.read_bytes().split(b"-----END CERTIFICATE-----")[0] + b"-----END CERTIFICATE-----\\n")
+        intermediate_cert.write_bytes(intermediate.read_bytes().split(b"-----END CERTIFICATE-----")[0] + b"-----END CERTIFICATE-----")
         tsa.revoke_certificate(intermediate_cert)
         current_crl = tsa.generate_crl(self.root / "intermediate-current-after-revocation.crl")
         with self.assertRaisesRegex(
