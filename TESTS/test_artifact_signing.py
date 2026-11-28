@@ -4,6 +4,7 @@ import os
 import subprocess
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import sys
 
@@ -118,6 +119,91 @@ class ArtifactSigningTests(unittest.TestCase):
         ):
             verify_integrity_bundle(
                 changed, bundle, self.public_key, "test-signing-key", self.evidence_root
+            )
+
+
+    def test_run_bound_signature_verifies_for_exact_context(self) -> None:
+        context = {
+            "run_id": "run-2026-11-28-001",
+            "workflow_id": "security-review-four-skill-chain",
+            "stage_id": "crypto-security",
+            "skill_id": "crypto-security",
+            "input_ref": "scenario:demo",
+        }
+        bundle = self.sign(execution_context=context, ttl_seconds=300)
+        report = verify_integrity_bundle(
+            self.envelope, bundle, self.public_key, "test-signing-key", self.evidence_root,
+            expected_execution_context=context, max_age_seconds=300,
+        )
+        self.assertEqual(report["replay_protection"], "run_stage_bound_and_time_limited")
+
+    def test_signature_replay_in_another_run_is_rejected(self) -> None:
+        context = {
+            "run_id": "run-original",
+            "workflow_id": "workflow-a",
+            "stage_id": "stage-a",
+            "skill_id": "skill-a",
+            "input_ref": "input-a",
+        }
+        bundle = self.sign(execution_context=context)
+        replay_context = {**context, "run_id": "run-replay"}
+        with self.assertRaisesRegex(
+            IntegrityVerificationError, "signed_execution_context_mismatch:run_id"
+        ):
+            verify_integrity_bundle(
+                self.envelope, bundle, self.public_key, "test-signing-key", self.evidence_root,
+                expected_execution_context=replay_context,
+            )
+
+    def test_signature_replay_for_another_stage_is_rejected(self) -> None:
+        context = {
+            "run_id": "run-a",
+            "workflow_id": "workflow-a",
+            "stage_id": "stage-a",
+            "skill_id": "skill-a",
+            "input_ref": "input-a",
+        }
+        bundle = self.sign(execution_context=context)
+        replay_context = {**context, "stage_id": "stage-b"}
+        with self.assertRaisesRegex(
+            IntegrityVerificationError, "signed_execution_context_mismatch:stage_id"
+        ):
+            verify_integrity_bundle(
+                self.envelope, bundle, self.public_key, "test-signing-key", self.evidence_root,
+                expected_execution_context=replay_context,
+            )
+
+    def test_expired_run_bound_signature_is_rejected(self) -> None:
+        context = {
+            "run_id": "run-expired",
+            "workflow_id": "workflow-a",
+            "stage_id": "stage-a",
+            "skill_id": "skill-a",
+            "input_ref": "input-a",
+        }
+        bundle = self.sign(execution_context=context, ttl_seconds=60)
+        with self.assertRaisesRegex(IntegrityVerificationError, "signed_execution_context_expired"):
+            verify_integrity_bundle(
+                self.envelope, bundle, self.public_key, "test-signing-key", self.evidence_root,
+                expected_execution_context=context,
+                now=datetime.now(timezone.utc) + timedelta(seconds=61),
+            )
+
+    def test_run_bound_signature_rejects_ttl_above_verifier_policy(self) -> None:
+        context = {
+            "run_id": "run-long",
+            "workflow_id": "workflow-a",
+            "stage_id": "stage-a",
+            "skill_id": "skill-a",
+            "input_ref": "input-a",
+        }
+        bundle = self.sign(execution_context=context, ttl_seconds=1200)
+        with self.assertRaisesRegex(
+            IntegrityVerificationError, "execution_context_ttl_exceeds_policy"
+        ):
+            verify_integrity_bundle(
+                self.envelope, bundle, self.public_key, "test-signing-key", self.evidence_root,
+                expected_execution_context=context, max_age_seconds=900,
             )
 
 
