@@ -15,6 +15,7 @@ from trust_registry_history import (
     RegistryHistoryError,
     registry_snapshot_sha256,
     verify_registry_history,
+    verify_rfc3161_timestamp,
 )
 
 
@@ -47,6 +48,10 @@ def verify_archived_bundle(
         raise RegistryHistoryError("timestamp_response_and_ca_must_be_supplied_together")
     if require_trusted_timestamp and not timestamp_paths_supplied:
         raise RegistryHistoryError("trusted_timestamp_required")
+    if timestamp_paths_supplied and (
+        not isinstance(timestamp_response, Path) or not isinstance(timestamp_ca_file, Path)
+    ):
+        raise RegistryHistoryError("timestamp_response_and_ca_must_be_path_objects")
     timestamp_precheck: dict[str, str] | None = None
     if timestamp_paths_supplied:
         signature_text = bundle.get("signature")
@@ -58,8 +63,8 @@ def verify_archived_bundle(
             raise IntegrityVerificationError("signature_is_not_valid_base64") from exc
         timestamp_precheck = verify_rfc3161_timestamp(
             signature_bytes,
-            timestamp_response,  # type: ignore[arg-type]
-            timestamp_ca_file,  # type: ignore[arg-type]
+            timestamp_response,
+            timestamp_ca_file,
             timestamp_untrusted_chain_file,
         )
     execution_context = statement.get("execution_context")
