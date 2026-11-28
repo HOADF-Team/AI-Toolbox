@@ -8,6 +8,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import re
 import subprocess
 import tempfile
 from datetime import datetime, timezone
@@ -76,6 +77,10 @@ def _validate_execution_context(
     now: datetime | None,
 ) -> dict[str, Any]:
     context = statement.get("execution_context")
+    if not isinstance(expected, dict) or set(expected) != {
+        "run_id", "workflow_id", "stage_id", "skill_id", "input_ref"
+    }:
+        raise IntegrityVerificationError("invalid_expected_execution_context_fields")
     if not isinstance(context, dict):
         raise IntegrityVerificationError("signed_execution_context_required")
     required = {"run_id", "workflow_id", "stage_id", "skill_id", "input_ref", "issued_at", "expires_at"}
@@ -147,22 +152,38 @@ def verify_integrity_bundle(
     refs = envelope.get("evidence")
     if not isinstance(evidence, list) or not isinstance(refs, list):
         raise IntegrityVerificationError("evidence_manifest_must_be_arrays")
-    if any(not isinstance(ref, str) for ref in refs):
-        raise IntegrityVerificationError("envelope_evidence_refs_must_be_strings")
-    if sorted(item.get("ref", "") for item in evidence if isinstance(item, dict)) != sorted(refs):
+    if any(not isinstance(ref, str) or not ref.strip() for ref in refs):
+        raise IntegrityVerificationError("envelope_evidence_refs_must_be_nonempty_strings")
+    if len(set(refs)) != len(refs):
+        raise IntegrityVerificationError("duplicate_envelope_evidence_reference")
+    manifest_refs: list[str] = []
+    for item in evidence:
+        if not isinstance(item, dict):
+            raise IntegrityVerificationError("evidence_manifest_entry_must_be_object")
+        if set(item) != {"ref", "path", "sha256"}:
+            raise IntegrityVerificationError("invalid_evidence_manifest_entry_fields")
+        ref = item.get("ref")
+        relative_path = item.get("path")
+        digest = item.get("sha256")
+        if not isinstance(ref, str) or not ref.strip():
+            raise IntegrityVerificationError("evidence_manifest_reference_required")
+        if not isinstance(relative_path, str) or not relative_path.strip():
+            raise IntegrityVerificationError("evidence_path_required")
+        if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+            raise IntegrityVerificationError("invalid_evidence_sha256")
+        manifest_refs.append(ref)
+    if len(set(manifest_refs)) != len(manifest_refs):
+        raise IntegrityVerificationError("duplicate_evidence_manifest_reference")
+    if set(manifest_refs) != set(refs) or len(manifest_refs) != len(refs):
         raise IntegrityVerificationError("evidence_reference_set_mismatch")
 
     root = evidence_root.resolve(strict=True)
     verified_evidence: list[str] = []
     for item in evidence:
-        if not isinstance(item, dict):
-            raise IntegrityVerificationError("evidence_manifest_entry_must_be_object")
-        relative_path = item.get("path")
-        if not isinstance(relative_path, str):
-            raise IntegrityVerificationError("evidence_path_required")
+        relative_path = item["path"]
         path = _safe_evidence_file(root, relative_path)
         actual = sha256_bytes(path.read_bytes())
-        if item.get("sha256") != actual:
+        if item["sha256"] != actual:
             raise IntegrityVerificationError("evidence_digest_mismatch")
         verified_evidence.append(item["ref"])
 
