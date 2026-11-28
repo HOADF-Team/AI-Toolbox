@@ -369,5 +369,48 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
         )
 
 
+    def test_tampered_plan_cannot_clear_contract_required_approval(self) -> None:
+        contract = json.loads(json.dumps(self.contract))
+        contract["stages"][0]["required_approvals"] = ["remote_access"]
+        plan = build_workflow_plan(
+            contract, self.skill_map, self.make_root(), "task", "ref", SKILLS_REVISION
+        )
+        plan[0]["envelope"]["permissions"]["missing_approvals"] = []
+        plan[0]["envelope"]["permissions"]["granted_approvals"] = {
+            "remote_access": "forged-plan-approval"
+        }
+        adapter, calls = self.adapter_for()
+        report = execute_with_adapter(contract, plan, adapter)
+        self.assertEqual(report["status"], "blocked")
+        self.assertEqual(calls, [])
+        self.assertIn("approval_required", report["stopped_reason"])
+
+    def test_approval_for_another_stage_cannot_authorize_this_stage_action(self) -> None:
+        contract = json.loads(json.dumps(self.contract))
+        contract["stages"][1]["required_approvals"] = ["remote_access"]
+        values = [dict(item) for item in self.source_artifacts]
+        values[0]["actions_taken"] = [
+            {"action": "remote_access", "approval_id": "approved-remote"}
+        ]
+        plan = build_workflow_plan(
+            contract,
+            self.skill_map,
+            self.make_root(),
+            "task",
+            "ref",
+            SKILLS_REVISION,
+            {"remote_access": "approved-remote"},
+        )
+        adapter, calls = self.adapter_for(values)
+        report = execute_with_adapter(
+            contract, plan, adapter, {"remote_access": "approved-remote"}
+        )
+        self.assertEqual(calls, ["crypto-security"])
+        self.assertIn(
+            "action_without_matching_approval:remote_access",
+            report["stages"][0]["errors"],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
