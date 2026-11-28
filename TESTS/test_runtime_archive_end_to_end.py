@@ -73,6 +73,7 @@ class RuntimeArchiveEndToEndTests(unittest.TestCase):
         fingerprint = public_key_fingerprint(public_key)
 
         tsa = LocalRfc3161TSA(self.root / "local-tsa")
+        current_tsa_crl = tsa.generate_crl()
         evidence_root = self.root / "live-evidence"
         evidence_root.mkdir()
         registry_path = self.root / "live-registry.json"
@@ -267,7 +268,10 @@ class RuntimeArchiveEndToEndTests(unittest.TestCase):
             "ai_toolbox_revision": "b" * 40,
             "created_at": now.isoformat().replace("+00:00", "Z"),
             "run_status": "completed",
-            "verification_policy": {"require_trusted_timestamp": True},
+            "verification_policy": {
+                "require_trusted_timestamp": True,
+                "require_tsa_revocation": True,
+            },
         }
         archive = self.root / "portable-archive"
         create_cryptographic_runtime_archive(staging, archive, metadata, files)
@@ -284,15 +288,22 @@ class RuntimeArchiveEndToEndTests(unittest.TestCase):
         host_anchor_public = host_root / "history-anchor-public.pem"
         host_tsa_ca = host_root / "tsa-root.pem"
         host_tsa_chain = host_root / "tsa-signer.pem"
+        host_historical_crl = host_root / "tsa-historical.crl"
+        host_current_crl = host_root / "tsa-current.crl"
         shutil.copyfile(anchor_public, host_anchor_public)
         shutil.copyfile(tsa.ca_cert, host_tsa_ca)
         shutil.copyfile(tsa.tsa_cert, host_tsa_chain)
+        shutil.copyfile(tsa.historical_crl, host_historical_crl)
+        shutil.copyfile(current_tsa_crl, host_current_crl)
         host_trust = {
             "history_anchor_public_key": host_anchor_public,
             "history_anchor_key_id": anchor_key_id,
             "timestamp_ca_file": host_tsa_ca,
             "timestamp_untrusted_chain_file": host_tsa_chain,
+            "historical_tsa_crl_file": host_historical_crl,
+            "current_tsa_crl_file": host_current_crl,
             "require_trusted_timestamps": True,
+            "require_tsa_revocation": True,
         }
         self.temp.cleanup()
         return transferred_archive, host_anchor_public, host_tsa_ca, {
@@ -314,6 +325,7 @@ class RuntimeArchiveEndToEndTests(unittest.TestCase):
         ))
         self.assertTrue(anchor_public.is_file())
         self.assertTrue(tsa_ca.is_file())
+        self.assertEqual(report["tsa_revocation_policy"], "historical_and_current_crl_verified")
 
     def test_tampered_archived_stage_signature_fails_closed(self) -> None:
         archive, _, _, context = self._run_and_export()

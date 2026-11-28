@@ -34,6 +34,9 @@ def verify_archived_bundle(
     timestamp_untrusted_chain_file: Path | None = None,
     require_trusted_timestamp: bool = False,
     now: datetime | None = None,
+    historical_tsa_crl_file: Path | None = None,
+    current_tsa_crl_file: Path | None = None,
+    require_tsa_revocation: bool = False,
 ) -> dict[str, Any]:
     """Verify an archived signature using the key's signed-time validity and retirement record."""
     if not isinstance(envelope, dict) or not isinstance(bundle, dict):
@@ -43,6 +46,14 @@ def verify_archived_bundle(
         raise IntegrityVerificationError("integrity_statement_required")
     if not isinstance(require_trusted_timestamp, bool):
         raise RegistryHistoryError("invalid_require_trusted_timestamp_policy")
+    if not isinstance(require_tsa_revocation, bool):
+        raise RegistryHistoryError("invalid_require_tsa_revocation_policy")
+    if (historical_tsa_crl_file is None) != (current_tsa_crl_file is None):
+        raise RegistryHistoryError("historical_and_current_tsa_crls_must_be_supplied_together")
+    if require_tsa_revocation and historical_tsa_crl_file is None:
+        raise RegistryHistoryError("tsa_revocation_crls_required")
+    if require_tsa_revocation and not require_trusted_timestamp:
+        raise RegistryHistoryError("tsa_revocation_requires_trusted_timestamp")
     timestamp_paths_supplied = timestamp_response is not None or timestamp_ca_file is not None
     if timestamp_paths_supplied and (timestamp_response is None or timestamp_ca_file is None):
         raise RegistryHistoryError("timestamp_response_and_ca_must_be_supplied_together")
@@ -62,6 +73,10 @@ def verify_archived_bundle(
             timestamp_response,
             timestamp_ca_file,
             timestamp_untrusted_chain_file,
+            historical_tsa_crl_file,
+            current_tsa_crl_file,
+            require_tsa_revocation,
+            now,
         )
     execution_context = statement.get("execution_context")
     if statement.get("statement_version") == "1.1":
@@ -110,6 +125,9 @@ def verify_archived_bundle(
         timestamp_untrusted_chain_file=timestamp_untrusted_chain_file,
         require_trusted_timestamp=require_trusted_timestamp,
         now=now,
+        historical_tsa_crl_file=historical_tsa_crl_file,
+        current_tsa_crl_file=current_tsa_crl_file,
+        require_tsa_revocation=require_tsa_revocation,
     )
     history_report = None
     if not isinstance(require_history, bool):

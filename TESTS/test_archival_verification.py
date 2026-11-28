@@ -14,7 +14,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "TESTS"))
-from local_tsa_fixture import issue_local_rfc3161_timestamp  # noqa: E402
+from local_tsa_fixture import LocalRfc3161TSA, issue_local_rfc3161_timestamp  # noqa: E402
 from archival_verification import verify_archived_bundle  # noqa: E402
 from artifact_integrity import IntegrityVerificationError  # noqa: E402
 from artifact_signing import create_integrity_bundle  # noqa: E402
@@ -228,6 +228,76 @@ class ArchivalVerificationTests(unittest.TestCase):
             report["verification"],
             "openssl_ts_verify_with_host_supplied_ca_at_authenticated_gen_time",
         )
+
+    def test_tsa_historical_and_current_crls_verify_offline(self) -> None:
+        tsa = LocalRfc3161TSA(self.root / "tsa-crl-valid")
+        signature = base64.b64decode(self.sign()["signature"], validate=True)
+        response = tsa.issue(signature)
+        current_crl = tsa.generate_crl()
+        report = verify_rfc3161_timestamp(
+            signature,
+            response,
+            tsa.ca_cert,
+            tsa.tsa_cert,
+            tsa.historical_crl,
+            current_crl,
+            True,
+        )
+        self.assertEqual(report["tsa_revocation"], "historical_and_current_crl_verified")
+
+    def test_currently_revoked_tsa_certificate_is_rejected_after_timestamp(self) -> None:
+        tsa = LocalRfc3161TSA(self.root / "tsa-crl-current-revoked")
+        signature = base64.b64decode(self.sign()["signature"], validate=True)
+        response = tsa.issue(signature)
+        tsa.revoke_tsa_certificate()
+        current_crl = tsa.generate_crl()
+        with self.assertRaisesRegex(
+            ValueError, "current_tsa_certificate_revoked_or_crl_invalid"
+        ):
+            verify_rfc3161_timestamp(
+                signature, response, tsa.ca_cert, tsa.tsa_cert,
+                tsa.historical_crl, current_crl, True,
+            )
+
+    def test_tsa_revoked_at_timestamp_is_rejected_by_historical_crl(self) -> None:
+        tsa = LocalRfc3161TSA(self.root / "tsa-crl-historical-revoked")
+        tsa.revoke_tsa_certificate()
+        tsa.generate_crl(tsa.historical_crl)
+        signature = base64.b64decode(self.sign()["signature"], validate=True)
+        response = tsa.issue(signature)
+        current_crl = tsa.generate_crl()
+        with self.assertRaisesRegex(
+            ValueError, "historical_tsa_revocation_or_crl_verification_failed"
+        ):
+            verify_rfc3161_timestamp(
+                signature, response, tsa.ca_cert, tsa.tsa_cert,
+                tsa.historical_crl, current_crl, True,
+            )
+
+    def test_stale_current_tsa_crl_fails_closed(self) -> None:
+        tsa = LocalRfc3161TSA(self.root / "tsa-crl-stale")
+        signature = base64.b64decode(self.sign()["signature"], validate=True)
+        response = tsa.issue(signature)
+        current_crl = tsa.generate_crl()
+        future = datetime.now(timezone.utc) + timedelta(days=4)
+        with self.assertRaisesRegex(ValueError, "current_tsa_crl_stale_or_not_yet_valid"):
+            verify_rfc3161_timestamp(
+                signature, response, tsa.ca_cert, tsa.tsa_cert,
+                tsa.historical_crl, current_crl, True, future,
+            )
+
+    def test_tampered_current_tsa_crl_fails_closed(self) -> None:
+        tsa = LocalRfc3161TSA(self.root / "tsa-crl-tampered")
+        signature = base64.b64decode(self.sign()["signature"], validate=True)
+        response = tsa.issue(signature)
+        current_crl = tsa.generate_crl()
+        data = current_crl.read_bytes()
+        current_crl.write_bytes(data[:-2] + bytes([data[-2] ^ 1]) + data[-1:])
+        with self.assertRaisesRegex(ValueError, "current_tsa_crl_invalid"):
+            verify_rfc3161_timestamp(
+                signature, response, tsa.ca_cert, tsa.tsa_cert,
+                tsa.historical_crl, current_crl, True,
+            )
 
     def test_archival_verifier_accepts_real_local_rfc3161_timestamp(self) -> None:
         bundle = self.sign()

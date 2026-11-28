@@ -139,12 +139,23 @@ def verify_integrity_bundle(
     timestamp_ca_file: Path | None = None,
     timestamp_untrusted_chain_file: Path | None = None,
     require_trusted_timestamp: bool = False,
+    historical_tsa_crl_file: Path | None = None,
+    current_tsa_crl_file: Path | None = None,
+    require_tsa_revocation: bool = False,
 ) -> dict[str, Any]:
     """Verify payload/evidence hashes, Ed25519 signature, and optional RFC 3161 time proof."""
     if not isinstance(envelope, dict) or not isinstance(bundle, dict):
         raise IntegrityVerificationError("envelope_and_bundle_must_be_objects")
     if not isinstance(require_trusted_timestamp, bool):
         raise IntegrityVerificationError("invalid_require_trusted_timestamp_policy")
+    if not isinstance(require_tsa_revocation, bool):
+        raise IntegrityVerificationError("invalid_require_tsa_revocation_policy")
+    if (historical_tsa_crl_file is None) != (current_tsa_crl_file is None):
+        raise IntegrityVerificationError("historical_and_current_tsa_crls_must_be_supplied_together")
+    if require_tsa_revocation and historical_tsa_crl_file is None:
+        raise IntegrityVerificationError("tsa_revocation_crls_required")
+    if require_tsa_revocation and not require_trusted_timestamp:
+        raise IntegrityVerificationError("tsa_revocation_requires_trusted_timestamp")
     timestamp_paths_supplied = timestamp_response is not None or timestamp_ca_file is not None
     if timestamp_paths_supplied and (timestamp_response is None or timestamp_ca_file is None):
         raise IntegrityVerificationError("timestamp_response_and_ca_must_be_supplied_together")
@@ -152,6 +163,8 @@ def verify_integrity_bundle(
         raise IntegrityVerificationError("trusted_timestamp_required")
     if timestamp_untrusted_chain_file is not None and not timestamp_paths_supplied:
         raise IntegrityVerificationError("timestamp_chain_requires_timestamp_response")
+    if (historical_tsa_crl_file is not None or current_tsa_crl_file is not None) and not timestamp_paths_supplied:
+        raise IntegrityVerificationError("tsa_crls_require_timestamp_response")
     if not trusted_key_id or bundle.get("key_id") != trusted_key_id:
         raise IntegrityVerificationError("untrusted_signing_key_id")
     if bundle.get("algorithm") != "Ed25519":
@@ -258,6 +271,10 @@ def verify_integrity_bundle(
                 timestamp_response,
                 timestamp_ca_file,
                 timestamp_untrusted_chain_file,
+                historical_tsa_crl_file,
+                current_tsa_crl_file,
+                require_tsa_revocation,
+                now,
             )
         except (OSError, ValueError) as exc:
             raise IntegrityVerificationError("trusted_timestamp_verification_failed") from exc

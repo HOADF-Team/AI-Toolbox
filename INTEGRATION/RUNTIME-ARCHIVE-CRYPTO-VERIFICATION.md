@@ -166,7 +166,10 @@ Create `host-trust/trust-config.json`:
   "history_anchor_key_id": "registry-anchor-2026",
   "timestamp_ca_file": "tsa-roots.pem",
   "timestamp_untrusted_chain_file": "tsa-intermediates.pem",
-  "require_trusted_timestamps": true
+  "historical_tsa_crl_file": "tsa-historical.crl",
+  "current_tsa_crl_file": "tsa-current.crl",
+  "require_trusted_timestamps": true,
+  "require_tsa_revocation": true
 }
 ```
 
@@ -209,12 +212,38 @@ certificate file may provide the TSA signer and intermediate certificates, but i
 cannot establish trust by itself. OpenSSL's timestamp verification also enforces
 the timestamp-signing certificate purpose/EKU requirements.
 
-**Revocation limitation:** this path does not currently consume authenticated TSA
-CRLs or OCSP responses. Historical certificate validity is not equivalent to
-proof of non-revocation. Until a separately provisioned and authenticated revocation
-policy is implemented, operators must not interpret a successful timestamp check
-as evidence that the TSA certificate was never revoked. No online revocation lookup
-is performed.
+### TSA certificate revocation checks
+
+The offline verifier supports two independently provisioned PEM CRLs when the host
+sets `require_tsa_revocation: true`:
+
+- `historical_tsa_crl_file` must be signed by the TSA certificate issuer and its
+  validity interval must cover the token's authenticated `genTime`. OpenSSL checks
+  the CRL signature, issuer chain, CRL validity window, and whether the TSA signer
+  was revoked at that historical instant.
+- `current_tsa_crl_file` must be signed by the issuer and be fresh at audit time:
+  `thisUpdate <= audit_time < nextUpdate`. Its signature and the TSA certificate's
+  current revocation status are checked against the host trust bundle. This is a
+  conservative compromise policy: a currently revoked TSA certificate is rejected
+  even if its revocation date is later than the archived timestamp.
+
+The TSA signer certificate is extracted from the signed CMS timestamp token; the
+verifier does not accept a caller-selected certificate as the revocation subject.
+CRLs, like trust roots, are host inputs and cannot bootstrap trust from archive
+contents. Missing, stale, future-dated, wrongly signed, or revoking CRLs fail closed
+when the policy is required.
+
+The current-status pass uses OpenSSL `-no_check_time` so an expired TSA leaf can
+still be checked for revocation. CRL freshness is checked separately against the
+audit clock. Historical certificate-chain validity and timestamp EKU are still
+checked by the RFC 3161 verification pass at `genTime`. This does not establish
+current validity of an expired TSA certificate, nor does it provide a full
+current-time revocation audit for every CA in a multi-level chain; the CRL policy
+currently targets the TSA signer certificate.
+
+If `require_tsa_revocation` is omitted or false, timestamp verification remains
+compatible with the earlier timestamp-only policy and the report explicitly says
+that TSA revocation was not required. No OCSP or online CRL retrieval is performed.
 
 ## Trust lifecycle negative-test coverage
 
@@ -223,6 +252,7 @@ The archival verification test suite also exercises fail-closed cases with ephem
 - A signing key whose validity window ended before the TSA-authenticated signature time is rejected, even when the signer-provided creation time claims an earlier date.
 - A timestamp token verified against a substituted, independently generated TSA root is rejected.
 - Missing evidence referenced by the signed evidence manifest is rejected.
+- TSA CRL tests verify valid historical/current CRLs, reject a TSA certificate revoked after timestamp issuance under the conservative current-status policy, reject a certificate already revoked at genTime, and fail closed on stale or tampered CRLs.
 - Existing lifecycle tests continue to reject revoked signing keys, signatures outside a retired key's validity/retirement window, inconsistent registry snapshots, and altered history checkpoints.
 
 Revocation is intentionally conservative: once a key is recorded as revoked in the authenticated history/current registry, archival verification rejects signatures from that key even if a timestamp predates the recorded revocation. This is the current compromise-response policy; it avoids treating a possibly compromised key as safe merely because a token claims an earlier signing time.

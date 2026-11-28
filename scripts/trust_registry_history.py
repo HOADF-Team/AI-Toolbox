@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import base64
 import re
+from email.utils import parsedate_to_datetime
 import subprocess
 import tempfile
 from datetime import datetime, timezone
@@ -147,17 +148,32 @@ def verify_rfc3161_timestamp(
     timestamp_response: Path,
     trusted_ca_file: Path,
     untrusted_chain_file: Path | None = None,
+    historical_tsa_crl_file: Path | None = None,
+    current_tsa_crl_file: Path | None = None,
+    require_tsa_revocation: bool = False,
+    now: datetime | None = None,
 ) -> dict[str, str]:
-    """Verify an RFC 3161 token and validate its TSA chain at authenticated genTime.
+    """Verify an RFC 3161 token and optionally check historical and current TSA revocation.
 
-    genTime is parsed before certificate validation only to select OpenSSL's
-    historical verification instant. The timestamp token signature and imprint
-    are then verified by OpenSSL at that instant, binding genTime to the TSA key.
-    Trust roots are supplied by the verifier host; untrusted certificates can
-    complete a chain but can never become trust anchors.
+    CRLs are independent host inputs. The historical CRL must cover genTime.
+    The current CRL must be fresh at audit time. Current revocation is deliberately
+    conservative: a currently revoked TSA certificate is rejected even when its
+    revocation date is later than the timestamp.
     """
     if not isinstance(data, bytes) or not data:
         raise RegistryHistoryError("timestamped_data_must_be_nonempty_bytes")
+    if not isinstance(require_tsa_revocation, bool):
+        raise RegistryHistoryError("invalid_require_tsa_revocation_policy")
+    crl_paths_supplied = (
+        historical_tsa_crl_file is not None or current_tsa_crl_file is not None
+    )
+    if crl_paths_supplied and (
+        historical_tsa_crl_file is None or current_tsa_crl_file is None
+    ):
+        raise RegistryHistoryError("historical_and_current_tsa_crls_must_be_supplied_together")
+    if require_tsa_revocation and not crl_paths_supplied:
+        raise RegistryHistoryError("tsa_revocation_crls_required")
+
     for path, error_code in (
         (timestamp_response, "timestamp_response_unavailable"),
         (trusted_ca_file, "timestamp_trust_bundle_unavailable"),
@@ -170,9 +186,25 @@ def verify_rfc3161_timestamp(
         or not untrusted_chain_file.is_file()
     ):
         raise RegistryHistoryError("timestamp_untrusted_chain_unavailable")
+    for crl_path, error_code in (
+        (historical_tsa_crl_file, "historical_tsa_crl_unavailable"),
+        (current_tsa_crl_file, "current_tsa_crl_unavailable"),
+    ):
+        if crl_path is not None and (
+            not isinstance(crl_path, Path)
+            or crl_path.is_symlink()
+            or not crl_path.is_file()
+        ):
+            raise RegistryHistoryError(error_code)
+
+    audit_time = now or datetime.now(timezone.utc)
+    if audit_time.tzinfo is None or audit_time.utcoffset() is None:
+        raise RegistryHistoryError("verification_time_must_include_timezone")
+    audit_time = audit_time.astimezone(timezone.utc)
 
     with tempfile.TemporaryDirectory(prefix="rfc3161-verify-") as temp_dir:
-        data_path = Path(temp_dir) / "timestamped-data.bin"
+        work = Path(temp_dir)
+        data_path = work / "timestamped-data.bin"
         data_path.write_bytes(data)
         try:
             details = subprocess.run(
@@ -190,7 +222,6 @@ def verify_rfc3161_timestamp(
             if stripped.lower().startswith("time stamp:"):
                 value = stripped.split(":", 1)[1].strip()
                 try:
-                    from email.utils import parsedate_to_datetime
                     generation_time = parsedate_to_datetime(value)
                 except (TypeError, ValueError, OverflowError) as exc:
                     raise RegistryHistoryError("rfc3161_generation_time_invalid") from exc
@@ -198,8 +229,8 @@ def verify_rfc3161_timestamp(
         if generation_time is None or generation_time.tzinfo is None:
             raise RegistryHistoryError("rfc3161_generation_time_missing")
         generation_time = generation_time.astimezone(timezone.utc)
-        # OpenSSL -attime takes Unix seconds. This preliminary value is not
-        # trusted until the subsequent signature/imprint verification succeeds.
+        # This candidate time is not trusted until OpenSSL verifies the token
+        # signature and exact message imprint below.
         attime = str(int(generation_time.timestamp()))
         command = [
             "openssl", "ts", "-verify", "-in", str(timestamp_response),
@@ -217,10 +248,115 @@ def verify_rfc3161_timestamp(
         if verified.returncode != 0:
             raise RegistryHistoryError("rfc3161_signature_or_trust_verification_failed")
 
+        revocation_status = "not_checked"
+        if historical_tsa_crl_file is not None and current_tsa_crl_file is not None:
+            token_path = work / "timestamp-token.der"
+            signer_path = work / "tsa-signer.pem"
+            token_certs_path = work / "token-certificates.pem"
+            cms_content_path = work / "timestamp-content.der"
+            try:
+                extracted = subprocess.run(
+                    ["openssl", "ts", "-reply", "-in", str(timestamp_response),
+                     "-token_out", "-out", str(token_path)],
+                    check=False, capture_output=True, text=True, timeout=20,
+                )
+                if extracted.returncode != 0:
+                    raise RegistryHistoryError("rfc3161_token_extraction_failed")
+                signer = subprocess.run(
+                    ["openssl", "cms", "-verify", "-inform", "DER", "-in",
+                     str(token_path), "-noverify", "-signer", str(signer_path),
+                     "-out", str(cms_content_path)],
+                    check=False, capture_output=True, text=True, timeout=20,
+                )
+                if signer.returncode != 0 or not signer_path.is_file():
+                    raise RegistryHistoryError("rfc3161_signer_certificate_extraction_failed")
+                certs = subprocess.run(
+                    ["openssl", "pkcs7", "-inform", "DER", "-in", str(token_path),
+                     "-print_certs", "-out", str(token_certs_path)],
+                    check=False, capture_output=True, text=True, timeout=20,
+                )
+                if certs.returncode != 0:
+                    raise RegistryHistoryError("rfc3161_certificate_chain_extraction_failed")
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                raise RegistryHistoryError("rfc3161_revocation_tools_unavailable") from exc
+
+            pem_blocks = re.findall(
+                rb"-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----",
+                token_certs_path.read_bytes(),
+                flags=re.DOTALL,
+            )
+            if not pem_blocks:
+                raise RegistryHistoryError("rfc3161_embedded_signer_chain_missing")
+            chain_path = work / "untrusted-chain.pem"
+            chain_bytes = b"\n".join(pem_blocks) + b"\n"
+            if untrusted_chain_file is not None:
+                chain_bytes += untrusted_chain_file.read_bytes()
+            chain_path.write_bytes(chain_bytes)
+
+            historical_command = [
+                "openssl", "verify", "-CAfile", str(trusted_ca_file),
+                "-untrusted", str(chain_path), "-CRLfile", str(historical_tsa_crl_file),
+                "-crl_check", "-attime", attime, str(signer_path),
+            ]
+            try:
+                historical = subprocess.run(
+                    historical_command, check=False, capture_output=True,
+                    text=True, timeout=20,
+                )
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                raise RegistryHistoryError("historical_tsa_revocation_check_unavailable") from exc
+            if historical.returncode != 0:
+                raise RegistryHistoryError("historical_tsa_revocation_or_crl_verification_failed")
+
+            try:
+                crl_details = subprocess.run(
+                    ["openssl", "crl", "-in", str(current_tsa_crl_file),
+                     "-noout", "-lastupdate", "-nextupdate"],
+                    check=False, capture_output=True, text=True, timeout=20,
+                )
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                raise RegistryHistoryError("current_tsa_crl_parser_unavailable") from exc
+            if crl_details.returncode != 0:
+                raise RegistryHistoryError("current_tsa_crl_invalid")
+            crl_dates: dict[str, datetime] = {}
+            for line in crl_details.stdout.splitlines():
+                if "=" not in line:
+                    continue
+                field, value = line.split("=", 1)
+                if field in {"lastUpdate", "nextUpdate"}:
+                    try:
+                        parsed = parsedate_to_datetime(value.strip())
+                    except (TypeError, ValueError, OverflowError) as exc:
+                        raise RegistryHistoryError("current_tsa_crl_dates_invalid") from exc
+                    if parsed.tzinfo is None:
+                        raise RegistryHistoryError("current_tsa_crl_dates_invalid")
+                    crl_dates[field] = parsed.astimezone(timezone.utc)
+            if set(crl_dates) != {"lastUpdate", "nextUpdate"}:
+                raise RegistryHistoryError("current_tsa_crl_validity_window_missing")
+            if not crl_dates["lastUpdate"] <= audit_time < crl_dates["nextUpdate"]:
+                raise RegistryHistoryError("current_tsa_crl_stale_or_not_yet_valid")
+
+            current_command = [
+                "openssl", "verify", "-CAfile", str(trusted_ca_file),
+                "-untrusted", str(chain_path), "-CRLfile", str(current_tsa_crl_file),
+                "-crl_check", "-no_check_time", str(signer_path),
+            ]
+            try:
+                current = subprocess.run(
+                    current_command, check=False, capture_output=True,
+                    text=True, timeout=20,
+                )
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                raise RegistryHistoryError("current_tsa_revocation_check_unavailable") from exc
+            if current.returncode != 0:
+                raise RegistryHistoryError("current_tsa_certificate_revoked_or_crl_invalid")
+            revocation_status = "historical_and_current_crl_verified"
+
     return {
         "status": "verified",
         "gen_time": generation_time.isoformat(),
         "verification": "openssl_ts_verify_with_host_supplied_ca_at_authenticated_gen_time",
+        "tsa_revocation": revocation_status,
     }
 
 def verify_history_anchor(
@@ -231,8 +367,13 @@ def verify_history_anchor(
     timestamp_response: Path | None = None,
     timestamp_ca_file: Path | None = None,
     timestamp_untrusted_chain_file: Path | None = None,
+    historical_tsa_crl_file: Path | None = None,
+    current_tsa_crl_file: Path | None = None,
+    require_tsa_revocation: bool = False,
+    now: datetime | None = None,
 ) -> dict[str, Any]:
     """Verify a signed history checkpoint and, optionally, its RFC 3161 timestamp."""
+
     if not isinstance(anchor, dict) or set(anchor) != {
         "anchor_version", "log_id", "anchor_key_id", "anchored_at", "checkpoint", "signature"
     }:
@@ -281,6 +422,11 @@ def verify_history_anchor(
 
     if (timestamp_response is None) != (timestamp_ca_file is None):
         raise RegistryHistoryError("timestamp_response_and_ca_must_be_supplied_together")
+    if (historical_tsa_crl_file is not None or current_tsa_crl_file is not None):
+        if timestamp_response is None:
+            raise RegistryHistoryError("tsa_crls_require_timestamp_response")
+    if require_tsa_revocation and timestamp_response is None:
+        raise RegistryHistoryError("tsa_revocation_requires_trusted_timestamp")
     timestamp_report: dict[str, str] | None = None
     if timestamp_response is not None and timestamp_ca_file is not None:
         # Timestamp the Ed25519 signature itself, not only its public statement.
@@ -288,6 +434,10 @@ def verify_history_anchor(
         timestamp_report = verify_rfc3161_timestamp(
             signature, timestamp_response, timestamp_ca_file,
             timestamp_untrusted_chain_file,
+            historical_tsa_crl_file,
+            current_tsa_crl_file,
+            require_tsa_revocation,
+            now,
         )
     history_report = verify_registry_history(records, statement["checkpoint"])
     return {

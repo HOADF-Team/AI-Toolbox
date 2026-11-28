@@ -34,7 +34,10 @@ _TRUST_FIELDS = {
 }
 _OPTIONAL_TRUST_FIELDS = {
     "timestamp_untrusted_chain_file",
+    "historical_tsa_crl_file",
+    "current_tsa_crl_file",
     "require_trusted_timestamps",
+    "require_tsa_revocation",
 }
 
 
@@ -88,6 +91,17 @@ def load_trust_policy(config_path: Path) -> dict[str, Any]:
     require_timestamps = config.get("require_trusted_timestamps", True)
     if not isinstance(require_timestamps, bool):
         raise RuntimeArchiveCLIError("trust_config_invalid_timestamp_policy")
+    require_revocation = config.get("require_tsa_revocation", False)
+    if not isinstance(require_revocation, bool):
+        raise RuntimeArchiveCLIError("trust_config_invalid_tsa_revocation_policy")
+    if require_revocation and not (
+        config.get("historical_tsa_crl_file") and config.get("current_tsa_crl_file")
+    ):
+        raise RuntimeArchiveCLIError("trust_config_tsa_revocation_crls_required")
+    if (config.get("historical_tsa_crl_file") is None) != (
+        config.get("current_tsa_crl_file") is None
+    ):
+        raise RuntimeArchiveCLIError("trust_config_historical_and_current_crls_must_be_paired")
 
     base = config_path.resolve(strict=True).parent
     policy: dict[str, Any] = {
@@ -101,7 +115,14 @@ def load_trust_policy(config_path: Path) -> dict[str, Any]:
             "timestamp_ca_file",
         ),
         "require_trusted_timestamps": require_timestamps,
+        "require_tsa_revocation": require_revocation,
     }
+    for field in ("historical_tsa_crl_file", "current_tsa_crl_file"):
+        value = config.get(field)
+        if value is not None:
+            policy[field] = _validate_trust_file(
+                _resolve_path(value, base, field), field
+            )
     chain_value = config.get("timestamp_untrusted_chain_file")
     if chain_value is not None:
         policy["timestamp_untrusted_chain_file"] = _validate_trust_file(
