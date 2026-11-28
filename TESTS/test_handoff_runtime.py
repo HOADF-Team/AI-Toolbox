@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+SKILLS_REVISION = "a" * 40
 FIXTURE = ROOT / "TESTS" / "fixtures" / "inter-skill-demo"
 sys.path.insert(0, str(ROOT / "scripts"))
 from handoff_runtime import RuntimeProtocolError, build_workflow_plan, execute_with_adapter  # noqa: E402
@@ -39,7 +40,7 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
     def plan(self, approvals: dict[str, str] | None = None) -> list[dict[str, Any]]:
         return build_workflow_plan(
             self.contract, self.skill_map, self.make_root(),
-            "Review the synthetic security fixture", "scenario:demo", approvals,
+            "Review the synthetic security fixture", "scenario:demo", SKILLS_REVISION, approvals,
         )
 
     def adapter_for(self, artifacts: list[dict[str, Any]] | None = None):
@@ -55,7 +56,7 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
             result["skill_id"] = envelope["stage"]["skill_id"]
             result["provenance"] = {
                 "execution_mode": "mock",
-                "skill_manifest_ref": envelope["skill"]["manifest_path"],
+                "skill_manifest_ref": envelope["skill"]["manifest_ref"],
                 "agent": "test-adapter",
             }
             result.setdefault("actions_taken", [])
@@ -67,16 +68,21 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
         self.assertEqual([x["envelope"]["stage"]["skill_id"] for x in plan],
                          ["crypto-security", "code-audit", "python-development", "devops-vps"])
         self.assertEqual(plan[1]["envelope"]["prior_stage_output_ref"], "stage-output:crypto-security")
+        self.assertEqual(plan[0]["envelope"]["skill"]["manifest_revision"], SKILLS_REVISION)
 
     def test_unknown_skill_id_is_rejected(self) -> None:
         bad = json.loads(json.dumps(self.contract))
         bad["stages"][0]["skill_id"] = "not-a-real-skill"
         with self.assertRaisesRegex(RuntimeProtocolError, "unknown Skill ID"):
-            build_workflow_plan(bad, self.skill_map, self.make_root(), "task", "ref")
+            build_workflow_plan(bad, self.skill_map, self.make_root(), "task", "ref", SKILLS_REVISION)
+
+    def test_invalid_skill_revision_is_rejected(self) -> None:
+        with self.assertRaisesRegex(RuntimeProtocolError, "full 40-character"):
+            build_workflow_plan(self.contract, self.skill_map, self.make_root(), "task", "ref", "main")
 
     def test_missing_manifest_is_rejected(self) -> None:
         with self.assertRaisesRegex(RuntimeProtocolError, "manifest unavailable"):
-            build_workflow_plan(self.contract, self.skill_map, self.make_root([]), "task", "ref")
+            build_workflow_plan(self.contract, self.skill_map, self.make_root([]), "task", "ref", SKILLS_REVISION)
 
     def test_mock_adapter_executes_full_sequence_and_validates_handoffs(self) -> None:
         adapter, calls = self.adapter_for()
@@ -96,7 +102,7 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
     def test_required_approval_blocks_before_adapter(self) -> None:
         contract = json.loads(json.dumps(self.contract))
         contract["stages"][0]["required_approvals"] = ["remote_access"]
-        plan = build_workflow_plan(contract, self.skill_map, self.make_root(), "task", "ref")
+        plan = build_workflow_plan(contract, self.skill_map, self.make_root(), "task", "ref", SKILLS_REVISION)
         adapter, calls = self.adapter_for()
         report = execute_with_adapter(contract, plan, adapter)
         self.assertEqual(report["status"], "blocked")
@@ -118,6 +124,15 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
             return result
         report = execute_with_adapter(self.contract, self.plan(), invalid)
         self.assertIn("invalid_stage_result", report["stopped_reason"])
+
+    def test_wrong_skill_manifest_revision_is_rejected(self) -> None:
+        adapter, _ = self.adapter_for()
+        def wrong_revision(envelope: dict[str, Any]) -> dict[str, Any]:
+            result = adapter(envelope)
+            result["provenance"]["skill_manifest_ref"] = "https://github.com/HOADF-Team/Personal-AI-Library/blob/main/skills/crypto-security/SKILL.md"
+            return result
+        report = execute_with_adapter(self.contract, self.plan(), wrong_revision)
+        self.assertIn("skill_manifest_ref_mismatch", str(report["stopped_reason"]))
 
     def test_stage_output_cannot_claim_wrong_skill(self) -> None:
         adapter, _ = self.adapter_for()
