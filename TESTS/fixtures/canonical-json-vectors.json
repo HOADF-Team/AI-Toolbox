@@ -35,9 +35,9 @@
     {
       "id": "escaping-and-arrays",
       "value": {
-        "quote": "a\\\"b",
+        "quote": "a\"b",
         "slash": "a/b",
-        "newline": "line1\\nline2",
+        "newline": "line1\nline2",
         "items": [{"b": 2, "a": 1}, ["x", "y"]]
       },
       "canonical_utf8": "{\"items\":[{\"a\":1,\"b\":2},[\"x\",\"y\"]],\"newline\":\"line1\\nline2\",\"quote\":\"a\\\"b\",\"slash\":\"a/b\"}",
