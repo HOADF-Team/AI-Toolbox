@@ -8,7 +8,7 @@ Do not test untrusted software on a production machine or with real credentials.
 
 ## Inter-Skill workflow fixture
 
-The synthetic cross-Skill security scenario in [fixtures/inter-skill-demo/](fixtures/inter-skill-demo/) contains four structured handoff artifacts and a declarative workflow contract. The reusable engine validates stage order, artifact linkage, required fields, evidence, contract rules, and heuristic secret redaction.
+The synthetic cross-Skill security scenario in fixtures/inter-skill-demo/ contains four structured handoff artifacts and a declarative workflow contract. The reusable engine validates stage order, artifact linkage, required fields, evidence, contract rules, and heuristic secret redaction.
 
 Run the generic contract tests:
 
@@ -21,10 +21,18 @@ python scripts/validate_handoff_chain.py \
   --output handoff-report.json
 ```
 
-Run the additional scenario-specific security regression tests:
+Run the runtime adapter protocol tests:
+
+```bash
+python -m unittest TESTS.test_handoff_runtime -v
+```
+
+Run the scenario-specific security regression tests:
 
 ```bash
 python -m unittest TESTS.test_inter_skill_workflow -v
 ```
 
-The fixture is intentionally vulnerable and must not be executed, installed, or deployed. These tests validate JSON contract/orchestration integrity only. They do not execute Skills or an LLM, prove real agent reasoning, perform credential revocation or host isolation, establish remote VPS access, or harden production.
+The runtime tests use a deterministic mock adapter. They validate envelope creation, catalog/manifest resolution, ordered handoffs, approval gates, failure stopping, and report aggregation. They do not execute Skills or an LLM and do not establish reasoning quality.
+
+The fixture is intentionally vulnerable and must not be executed, installed, or deployed. These tests do not prove real agent reasoning, perform credential revocation or host isolation, establish remote VPS access, or harden production.
