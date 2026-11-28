@@ -129,8 +129,6 @@ def verify_runtime_archive_cryptographically(
         raise RuntimeArchiveVerificationError("invalid_tsa_revocation_policy")
     if (historical_crl is None) != (current_crl is None):
         raise RuntimeArchiveVerificationError("historical_and_current_tsa_crls_must_be_supplied_together")
-    if require_tsa_revocation and historical_crl is None:
-        raise RuntimeArchiveVerificationError("tsa_revocation_crls_required")
     if require_tsa_revocation and not require_timestamps:
         raise RuntimeArchiveVerificationError("tsa_revocation_requires_trusted_timestamp")
     use_tsa_crls = historical_crl is not None
@@ -169,10 +167,22 @@ def verify_runtime_archive_cryptographically(
     archive_policy = metadata.get("verification_policy")
     if not isinstance(archive_policy, dict):
         raise RuntimeArchiveVerificationError("archive_verification_policy_invalid")
-    if archive_policy.get("require_trusted_timestamp") is True and not require_timestamps:
-        raise RuntimeArchiveVerificationError("archive_timestamp_policy_downgrade")
-    if archive_policy.get("require_tsa_revocation") is True and not require_tsa_revocation:
-        raise RuntimeArchiveVerificationError("archive_tsa_revocation_policy_downgrade")
+    policy_version = metadata.get("verification_policy_version")
+    if policy_version is not None and (type(policy_version) is not int or policy_version != 2):
+        raise RuntimeArchiveVerificationError("unsupported_archive_verification_policy_version")
+    if policy_version == 2:
+        if archive_policy.get("require_trusted_timestamp") is not True or archive_policy.get("require_tsa_revocation") is not True:
+            raise RuntimeArchiveVerificationError("archive_version_2_policy_invalid")
+        # Host policy may strengthen, but never weaken, archive requirements.
+        require_timestamps = True
+        require_tsa_revocation = True
+    else:
+        if archive_policy.get("require_trusted_timestamp") is True and not require_timestamps:
+            raise RuntimeArchiveVerificationError("archive_timestamp_policy_downgrade")
+        if archive_policy.get("require_tsa_revocation") is True and not require_tsa_revocation:
+            raise RuntimeArchiveVerificationError("archive_tsa_revocation_policy_downgrade")
+    if require_tsa_revocation and historical_crl is None:
+        raise RuntimeArchiveVerificationError("tsa_revocation_crls_required")
 
     registry_path = _safe_file(root, "trust/registry.json")
     key_root = _safe_directory(root, "trust/keys")
