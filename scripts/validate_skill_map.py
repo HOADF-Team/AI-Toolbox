@@ -13,13 +13,23 @@ SKILL_FILE = "SKILL.md"
 
 
 def discover_skills(skills_root: Path) -> set[str]:
+    if skills_root.is_symlink():
+        raise ValueError(f"Skills directory must not be a symbolic link: {skills_root}")
     if not skills_root.is_dir():
         raise ValueError(f"Skills directory does not exist: {skills_root}")
-    return {
-        skill_file.parent.name
-        for skill_file in skills_root.glob(f"*/{SKILL_FILE}")
-        if skill_file.is_file()
-    }
+
+    discovered: set[str] = set()
+    for skill_dir in sorted(skills_root.iterdir()):
+        if skill_dir.is_symlink():
+            raise ValueError(f"Skill directory must not be a symbolic link: {skill_dir}")
+        if not skill_dir.is_dir():
+            continue
+        skill_file = skill_dir / SKILL_FILE
+        if skill_file.is_symlink():
+            raise ValueError(f"Skill manifest must not be a symbolic link: {skill_file}")
+        if skill_file.is_file():
+            discovered.add(skill_dir.name)
+    return discovered
 
 
 def mapped_skills(map_path: Path) -> list[str]:
