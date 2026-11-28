@@ -408,6 +408,64 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
         )
 
 
+
+    def _approval(self, expires_at: str = "2026-11-28T23:59:59Z") -> dict[str, Any]:
+        return {
+            "stage_id": "crypto-security",
+            "action": "remote_access",
+            "approval_id": "approval-123",
+            "scope": {"target_ref": "vps://test-host", "operation": "read-only-diagnostics", "resource": "journal/systemd"},
+            "expires_at": expires_at,
+        }
+
+    def test_expired_approval_blocks_before_adapter_invocation(self) -> None:
+        contract = json.loads(json.dumps(self.contract))
+        contract["stages"][0]["required_approvals"] = ["remote_access"]
+        approvals = {"crypto-security": {"remote_access": self._approval("2020-01-01T00:00:00Z")}}
+        plan = build_workflow_plan(contract, self.skill_map, self.make_root(), "task", "ref", SKILLS_REVISION, approvals)
+        adapter, calls = self.adapter_for()
+        report = execute_with_adapter(contract, plan, adapter, approvals)
+        self.assertEqual(calls, [])
+        self.assertEqual(report["status"], "blocked")
+
+    def test_unscoped_legacy_approval_does_not_authorize_stage(self) -> None:
+        contract = json.loads(json.dumps(self.contract))
+        contract["stages"][0]["required_approvals"] = ["remote_access"]
+        plan = build_workflow_plan(contract, self.skill_map, self.make_root(), "task", "ref", SKILLS_REVISION)
+        adapter, calls = self.adapter_for()
+        report = execute_with_adapter(contract, plan, adapter, {"remote_access": "legacy-id"})
+        self.assertEqual(calls, [])
+        self.assertEqual(report["status"], "blocked")
+
+    def test_action_target_scope_mismatch_is_rejected(self) -> None:
+        values = [dict(x) for x in self.source_artifacts]
+        approval = self._approval()
+        altered_scope = dict(approval["scope"], target_ref="vps://other-host")
+        values[0]["actions_taken"] = [{"stage_id": "crypto-security", "action": "remote_access", "approval_id": approval["approval_id"], "scope": altered_scope}]
+        approvals = {"crypto-security": {"remote_access": approval}}
+        adapter, _ = self.adapter_for(values)
+        report = execute_with_adapter(self.contract, self.plan(approvals), adapter, approvals)
+        self.assertIn("action_scope_mismatch:remote_access", report["stages"][0]["errors"])
+
+    def test_action_operation_scope_mismatch_is_rejected(self) -> None:
+        values = [dict(x) for x in self.source_artifacts]
+        approval = self._approval()
+        altered_scope = dict(approval["scope"], operation="destructive-change")
+        values[0]["actions_taken"] = [{"stage_id": "crypto-security", "action": "remote_access", "approval_id": approval["approval_id"], "scope": altered_scope}]
+        approvals = {"crypto-security": {"remote_access": approval}}
+        adapter, _ = self.adapter_for(values)
+        report = execute_with_adapter(self.contract, self.plan(approvals), adapter, approvals)
+        self.assertIn("action_scope_mismatch:remote_access", report["stages"][0]["errors"])
+
+    def test_action_with_wrong_stage_id_is_rejected(self) -> None:
+        values = [dict(x) for x in self.source_artifacts]
+        approval = self._approval()
+        values[0]["actions_taken"] = [{"stage_id": "devops-vps", "action": "remote_access", "approval_id": approval["approval_id"], "scope": approval["scope"]}]
+        approvals = {"crypto-security": {"remote_access": approval}}
+        adapter, _ = self.adapter_for(values)
+        report = execute_with_adapter(self.contract, self.plan(approvals), adapter, approvals)
+        self.assertIn("action_stage_mismatch:remote_access", report["stages"][0]["errors"])
+
     def test_symlinked_skill_manifest_is_rejected(self) -> None:
         root = self.make_root()
         manifest = root / "skills" / "crypto-security" / "SKILL.md"
