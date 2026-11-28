@@ -85,3 +85,39 @@ integrity_policy = {
 ```
 
 If `require_execution_context` is omitted or false, compatibility verification accepts the earlier statement format and does not claim replay protection. The host must persist run IDs and ensure they are never reused. This mechanism binds signatures to a host-declared run context; it is not a globally distributed nonce database and cannot stop a compromised host from deliberately reusing its own run ID.
+
+
+## RFC 3161 trusted time for artifact signatures
+
+The verifier can require an RFC 3161 timestamp response for the **raw Ed25519 signature bytes**. This is intentionally not a timestamp over the public statement or the whole JSON bundle: the timestamp message imprint must bind the exact signature value that verifies the statement.
+
+A host obtains a timestamp response through its independently selected TSA process, then retains the response and TSA CA trust bundle outside the artifact's editable storage. This repository does not contact a TSA or choose a provider.
+
+For a multi-stage workflow, the host configures one response file per stage. Paths come only from trusted runtime policy, never from artifact-controlled fields:
+
+```python
+integrity_policy = {
+    "trust_registry_path": "/host/policy/trust-registry.json",
+    "key_root": "/host/policy/public-keys",
+    "evidence_root": "/host/evidence",
+    "require_execution_context": True,
+    "run_id": host_generated_unique_run_id,
+    "max_signature_age_seconds": 300,
+    "require_trusted_timestamp": True,
+    "timestamp_responses": {
+        "crypto-security": "/host/timestamps/run-123/crypto-security.tsr",
+        "code-audit": "/host/timestamps/run-123/code-audit.tsr",
+        "python-development": "/host/timestamps/run-123/python-development.tsr",
+        "devops-vps": "/host/timestamps/run-123/devops-vps.tsr",
+    },
+    "timestamp_ca_file": "/host/policy/tsa-trust-roots.pem",
+    # Optional untrusted intermediates; never treated as a trust root:
+    "timestamp_untrusted_chain_file": "/host/policy/tsa-intermediates.pem",
+}
+```
+
+When required, every stage must have its own configured timestamp response and the runtime fails closed if one is missing or invalid. The RFC 3161 verifier checks the response's message imprint against the decoded raw signature bytes and verifies the TSA certificate chain against the host-supplied CA bundle. It rejects a generation time later than the verifier's current clock.
+
+For registry-backed keys, the runtime also requires the TSA-authenticated `genTime` to fall within the signing key's registered `not_before` / `not_after` window. Mandatory trusted-time policy therefore requires the host trust registry; a bare public-key path has no revocation or key-validity lifecycle to check. Current handoff verification continues to reject revoked or retired keys through the existing registry policy.
+
+A timestamp proves that the exact signature bytes were presented to the trusted TSA no later than its authenticated `genTime`. It does not prove that the signer’s claims are true, that the evidence is truthful, or that the TSA is honest. The TSA response and trust bundle must be preserved and authenticated independently. The local RFC 3161 end-to-end regression test uses an ephemeral local CA/TSA only; no public TSA interoperability is claimed.

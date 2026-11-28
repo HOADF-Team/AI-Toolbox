@@ -342,6 +342,84 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
             for item in report["artifacts"]
         ))
 
+    def test_required_timestamp_policy_blocks_without_stage_response(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            adapter, policy, calls = self._signed_chain_fixture(Path(temp_dir))
+            policy["require_trusted_timestamp"] = True
+            policy["timestamp_ca_file"] = str(Path(temp_dir) / "tsa-ca.pem")
+            report = execute_with_adapter(
+                self.contract, self.plan(), adapter, integrity_policy=policy
+            )
+        self.assertEqual(report["status"], "incomplete")
+        self.assertEqual(len(calls), 1)
+        self.assertIn(
+            "artifact_integrity_verification_failed",
+            report["stages"][0]["errors"],
+        )
+
+    def test_runtime_passes_per_stage_timestamp_and_checks_key_window(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            adapter, policy, calls = self._signed_chain_fixture(Path(temp_dir))
+            policy["require_trusted_timestamp"] = True
+            policy["timestamp_ca_file"] = str(Path(temp_dir) / "tsa-roots.pem")
+            policy["timestamp_responses"] = {
+                stage["id"]: str(Path(temp_dir) / f"{stage['id']}.tsr")
+                for stage in self.contract["stages"]
+            }
+            with patch(
+                "handoff_runtime.verify_integrity_bundle",
+                return_value={
+                    "status": "verified",
+                    "trusted_timestamp": {
+                        "status": "verified",
+                        "gen_time": "2026-11-28T11:00:00+00:00",
+                    },
+                },
+            ) as verifier:
+                report = execute_with_adapter(
+                    self.contract, self.plan(), adapter, integrity_policy=policy
+                )
+        self.assertEqual(report["status"], "completed")
+        self.assertEqual(len(calls), 4)
+        self.assertEqual(verifier.call_count, 4)
+        self.assertTrue(all(
+            call.kwargs["require_trusted_timestamp"] is True
+            for call in verifier.call_args_list
+        ))
+        self.assertEqual(
+            verifier.call_args_list[0].kwargs["timestamp_response"],
+            Path(policy["timestamp_responses"]["crypto-security"]),
+        )
+
+    def test_runtime_rejects_timestamp_outside_registered_key_window(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            adapter, policy, _ = self._signed_chain_fixture(Path(temp_dir))
+            policy["require_trusted_timestamp"] = True
+            policy["timestamp_ca_file"] = str(Path(temp_dir) / "tsa-roots.pem")
+            policy["timestamp_responses"] = {
+                stage["id"]: str(Path(temp_dir) / f"{stage['id']}.tsr")
+                for stage in self.contract["stages"]
+            }
+            with patch(
+                "handoff_runtime.verify_integrity_bundle",
+                return_value={
+                    "status": "verified",
+                    "trusted_timestamp": {
+                        "status": "verified",
+                        "gen_time": "2025-12-31T23:59:59+00:00",
+                    },
+                },
+            ):
+                report = execute_with_adapter(
+                    self.contract, self.plan(), adapter, integrity_policy=policy
+                )
+        self.assertEqual(report["status"], "incomplete")
+        self.assertIn(
+            "artifact_integrity_verification_failed",
+            report["stages"][0]["errors"],
+        )
+
+
     def test_tampered_signature_stops_signed_four_skill_chain(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             adapter, policy, calls = self._signed_chain_fixture(

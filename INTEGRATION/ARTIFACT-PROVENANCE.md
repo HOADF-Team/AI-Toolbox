@@ -78,6 +78,15 @@ When this policy is supplied, a missing bundle, bad signature, changed envelope,
 
 A valid signature proves that the signed bytes have not changed since signing and that the signer possessed the corresponding private key. It does **not** prove who the signer is unless the host independently trusts the public key, and it does not prove that evidence is truthful, complete, relevant, or captured from a real system. Evidence files are local inputs supplied by the host; this verifier does not fetch URLs or access remote systems. No live VPS, production system, external service, or paid provider is contacted.
 
+
+### Trusted timestamp enforcement
+
+The artifact verifier optionally accepts `timestamp_response` and `timestamp_ca_file`; when `require_trusted_timestamp=True`, both are mandatory. It decodes the bundle's Ed25519 signature and verifies the RFC 3161 message imprint against those exact raw signature bytes. It does this only after the Ed25519 signature has passed verification. The report includes the TSA-authenticated `gen_time`; the host's `issued_at`, `created_at`, and the history anchor's `anchored_at` remain self-asserted timestamps.
+
+At the runtime boundary, configure `require_trusted_timestamp=True`, a host-controlled `timestamp_responses` mapping keyed by stage ID, and `timestamp_ca_file`. Each stage needs its own retained response. The runtime does not accept a response path from the artifact. A mandatory trusted-time policy also requires the host trust registry; it rejects a missing response, failed TSA verification, future `genTime`, and a `genTime` outside the registered signing key's validity window. Existing current-use trust resolution rejects revoked and retired keys before artifact verification.
+
+The timestamp response and CA bundle are external host policy/evidence inputs and must be retained independently. The optional intermediate chain is untrusted chain material, not a root. No TSA request, provider selection, remote service, or paid call is performed by this repository. A trusted timestamp proves that the exact signature bytes existed no later than TSA-authenticated `genTime`; it does not establish evidence truthfulness, signer real-world identity, or TSA honesty. Local RFC 3161 end-to-end tests use an ephemeral local TSA and do not claim public-provider interoperability.
+
 Run the tests with:
 
 ```bash

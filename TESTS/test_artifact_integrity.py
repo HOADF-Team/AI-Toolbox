@@ -6,6 +6,8 @@ import json
 import subprocess
 import tempfile
 import unittest
+from datetime import datetime, timezone
+from unittest.mock import patch
 from pathlib import Path
 import sys
 
@@ -200,6 +202,81 @@ class ArtifactIntegrityTests(unittest.TestCase):
             IntegrityVerificationError, "value_is_not_json_data"
         ):
             canonical_json_bytes({"values": ("not", "a", "json-array")})
+
+
+    def test_required_trusted_timestamp_cannot_be_omitted(self) -> None:
+        with self.assertRaisesRegex(IntegrityVerificationError, "trusted_timestamp_required"):
+            verify_integrity_bundle(
+                self.envelope, self.bundle, self.public_key,
+                "ci-ephemeral-test-key", self.evidence_root,
+                require_trusted_timestamp=True,
+            )
+
+    def test_rfc3161_timestamp_verifies_exact_raw_ed25519_signature(self) -> None:
+        response = self.root / "artifact.tsr"
+        ca_bundle = self.root / "tsa-ca.pem"
+        response.write_bytes(b"synthetic timestamp response fixture")
+        ca_bundle.write_text("synthetic host trust bundle fixture\n", encoding="utf-8")
+        generation_time = "2026-11-28T11:00:00+00:00"
+        with patch(
+            "trust_registry_history.verify_rfc3161_timestamp",
+            return_value={
+                "status": "verified",
+                "gen_time": generation_time,
+                "verification": "openssl_ts_verify_with_host_supplied_ca",
+            },
+        ) as timestamp_verifier:
+            report = verify_integrity_bundle(
+                self.envelope, self.bundle, self.public_key,
+                "ci-ephemeral-test-key", self.evidence_root,
+                timestamp_response=response,
+                timestamp_ca_file=ca_bundle,
+                require_trusted_timestamp=True,
+                now=datetime(2026, 11, 28, 12, 0, tzinfo=timezone.utc),
+            )
+        self.assertEqual(report["trusted_timestamp"]["gen_time"], generation_time)
+        self.assertEqual(
+            timestamp_verifier.call_args.args[0],
+            base64.b64decode(self.bundle["signature"], validate=True),
+        )
+        self.assertEqual(report["status"], "verified")
+
+    def test_future_rfc3161_timestamp_is_rejected(self) -> None:
+        response = self.root / "future.tsr"
+        ca_bundle = self.root / "tsa-ca.pem"
+        response.write_bytes(b"synthetic timestamp response fixture")
+        ca_bundle.write_text("synthetic host trust bundle fixture\n", encoding="utf-8")
+        with patch(
+            "trust_registry_history.verify_rfc3161_timestamp",
+            return_value={
+                "status": "verified",
+                "gen_time": "2026-11-28T13:00:00+00:00",
+                "verification": "openssl_ts_verify_with_host_supplied_ca",
+            },
+        ):
+            with self.assertRaisesRegex(
+                IntegrityVerificationError, "trusted_timestamp_from_future"
+            ):
+                verify_integrity_bundle(
+                    self.envelope, self.bundle, self.public_key,
+                    "ci-ephemeral-test-key", self.evidence_root,
+                    timestamp_response=response,
+                    timestamp_ca_file=ca_bundle,
+                    require_trusted_timestamp=True,
+                    now=datetime(2026, 11, 28, 12, 0, tzinfo=timezone.utc),
+                )
+
+    def test_timestamp_response_and_ca_must_be_paired(self) -> None:
+        response = self.root / "unpaired.tsr"
+        response.write_bytes(b"fixture")
+        with self.assertRaisesRegex(
+            IntegrityVerificationError, "timestamp_response_and_ca_must_be_supplied_together"
+        ):
+            verify_integrity_bundle(
+                self.envelope, self.bundle, self.public_key,
+                "ci-ephemeral-test-key", self.evidence_root,
+                timestamp_response=response,
+            )
 
 
 if __name__ == "__main__":

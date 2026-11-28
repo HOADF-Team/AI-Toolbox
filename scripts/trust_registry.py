@@ -159,6 +159,7 @@ def resolve_trusted_key(
         "public_key_sha256": actual_fingerprint,
         "status": status,
         "verification_mode": verification_mode,
+        "valid_from": not_before.isoformat(),
         "valid_until": not_after.isoformat(),
         "retired_at": entry.get("retired_at"),
         "producer_id": producer_id,

@@ -135,10 +135,23 @@ def verify_integrity_bundle(
     expected_execution_context: dict[str, str] | None = None,
     max_age_seconds: int = 900,
     now: datetime | None = None,
+    timestamp_response: Path | None = None,
+    timestamp_ca_file: Path | None = None,
+    timestamp_untrusted_chain_file: Path | None = None,
+    require_trusted_timestamp: bool = False,
 ) -> dict[str, Any]:
-    """Verify payload/evidence hashes and an Ed25519 signature from a trusted key."""
+    """Verify payload/evidence hashes, Ed25519 signature, and optional RFC 3161 time proof."""
     if not isinstance(envelope, dict) or not isinstance(bundle, dict):
         raise IntegrityVerificationError("envelope_and_bundle_must_be_objects")
+    if not isinstance(require_trusted_timestamp, bool):
+        raise IntegrityVerificationError("invalid_require_trusted_timestamp_policy")
+    timestamp_paths_supplied = timestamp_response is not None or timestamp_ca_file is not None
+    if timestamp_paths_supplied and (timestamp_response is None or timestamp_ca_file is None):
+        raise IntegrityVerificationError("timestamp_response_and_ca_must_be_supplied_together")
+    if require_trusted_timestamp and not timestamp_paths_supplied:
+        raise IntegrityVerificationError("trusted_timestamp_required")
+    if timestamp_untrusted_chain_file is not None and not timestamp_paths_supplied:
+        raise IntegrityVerificationError("timestamp_chain_requires_timestamp_response")
     if not trusted_key_id or bundle.get("key_id") != trusted_key_id:
         raise IntegrityVerificationError("untrusted_signing_key_id")
     if bundle.get("algorithm") != "Ed25519":
@@ -233,6 +246,30 @@ def verify_integrity_bundle(
         if completed.returncode != 0:
             raise IntegrityVerificationError("signature_verification_failed")
 
+    timestamp_report: dict[str, str] | None = None
+    if timestamp_response is not None and timestamp_ca_file is not None:
+        try:
+            # Local import avoids a module cycle: trust_registry_history shares
+            # canonical JSON helpers from this module.
+            from trust_registry_history import verify_rfc3161_timestamp
+
+            timestamp_report = verify_rfc3161_timestamp(
+                signature,
+                timestamp_response,
+                timestamp_ca_file,
+                timestamp_untrusted_chain_file,
+            )
+        except (OSError, ValueError) as exc:
+            raise IntegrityVerificationError("trusted_timestamp_verification_failed") from exc
+        generation_time = _parse_aware_time(
+            timestamp_report.get("gen_time"), "timestamp_gen_time"
+        )
+        verification_time = now or datetime.now(timezone.utc)
+        if verification_time.tzinfo is None or verification_time.utcoffset() is None:
+            raise IntegrityVerificationError("verification_time_must_include_timezone")
+        if generation_time > verification_time:
+            raise IntegrityVerificationError("trusted_timestamp_from_future")
+
     return {
         "status": "verified",
         "algorithm": "Ed25519",
@@ -240,6 +277,7 @@ def verify_integrity_bundle(
         "envelope_sha256": envelope_digest,
         "verified_evidence": verified_evidence,
         "execution_context": execution_context,
+        "trusted_timestamp": timestamp_report,
         "replay_protection": "run_stage_bound_and_time_limited" if execution_context else "not_enabled",
         "limitations": [
             "The public key is trusted only because the host supplied it through policy.",
