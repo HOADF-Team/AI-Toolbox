@@ -196,5 +196,15 @@ class TrustRegistryTests(unittest.TestCase):
             self.resolve(verification_mode="historical")
 
 
+    def test_historical_signature_from_future_is_rejected(self) -> None:
+        with self.assertRaisesRegex(
+            TrustRegistryError, "historical_signature_from_future"
+        ):
+            self.resolve(
+                verification_mode="historical",
+                signed_at="2026-11-28T12:00:01Z",
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
