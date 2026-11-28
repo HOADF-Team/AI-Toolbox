@@ -438,32 +438,38 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
         self.assertNotEqual(report["status"], "completed")
 
     def test_action_target_scope_mismatch_is_rejected(self) -> None:
+        contract = json.loads(json.dumps(self.contract))
+        contract["stages"][0]["required_approvals"] = ["remote_access"]
         values = [dict(x) for x in self.source_artifacts]
         approval = self._approval()
         altered_scope = dict(approval["scope"], target_ref="vps://other-host")
         values[0]["actions_taken"] = [{"stage_id": "crypto-security", "action": "remote_access", "approval_id": approval["approval_id"], "scope": altered_scope}]
         approvals = {"crypto-security": {"remote_access": approval}}
         adapter, _ = self.adapter_for(values)
-        report = execute_with_adapter(self.contract, self.plan(approvals), adapter, approvals)
+        report = execute_with_adapter(contract, build_workflow_plan(contract, self.skill_map, self.make_root(), "task", "ref", SKILLS_REVISION, approvals), adapter, approvals)
         self.assertIn("action_scope_mismatch:remote_access", report["stages"][0]["errors"])
 
     def test_action_operation_scope_mismatch_is_rejected(self) -> None:
+        contract = json.loads(json.dumps(self.contract))
+        contract["stages"][0]["required_approvals"] = ["remote_access"]
         values = [dict(x) for x in self.source_artifacts]
         approval = self._approval()
         altered_scope = dict(approval["scope"], operation="destructive-change")
         values[0]["actions_taken"] = [{"stage_id": "crypto-security", "action": "remote_access", "approval_id": approval["approval_id"], "scope": altered_scope}]
         approvals = {"crypto-security": {"remote_access": approval}}
         adapter, _ = self.adapter_for(values)
-        report = execute_with_adapter(self.contract, self.plan(approvals), adapter, approvals)
+        report = execute_with_adapter(contract, build_workflow_plan(contract, self.skill_map, self.make_root(), "task", "ref", SKILLS_REVISION, approvals), adapter, approvals)
         self.assertIn("action_scope_mismatch:remote_access", report["stages"][0]["errors"])
 
     def test_action_with_wrong_stage_id_is_rejected(self) -> None:
+        contract = json.loads(json.dumps(self.contract))
+        contract["stages"][0]["required_approvals"] = ["remote_access"]
         values = [dict(x) for x in self.source_artifacts]
         approval = self._approval()
         values[0]["actions_taken"] = [{"stage_id": "devops-vps", "action": "remote_access", "approval_id": approval["approval_id"], "scope": approval["scope"]}]
         approvals = {"crypto-security": {"remote_access": approval}}
         adapter, _ = self.adapter_for(values)
-        report = execute_with_adapter(self.contract, self.plan(approvals), adapter, approvals)
+        report = execute_with_adapter(contract, build_workflow_plan(contract, self.skill_map, self.make_root(), "task", "ref", SKILLS_REVISION, approvals), adapter, approvals)
         self.assertIn("action_stage_mismatch:remote_access", report["stages"][0]["errors"])
 
     def test_symlinked_skill_manifest_is_rejected(self) -> None:
