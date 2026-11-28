@@ -9,7 +9,7 @@ The payload schema registry adds field-level contracts on top of Skill artifact 
 
 ## Supported schema subset
 
-The validator supports object, array, string, boolean, integer, number and null types; required object properties; array item schemas; and enum constraints. It rejects booleans as integers/numbers. It does not claim full JSON Schema compatibility.
+The validator supports object, array, string, boolean, integer, number and null types; required object properties; array item schemas; and enum constraints. It recursively validates schema definitions, rejects unknown keywords and invalid required flags, and rejects booleans as integers/numbers. It does not claim full JSON Schema compatibility.
 
 ## Run
 

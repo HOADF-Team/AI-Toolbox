@@ -27,6 +27,30 @@ class HandoffPayloadSchemaTests(unittest.TestCase):
     def test_schema_catalog_valid(self):
         self.assertEqual(validate_payload_schemas(self.schemas)["status"], "passed")
 
+    def test_required_flag_must_be_boolean(self):
+        bad = copy.deepcopy(self.schemas)
+        bad["artifacts"][0]["required"] = "yes"
+        self.assertIn("artifact_schema_0:required_must_be_boolean",
+                      validate_payload_schemas(bad)["errors"])
+
+    def test_nested_schema_required_field_must_be_declared(self):
+        bad = copy.deepcopy(self.schemas)
+        bad["artifacts"][2]["items"]["required"].append("missing_property")
+        self.assertTrue(any("required_property_not_declared" in error
+                            for error in validate_payload_schemas(bad)["errors"]))
+
+    def test_schema_rejects_unsupported_keywords(self):
+        bad = copy.deepcopy(self.schemas)
+        bad["artifacts"][0]["pattern"] = ".*"
+        self.assertTrue(any("unsupported_schema_keywords" in error
+                            for error in validate_payload_schemas(bad)["errors"]))
+
+    def test_schema_rejects_enum_type_mismatch(self):
+        bad = copy.deepcopy(self.schemas)
+        bad["artifacts"][0]["enum"] = [False]
+        self.assertIn("artifact_schema_0:enum_value_type_mismatch",
+                      validate_payload_schemas(bad)["errors"])
+
     def test_reference_fixture_payloads_pass(self):
         report = self.report()
         self.assertEqual(report["status"], "passed", report["errors"])
