@@ -194,6 +194,28 @@ Exit code `0` means the requested operation completed and the report was written
 - This CLI is an initial local interface. It does not yet provide automatic run-staging discovery, trust-root rotation, or a full revocation/expiry policy manager.
 
 
+## RFC 3161 TSA certificate-time validation
+
+RFC 3161 verification extracts the token's candidate `genTime`, converts it to a Unix
+timestamp, and passes it to OpenSSL `ts -verify -attime`. The time is used only as
+the certificate-chain validation instant; it is not trusted until OpenSSL verifies
+the token signature and confirms that the token's message imprint matches the exact
+archived signature bytes. A modified or forged `genTime` therefore cannot pass
+verification merely by selecting a convenient historical date.
+
+The verifier checks the TSA signer certificate chain against the independently
+provisioned host trust bundle at that historical instant. The optional untrusted
+certificate file may provide the TSA signer and intermediate certificates, but it
+cannot establish trust by itself. OpenSSL's timestamp verification also enforces
+the timestamp-signing certificate purpose/EKU requirements.
+
+**Revocation limitation:** this path does not currently consume authenticated TSA
+CRLs or OCSP responses. Historical certificate validity is not equivalent to
+proof of non-revocation. Until a separately provisioned and authenticated revocation
+policy is implemented, operators must not interpret a successful timestamp check
+as evidence that the TSA certificate was never revoked. No online revocation lookup
+is performed.
+
 ## Trust lifecycle negative-test coverage
 
 The archival verification test suite also exercises fail-closed cases with ephemeral local fixtures:
