@@ -32,7 +32,7 @@ def main() -> int:
     contract = load_object(args.contract)
     skill_map = load_object(args.skill_map)
     report = validate_skill_selection(selection, contract, skill_map)
-    rendered = json.dumps(report, ensure_ascii=False, indent=2 if args.pretty else None) + "\\n"
+    rendered = json.dumps(report, ensure_ascii=False, indent=2 if args.pretty else None) + "\n"
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(rendered, encoding="utf-8")
