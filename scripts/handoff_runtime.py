@@ -32,6 +32,29 @@ def stage_result_sha256(result: dict[str, Any]) -> str:
     content = {key: value for key, value in result.items() if key not in unsigned_fields}
     return sha256_bytes(canonical_json_bytes(content))
 
+def _resolve_skill_manifest(skills_root: Path, relative_path: Path) -> Path:
+    """Resolve a canonical Skill manifest without following links outside the checkout."""
+    try:
+        base = skills_root.resolve(strict=True)
+    except OSError as exc:
+        raise RuntimeProtocolError("trusted Skills checkout root unavailable") from exc
+    if not base.is_dir():
+        raise RuntimeProtocolError("trusted Skills checkout root is not a directory")
+    current = base
+    for part in relative_path.parts:
+        current = current / part
+        if current.is_symlink():
+            raise RuntimeProtocolError("canonical Skill manifest path contains a symlink")
+    try:
+        manifest = current.resolve(strict=True)
+        manifest.relative_to(base)
+    except (OSError, ValueError) as exc:
+        raise RuntimeProtocolError("canonical Skill manifest unavailable or escapes checkout") from exc
+    if not manifest.is_file():
+        raise RuntimeProtocolError("canonical Skill manifest is not a regular file")
+    return manifest
+
+
 
 def build_workflow_plan(
     contract: dict[str, Any],
@@ -70,9 +93,7 @@ def build_workflow_plan(
         if skill_id not in catalog_ids:
             raise RuntimeProtocolError(f"unknown Skill ID in catalog map: {skill_id!r}")
         manifest_rel = Path("skills") / skill_id / "SKILL.md"
-        manifest = skills_root / manifest_rel
-        if not manifest.is_file():
-            raise RuntimeProtocolError(f"canonical Skill manifest unavailable: {manifest_rel.as_posix()}")
+        _resolve_skill_manifest(skills_root, manifest_rel)
         requested = stage.get("required_approvals", [])
         if not isinstance(requested, list) or any(not isinstance(item, str) for item in requested):
             raise RuntimeProtocolError(f"invalid required_approvals for stage {stage_id}")

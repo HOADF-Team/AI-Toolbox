@@ -87,3 +87,6 @@ This detects post-signing changes to the stage-result object. It does not prove 
 ### Approval enforcement at execution time
 
 The reference runtime re-derives each stage's required approvals from the workflow contract passed to `execute_with_adapter`; it does not trust a plan's cached `missing_approvals` or `granted_approvals` fields. The adapter is not called until every approval required by that exact stage is present in the execution-time approval map. Action records are checked against approvals scoped to the current stage, so an approval for the same action in a different stage cannot authorize it here. The host still must authenticate the approval channel and ensure the approval is specific to the exact operation, target, and time window.
+
+
+The reference planner resolves `skills/<skill-id>/SKILL.md` beneath the supplied checkout root and rejects symlinks in any path component, missing files, non-regular files, and paths that resolve outside the checkout. The host must still provision a trusted checkout and independently ensure its Git HEAD is the exact `skills_revision` supplied to the planner; this local path check does not authenticate the checkout's commit or file contents.
