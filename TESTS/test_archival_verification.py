@@ -221,14 +221,8 @@ class ArchivalVerificationTests(unittest.TestCase):
             "retired_at": (generation_time + timedelta(days=1)).isoformat(),
         }
         self.write_registry(self.entry)
-        envelope = {
-            **self.envelope,
-            "created_at": (generation_time - timedelta(days=1)).isoformat(),
-        }
-        bundle = self.sign(envelope=envelope)
+        # Keep the exact envelope whose signature was timestamped above.
         report = self.verify(
-            envelope=envelope,
-            bundle=bundle,
             timestamp_response=response,
             timestamp_ca_file=ca_bundle,
             timestamp_untrusted_chain_file=tsa_cert,
