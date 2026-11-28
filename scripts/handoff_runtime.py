@@ -18,6 +18,7 @@ from handoff_contract import validate_handoff_chain
 class RuntimeProtocolError(ValueError):
     """Raised when a workflow cannot be safely prepared or continued."""
 
+
 def stage_result_sha256(result: dict[str, Any]) -> str:
     """Digest the complete stage result, excluding its own envelope and signature fields."""
     if not isinstance(result, dict):
@@ -25,7 +26,6 @@ def stage_result_sha256(result: dict[str, Any]) -> str:
     unsigned_fields = {"artifact_provenance", "integrity_bundle", "integrity_verification"}
     content = {key: value for key, value in result.items() if key not in unsigned_fields}
     return sha256_bytes(canonical_json_bytes(content))
-
 
 
 def build_workflow_plan(
