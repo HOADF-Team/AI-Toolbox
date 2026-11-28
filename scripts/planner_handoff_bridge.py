@@ -150,3 +150,44 @@ def prepare_workflow_from_planner(
             "Preparation does not grant approvals; missing approvals remain visible in each stage envelope.",
         ],
     }
+
+
+
+def prepare_workflow_from_catalog(
+    planner_result: dict[str, Any],
+    task: str,
+    task_ref: str,
+    catalog_path: Path,
+    skill_map: dict[str, Any],
+    skills_root: Path,
+    skills_revision: str,
+    approvals: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """Load a validated workflow catalog and prepare only an eligible exact match."""
+    from workflow_catalog import WorkflowCatalogError, load_workflow_catalog
+
+    try:
+        catalog = load_workflow_catalog(catalog_path, skill_map)
+    except WorkflowCatalogError as exc:
+        raise PlannerHandoffBridgeError(f"workflow catalog rejected: {exc}") from exc
+
+    eligible = [
+        workflow for workflow in catalog["workflows"]
+        if workflow.get("catalog_status") in {"reviewed", "reviewed_fixture"}
+    ]
+    result = prepare_workflow_from_planner(
+        planner_result=planner_result,
+        task=task,
+        task_ref=task_ref,
+        reviewed_contracts=eligible,
+        skill_map=skill_map,
+        skills_root=skills_root,
+        skills_revision=skills_revision,
+        approvals=approvals,
+    )
+    result["workflow_catalog"] = {
+        "catalog_id": catalog["catalog_id"],
+        "catalog_status": "validated",
+        "eligible_template_count": len(eligible),
+    }
+    return result
