@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-SECRET_KEY = re.compile(r"(secret|token|password|private.?key|api.?key|credential.?value)", re.I)
+SECRET_KEY = re.compile(r"(?:^|_)(?:api_?key|access_?token|secret|password|private_?key|credential_?value)(?:$|_)", re.I)
 SECRET_VALUE = re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----|(?:gh[pousr]_|sk_live_|AKIA)[A-Za-z0-9_\-]{12,}")
 REDACTED = {"[redacted]", "redacted", "***", "****", "<redacted>"}
 
