@@ -6,6 +6,7 @@ LLM, loads Skill instructions as executable code, installs tools, or performs si
 from __future__ import annotations
 
 from collections.abc import Callable
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,41 @@ from handoff_contract import validate_handoff_chain
 
 class RuntimeProtocolError(ValueError):
     """Raised when a workflow cannot be safely prepared or continued."""
+
+
+def _approval_errors(stage_id: str, action_id: str, approval: Any) -> list[str]:
+    """Validate a host-supplied, stage/action-scoped approval record."""
+    errors: list[str] = []
+    if not isinstance(approval, dict):
+        return ["approval_record_not_object"]
+    if approval.get("stage_id") != stage_id:
+        errors.append("approval_stage_mismatch")
+    if approval.get("action") != action_id:
+        errors.append("approval_action_mismatch")
+    approval_id = approval.get("approval_id")
+    if not isinstance(approval_id, str) or not approval_id.strip():
+        errors.append("approval_id_missing")
+    scope = approval.get("scope")
+    if not isinstance(scope, dict) or not isinstance(scope.get("target_ref"), str) or not scope["target_ref"].strip() or not isinstance(scope.get("operation"), str) or not scope["operation"].strip():
+        errors.append("approval_scope_invalid")
+    else:
+        try:
+            canonical_json_bytes(scope)
+        except (IntegrityVerificationError, TypeError, ValueError):
+            errors.append("approval_scope_not_canonical_json")
+    expires_at = approval.get("expires_at")
+    if not isinstance(expires_at, str) or not expires_at.strip():
+        errors.append("approval_expiry_missing")
+    else:
+        try:
+            expiry = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+            if expiry.tzinfo is None or expiry.utcoffset() is None:
+                raise ValueError("timezone required")
+            if expiry <= datetime.now(timezone.utc):
+                errors.append("approval_expired")
+        except ValueError:
+            errors.append("approval_expiry_invalid")
+    return errors
 
 
 def stage_result_sha256(result: dict[str, Any]) -> str:
@@ -63,7 +99,7 @@ def build_workflow_plan(
     task: str,
     task_ref: str,
     skills_revision: str,
-    approvals: dict[str, str] | None = None,
+    approvals: dict[str, dict[str, dict[str, Any]]] | None = None,
 ) -> list[dict[str, Any]]:
     """Resolve explicit contract stages to canonical Skill manifests and envelopes."""
     if not task.strip() or not task_ref.strip():
@@ -115,9 +151,17 @@ def build_workflow_plan(
             "permissions": {
                 "requested_approvals": requested,
                 "granted_approvals": {
-                    action: granted[action] for action in requested if action in granted
+                    action: granted.get(stage_id, {}).get(action)
+                    for action in requested
+                    if isinstance(granted.get(stage_id, {}), dict)
+                    and action in granted.get(stage_id, {})
                 },
-                "missing_approvals": [action for action in requested if action not in granted],
+                "missing_approvals": [
+                    action for action in requested
+                    if not isinstance(granted.get(stage_id, {}), dict)
+                    or action not in granted.get(stage_id, {})
+                    or _approval_errors(stage_id, action, granted[stage_id][action])
+                ],
             },
             "prior_stage_output_ref": None if index == 0 else previous_ref,
         }
@@ -127,7 +171,7 @@ def build_workflow_plan(
 
 
 def _validate_stage_result(
-    result: dict[str, Any], envelope: dict[str, Any], approvals: dict[str, str],
+    result: dict[str, Any], envelope: dict[str, Any], approvals: dict[str, dict[str, Any]],
     integrity_policy: dict[str, Any] | None = None,
 ) -> list[str]:
     errors: list[str] = []
@@ -239,11 +283,20 @@ def _validate_stage_result(
                 errors.append("invalid_action_record")
                 continue
             action_id = action.get("action")
-            approval_id = action.get("approval_id")
             if not isinstance(action_id, str) or not action_id:
                 errors.append("invalid_action_id")
-            elif not isinstance(approval_id, str) or approvals.get(action_id) != approval_id:
+                continue
+            approval = approvals.get(action_id)
+            approval_errors = _approval_errors(stage["id"], action_id, approval)
+            if approval_errors:
+                errors.extend(f"action_approval:{action_id}:{error}" for error in approval_errors)
+                continue
+            if action.get("stage_id") != stage["id"]:
+                errors.append(f"action_stage_mismatch:{action_id}")
+            if action.get("approval_id") != approval.get("approval_id"):
                 errors.append(f"action_without_matching_approval:{action_id}")
+            if action.get("scope") != approval.get("scope"):
+                errors.append(f"action_scope_mismatch:{action_id}")
     return errors
 
 
@@ -270,9 +323,10 @@ def execute_with_adapter(
     elif not isinstance(plan, list) or len(plan) != len(contract_stages):
         stopped_reason = "invalid_plan_stage_count"
     elif not isinstance(granted, dict) or any(
-        not isinstance(action, str) or not action
-        or not isinstance(approval_id, str) or not approval_id.strip()
-        for action, approval_id in granted.items()
+        not isinstance(stage_id, str) or not stage_id
+        or not isinstance(stage_records, dict)
+        or any(not isinstance(action, str) or not action for action in stage_records)
+        for stage_id, stage_records in granted.items()
     ):
         stopped_reason = "invalid_approval_map"
 
@@ -302,14 +356,22 @@ def execute_with_adapter(
         ) or len(set(requested)) != len(requested):
             stopped_reason = f"invalid_required_approvals:{stage_id}"
             break
+        supplied_approvals = granted.get(stage_id, {})
+        if not isinstance(supplied_approvals, dict):
+            stopped_reason = f"invalid_approval_records:{stage_id}"
+            break
         stage_approvals = {
-            action: granted[action]
+            action: supplied_approvals[action]
             for action in requested
-            if action in granted
+            if action in supplied_approvals
+        }
+        invalid_approvals = {
+            action: _approval_errors(stage_id, action, stage_approvals[action])
+            for action in stage_approvals
         }
         missing = [
             action for action in requested
-            if action not in stage_approvals
+            if action not in stage_approvals or invalid_approvals.get(action)
         ]
         envelope = dict(supplied_envelope)
         envelope["stage"] = dict(supplied_stage)
@@ -364,7 +426,7 @@ def execute_with_adapter(
         "evidence_classification": {
             "adapter_output": "agent-reported; not independently authenticated",
             "runtime_validation": "deterministic structural and contract checks",
-            "real_world_actions": "only those explicitly recorded with matching approval IDs; not independently verified",
+            "real_world_actions": "only those explicitly recorded with matching stage/action/scope approvals; not independently verified",
         },
         "limitations": [
             "The adapter is an integration boundary, not an LLM or Skill execution engine.",
