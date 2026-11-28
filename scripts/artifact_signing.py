@@ -116,7 +116,10 @@ def create_integrity_bundle(
             raise IntegrityVerificationError("execution_context_values_must_be_nonempty_strings")
         if not isinstance(ttl_seconds, int) or isinstance(ttl_seconds, bool) or not 1 <= ttl_seconds <= 86400:
             raise IntegrityVerificationError("invalid_execution_context_ttl_seconds")
-        issued = datetime.now(timezone.utc)
+        # RFC 3161 genTime is commonly second-precision; normalize the
+        # signed lower bound so a same-clock TSA token is not rejected for
+        # fractional-second truncation.
+        issued = datetime.now(timezone.utc).replace(microsecond=0)
         expires = issued + timedelta(seconds=ttl_seconds)
         statement["statement_version"] = "1.1"
         statement["execution_context"] = {
