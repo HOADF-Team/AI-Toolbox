@@ -48,3 +48,7 @@ jobs:
           python scripts/validate_skill_interfaces.py --pretty
           python scripts/validate_workflow_compatibility.py --pretty
           python -m unittest TESTS.test_skill_interfaces -v
+      - name: Validate field-level handoff payload schemas
+        run: |
+          python scripts/validate_handoff_payloads.py --pretty
+          python -m unittest TESTS.test_handoff_payload_schemas -v
