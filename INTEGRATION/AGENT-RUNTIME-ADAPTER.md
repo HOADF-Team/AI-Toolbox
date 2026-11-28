@@ -25,7 +25,7 @@ The reference implementation in scripts/handoff_runtime.py does not call an LLM,
 
 The envelope contains workflow/task identity, stage and Skill IDs, canonical manifest path, prior output reference, required outputs, constraints, and requested/granted/missing approvals.
 
-A stage result contains stage and Skill IDs, status (completed/blocked/failed), input_ref, non-empty output_ref, domain fields required by the workflow contract, a non-empty evidence array with location and observation, provenance.execution_mode, provenance.skill_manifest_ref, provenance.agent, and actions_taken. The manifest ref must exactly match the pinned commit and path in the stage envelope. Use an empty actions_taken array when no action was performed.
+A stage result contains stage and Skill IDs, status (completed/blocked/failed), input_ref, non-empty output_ref, domain fields required by the workflow contract, a non-empty evidence array with location and observation, provenance.execution_mode, provenance.skill_manifest_ref, provenance.agent, a required artifact_provenance envelope, and actions_taken. The runtime validates the envelope structure and binds its producer Skill/revision, source revision, input reference, and payload stage/Skill/output reference to the current stage result. The manifest ref must exactly match the pinned commit and path in the stage envelope. Use an empty actions_taken array when no action was performed.
 
 Every action record must include action and an approval_id matching an approval granted to that exact action. Approval does not make an unsafe action automatically appropriate: host policy must still evaluate scope, reversibility, and user intent. Report recommendations separately from actions actually performed.
 
@@ -37,7 +37,7 @@ The reference engine verifies only that an action's approval ID matches the call
 
 ## Evidence, failure behavior, and limitations
 
-Evidence locations and observations are agent-reported. The adapter checks basic structure and required provenance fields; it does not authenticate evidence, attest model identity, or verify that an action occurred. Use explicit classifications in final reports: **Observed**, **Inferred**, **Recommended**, and **Not checked**.
+The artifact provenance envelope is required for every stage result. Structural validation checks its schema and binds key identifiers to the stage result; it does not authenticate producer identity, resolve the source revision, or prove evidence. Evidence locations and observations are agent-reported. The adapter checks basic structure and required provenance fields; it does not authenticate evidence, attest model identity, or verify that an action occurred. Use explicit classifications in final reports: **Observed**, **Inferred**, **Recommended**, and **Not checked**.
 
 Unknown Skill IDs, missing manifests, invalid stage results, missing evidence/provenance, mismatched references, and missing approvals must stop the chain. A failed or blocked stage must not silently pass control to a later stage. Preserve partial outputs and the stop reason; do not relabel an incomplete workflow as completed.
 
