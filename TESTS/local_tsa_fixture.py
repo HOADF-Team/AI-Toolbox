@@ -24,6 +24,7 @@ class LocalRfc3161TSA:
         self.ca_config = root / "ca.cnf"
         self.config = root / "tsa.cnf"
         self.serial = root / "tsa.srl"
+        self.ca_serial = root / "serial"
         self.database = root / "index.txt"
         self.crl_number = root / "crlnumber"
         self.new_certs = root / "newcerts"
@@ -32,7 +33,8 @@ class LocalRfc3161TSA:
 
         self.new_certs.mkdir()
         self.database.write_text("", encoding="ascii")
-        self.serial.write_text("1000\n", encoding="ascii")
+        self.ca_serial.write_text("1000\n", encoding="ascii")
+        self.serial.write_text("01\n", encoding="ascii")
         self.crl_number.write_text("1000\n", encoding="ascii")
         self._run_openssl(
             "req", "-x509", "-newkey", "rsa:2048", "-nodes",
