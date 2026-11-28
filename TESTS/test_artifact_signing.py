@@ -159,6 +159,10 @@ class ArtifactSigningTests(unittest.TestCase):
         )
         self.assertEqual(report["status"], "verified")
         self.assertEqual(report["trusted_timestamp"]["status"], "verified")
+        self.assertEqual(
+            report["trusted_timestamp"]["verification"],
+            "openssl_ts_verify_with_host_supplied_ca",
+        )
         self.assertTrue(report["trusted_timestamp"]["gen_time"].endswith("+00:00"))
 
     def test_trusted_timestamp_must_fall_inside_signed_execution_window(self) -> None:
