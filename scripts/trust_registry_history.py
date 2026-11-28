@@ -5,8 +5,12 @@ immutable storage and cannot authenticate a checkpoint kept beside the editable 
 """
 from __future__ import annotations
 
+import base64
 import re
+import subprocess
+import tempfile
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from artifact_integrity import canonical_json_bytes, sha256_bytes
@@ -99,6 +103,108 @@ def build_history_checkpoint(records: list[dict[str, Any]]) -> dict[str, Any]:
     else:
         head = GENESIS_HASH
     return {"event_count": len(records), "head_sha256": head}
+
+
+
+def build_history_anchor_statement(
+    log_id: str,
+    checkpoint: dict[str, Any],
+    anchored_at: str,
+    anchor_key_id: str,
+) -> dict[str, Any]:
+    """Build the exact statement an independent anchor signer must sign."""
+    if not isinstance(log_id, str) or not log_id.strip():
+        raise RegistryHistoryError("history_anchor_log_id_required")
+    if not isinstance(anchor_key_id, str) or not anchor_key_id.strip():
+        raise RegistryHistoryError("history_anchor_key_id_required")
+    if not isinstance(checkpoint, dict) or set(checkpoint) != {"event_count", "head_sha256"}:
+        raise RegistryHistoryError("invalid_history_anchor_checkpoint")
+    count = checkpoint.get("event_count")
+    head = checkpoint.get("head_sha256")
+    if not isinstance(count, int) or isinstance(count, bool) or count < 0:
+        raise RegistryHistoryError("invalid_history_anchor_event_count")
+    if not isinstance(head, str) or not _SHA256.fullmatch(head):
+        raise RegistryHistoryError("invalid_history_anchor_head_sha256")
+    if not isinstance(anchored_at, str) or not anchored_at.strip():
+        raise RegistryHistoryError("history_anchor_timestamp_required")
+    try:
+        parsed = datetime.fromisoformat(anchored_at.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise RegistryHistoryError("invalid_history_anchor_timestamp") from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise RegistryHistoryError("history_anchor_timestamp_must_include_timezone")
+    return {
+        "anchor_version": "1.0",
+        "log_id": log_id,
+        "anchor_key_id": anchor_key_id,
+        "anchored_at": anchored_at,
+        "checkpoint": {"event_count": count, "head_sha256": head},
+    }
+
+
+def verify_history_anchor(
+    records: list[dict[str, Any]],
+    anchor: dict[str, Any],
+    trusted_public_key: Path,
+    trusted_anchor_key_id: str,
+) -> dict[str, Any]:
+    """Verify an externally retained Ed25519 signature over a history checkpoint."""
+    if not isinstance(anchor, dict) or set(anchor) != {
+        "anchor_version", "log_id", "anchor_key_id", "anchored_at", "checkpoint", "signature"
+    }:
+        raise RegistryHistoryError("invalid_history_anchor_fields")
+    if anchor.get("anchor_version") != "1.0":
+        raise RegistryHistoryError("unsupported_history_anchor_version")
+    if not isinstance(trusted_anchor_key_id, str) or not trusted_anchor_key_id:
+        raise RegistryHistoryError("trusted_history_anchor_key_id_required")
+    if anchor.get("anchor_key_id") != trusted_anchor_key_id:
+        raise RegistryHistoryError("untrusted_history_anchor_key_id")
+    statement = build_history_anchor_statement(
+        anchor.get("log_id"),
+        anchor.get("checkpoint"),
+        anchor.get("anchored_at"),
+        anchor.get("anchor_key_id"),
+    )
+    signature_text = anchor.get("signature")
+    if not isinstance(signature_text, str) or not signature_text:
+        raise RegistryHistoryError("history_anchor_signature_required")
+    try:
+        signature = base64.b64decode(signature_text, validate=True)
+    except ValueError as exc:
+        raise RegistryHistoryError("history_anchor_signature_invalid_base64") from exc
+    if not trusted_public_key.is_file():
+        raise RegistryHistoryError("trusted_history_anchor_public_key_unavailable")
+    with tempfile.TemporaryDirectory(prefix="history-anchor-") as temp_dir:
+        statement_path = Path(temp_dir) / "anchor.json"
+        signature_path = Path(temp_dir) / "anchor.sig"
+        statement_path.write_bytes(canonical_json_bytes(statement))
+        signature_path.write_bytes(signature)
+        try:
+            completed = subprocess.run(
+                ["openssl", "pkeyutl", "-verify", "-pubin", "-inkey",
+                 str(trusted_public_key), "-rawin", "-in", str(statement_path),
+                 "-sigfile", str(signature_path)],
+                check=False, capture_output=True, text=True, timeout=15,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise RegistryHistoryError("history_anchor_verifier_unavailable") from exc
+        if completed.returncode != 0:
+            raise RegistryHistoryError("history_anchor_signature_verification_failed")
+    history_report = verify_registry_history(records, statement["checkpoint"])
+    return {
+        "status": "externally_anchored",
+        "log_id": statement["log_id"],
+        "anchor_key_id": trusted_anchor_key_id,
+        "anchored_at": statement["anchored_at"],
+        "checkpoint": statement["checkpoint"],
+        "history": history_report,
+        "limitations": [
+            "The anchor signature authenticates the checkpoint statement and proves key possession.",
+            "The anchored_at value is the anchor signer's assertion, not an independent RFC 3161 trusted timestamp.",
+            "The host must retain the anchor and trusted public key outside the editable history store.",
+            "A valid anchor does not prove that the underlying lifecycle events are truthful.",
+        ],
+    }
 
 
 def verify_registry_history(
