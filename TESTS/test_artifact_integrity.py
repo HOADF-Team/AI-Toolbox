@@ -144,5 +144,37 @@ class ArtifactIntegrityTests(unittest.TestCase):
             self.verify(bundle=bad)
 
 
+    def test_duplicate_envelope_evidence_references_are_rejected(self) -> None:
+        bad = {**self.envelope, "evidence": ["evidence:scan", "evidence:scan"]}
+        with self.assertRaisesRegex(
+            IntegrityVerificationError, "duplicate_envelope_evidence_reference"
+        ):
+            self.verify(envelope=bad)
+
+    def test_duplicate_manifest_evidence_references_are_rejected(self) -> None:
+        bad = copy.deepcopy(self.bundle)
+        bad["statement"]["evidence"].append(dict(bad["statement"]["evidence"][0]))
+        with self.assertRaisesRegex(
+            IntegrityVerificationError, "duplicate_evidence_manifest_reference"
+        ):
+            self.verify(bundle=bad)
+
+    def test_manifest_entry_with_unknown_field_is_rejected(self) -> None:
+        bad = copy.deepcopy(self.bundle)
+        bad["statement"]["evidence"][0]["untrusted_path_hint"] = "../outside"
+        with self.assertRaisesRegex(
+            IntegrityVerificationError, "invalid_evidence_manifest_entry_fields"
+        ):
+            self.verify(bundle=bad)
+
+    def test_malformed_manifest_digest_is_rejected(self) -> None:
+        bad = copy.deepcopy(self.bundle)
+        bad["statement"]["evidence"][0]["sha256"] = "not-a-digest"
+        with self.assertRaisesRegex(
+            IntegrityVerificationError, "invalid_evidence_sha256"
+        ):
+            self.verify(bundle=bad)
+
+
 if __name__ == "__main__":
     unittest.main()
