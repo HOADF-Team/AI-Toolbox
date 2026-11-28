@@ -46,3 +46,31 @@ The current set is a practical baseline, not a complete security platform. Candi
 - Fuzzing and dynamic application security testing, scoped to disposable test environments.
 
 Do not add candidates as `tested` until pinned installation and representative functional checks have passed. Do not install or connect paid services without an explicit decision.
+
+
+## Host-runtime artifact trust and provenance
+
+The repository now also contains a host-managed Ed25519 artifact trust profile, separate from the GitHub Actions SBOM/SLSA build attestations:
+
+- [Artifact signing guide](../../INTEGRATION/ARTIFACT-SIGNING.md) — create signed provenance bundles using a host-held private key; the helper verifies that the private key matches the registered public-key fingerprint.
+- [Artifact provenance and runtime verification](../../INTEGRATION/ARTIFACT-PROVENANCE.md) — canonical envelope/evidence digests, signature verification, trust-registry policy, and historical verification.
+- [Trust registry history](../../INTEGRATION/TRUST-REGISTRY-HISTORY.md) — lifecycle event hash chain with independently retained checkpoints and historical registry snapshots.
+- [Runtime adapter contract](../../INTEGRATION/AGENT-RUNTIME-ADAPTER.md) — fail-closed stage handoffs and optional run/stage-bound signatures.
+
+The signed run context can bind each artifact to a unique host-generated run ID, workflow, stage, Skill and exact input reference, with a bounded validity period. The synthetic four-Skill integration test verifies each stage signature and confirms that a tampered signature stops the chain.
+
+These controls are libraries and host integration contracts, not an installed production runtime or a key-management service. The host must provide private-key custody, authenticated trust-registry distribution, unique non-reused run IDs, evidence storage, and an independently authenticated history checkpoint. Archived verification is audit-only and never authorizes a live workflow handoff. Revoked keys are rejected even for historical verification.
+
+Focused regression tests:
+
+```bash
+python -m unittest \
+  TESTS.test_artifact_signing \
+  TESTS.test_artifact_integrity \
+  TESTS.test_trust_registry \
+  TESTS.test_trust_registry_history \
+  TESTS.test_archival_verification \
+  TESTS.test_handoff_runtime -v
+```
+
+All signing and history tests use ephemeral local keys and synthetic data. They do not contact production hosts, paid providers, or external key-management services.
