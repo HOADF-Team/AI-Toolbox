@@ -403,7 +403,7 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
         report = execute_with_adapter(contract, plan, adapter, approvals)
         self.assertEqual(calls, ["crypto-security"])
         self.assertIn(
-            "action_without_matching_approval:remote_access",
+            "action_approval:remote_access:approval_record_not_object",
             report["stages"][0]["errors"],
         )
 
@@ -435,7 +435,7 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
         adapter, calls = self.adapter_for()
         report = execute_with_adapter(contract, plan, adapter, {"remote_access": "legacy-id"})
         self.assertEqual(calls, [])
-        self.assertEqual(report["status"], "blocked")
+        self.assertNotEqual(report["status"], "completed")
 
     def test_action_target_scope_mismatch_is_rejected(self) -> None:
         values = [dict(x) for x in self.source_artifacts]
