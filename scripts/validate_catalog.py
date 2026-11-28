@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from pathlib import Path
 
@@ -19,8 +20,34 @@ VERIFICATION_FIELDS = {
 }
 
 
+def is_safe_repository_path(root: Path, path: Path) -> bool:
+    """Return whether a path stays inside root without traversing symlinks."""
+    root = root.resolve()
+    candidate = Path(os.path.abspath(path))
+    try:
+        relative = candidate.relative_to(root)
+    except ValueError:
+        return False
+
+    current = root
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            return False
+
+    try:
+        candidate.resolve(strict=False).relative_to(root)
+    except ValueError:
+        return False
+    return True
+
+
 def validate(root: Path, catalog_path: Path) -> list[str]:
+    root = root.resolve()
+    catalog_path = catalog_path if catalog_path.is_absolute() else root / catalog_path
     errors: list[str] = []
+    if not is_safe_repository_path(root, catalog_path):
+        return [f"Catalog path must stay inside the repository and must not traverse symlinks: {catalog_path}"]
     try:
         catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -97,7 +124,11 @@ def validate(root: Path, catalog_path: Path) -> list[str]:
                 errors.append(f"{prefix}.record must be a safe repository-relative path.")
             else:
                 record_path = root / relative
-                if not record_path.is_file():
+                if not is_safe_repository_path(root, record_path):
+                    errors.append(
+                        f"{prefix}.record must stay inside the repository and must not traverse symlinks."
+                    )
+                elif not record_path.is_file():
                     errors.append(f"{prefix}.record does not exist: {record}")
                 else:
                     try:
