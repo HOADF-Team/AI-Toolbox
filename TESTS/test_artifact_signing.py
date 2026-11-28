@@ -4,6 +4,7 @@ import os
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import sys
@@ -136,6 +137,43 @@ class ArtifactSigningTests(unittest.TestCase):
             expected_execution_context=context, max_age_seconds=300,
         )
         self.assertEqual(report["replay_protection"], "run_stage_bound_and_time_limited")
+
+    def test_trusted_timestamp_must_fall_inside_signed_execution_window(self) -> None:
+        context = {
+            "run_id": "run-timestamp-window",
+            "workflow_id": "workflow-a",
+            "stage_id": "stage-a",
+            "skill_id": "skill-a",
+            "input_ref": "input-a",
+        }
+        bundle = self.sign(execution_context=context, ttl_seconds=300)
+        issued = datetime.fromisoformat(
+            bundle["statement"]["execution_context"]["issued_at"].replace("Z", "+00:00")
+        )
+        response = self.root / "artifact.tsr"
+        ca_bundle = self.root / "tsa-ca.pem"
+        response.write_bytes(b"synthetic timestamp response")
+        ca_bundle.write_text("synthetic TSA trust fixture\n", encoding="utf-8")
+        with patch(
+            "trust_registry_history.verify_rfc3161_timestamp",
+            return_value={
+                "status": "verified",
+                "gen_time": (issued - timedelta(seconds=1)).isoformat(),
+                "verification": "openssl_ts_verify_with_host_supplied_ca",
+            },
+        ):
+            with self.assertRaisesRegex(
+                IntegrityVerificationError, "trusted_timestamp_outside_execution_context_window"
+            ):
+                verify_integrity_bundle(
+                    self.envelope, bundle, self.public_key, "test-signing-key",
+                    self.evidence_root,
+                    expected_execution_context=context,
+                    timestamp_response=response,
+                    timestamp_ca_file=ca_bundle,
+                    require_trusted_timestamp=True,
+                    now=issued + timedelta(seconds=10),
+                )
 
     def test_signature_replay_in_another_run_is_rejected(self) -> None:
         context = {
