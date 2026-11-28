@@ -1,22 +1,27 @@
 from __future__ import annotations
 
+import base64
 import json
 import os
 import subprocess
 import tempfile
 import unittest
+from datetime import datetime, timedelta
 from unittest.mock import patch
 from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(ROOT / "TESTS"))
+from local_tsa_fixture import issue_local_rfc3161_timestamp  # noqa: E402
 from archival_verification import verify_archived_bundle  # noqa: E402
 from artifact_integrity import IntegrityVerificationError  # noqa: E402
 from artifact_signing import create_integrity_bundle  # noqa: E402
 from trust_registry import public_key_fingerprint  # noqa: E402
 from trust_registry_history import (  # noqa: E402
     build_history_checkpoint, build_history_record, registry_snapshot_sha256,
+    verify_rfc3161_timestamp,
 )
 
 
@@ -196,6 +201,40 @@ class ArchivalVerificationTests(unittest.TestCase):
                 timestamp_ca_file=ca_bundle,
                 require_trusted_timestamp=True,
             )
+        self.assertEqual(report["status"], "archived_verified")
+        self.assertEqual(report["trusted_timestamp"]["gen_time"], timestamp["gen_time"])
+
+    def test_archival_verifier_accepts_real_local_rfc3161_timestamp(self) -> None:
+        bundle = self.sign()
+        signature = base64.b64decode(bundle["signature"], validate=True)
+        response, ca_bundle, tsa_cert = issue_local_rfc3161_timestamp(
+            signature, self.root / "archive-local-tsa"
+        )
+        timestamp = verify_rfc3161_timestamp(signature, response, ca_bundle, tsa_cert)
+        generation_time = datetime.fromisoformat(
+            timestamp["gen_time"].replace("Z", "+00:00")
+        )
+        self.entry = {
+            **self.entry,
+            "not_before": (generation_time - timedelta(days=2)).isoformat(),
+            "not_after": (generation_time + timedelta(days=2)).isoformat(),
+            "retired_at": (generation_time + timedelta(days=1)).isoformat(),
+        }
+        self.write_registry(self.entry)
+        envelope = {
+            **self.envelope,
+            "created_at": (generation_time - timedelta(days=1)).isoformat(),
+        }
+        bundle = self.sign(envelope=envelope)
+        report = self.verify(
+            envelope=envelope,
+            bundle=bundle,
+            timestamp_response=response,
+            timestamp_ca_file=ca_bundle,
+            timestamp_untrusted_chain_file=tsa_cert,
+            require_trusted_timestamp=True,
+            now=generation_time + timedelta(seconds=30),
+        )
         self.assertEqual(report["status"], "archived_verified")
         self.assertEqual(report["trusted_timestamp"]["gen_time"], timestamp["gen_time"])
 
