@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import os
 import subprocess
@@ -205,7 +206,7 @@ class ArchivalVerificationTests(unittest.TestCase):
 
     def test_archival_verifier_accepts_real_local_rfc3161_timestamp(self) -> None:
         bundle = self.sign()
-        signature = __import__("base64").b64decode(bundle["signature"], validate=True)
+        signature = base64.b64decode(bundle["signature"], validate=True)
         response, ca_bundle, tsa_cert = issue_local_rfc3161_timestamp(
             signature, self.root / "archive-local-tsa"
         )
