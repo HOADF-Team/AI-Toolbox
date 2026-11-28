@@ -199,7 +199,7 @@ class RuntimeArchiveCryptographicVerificationTests(unittest.TestCase):
             entry["size"] = len(data)
             entry["sha256"] = hashlib.sha256(data).hexdigest()
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
-            with self.assertRaisesRegex(RuntimeArchiveError, "archive_file_digest_mismatch"):
+            with self.assertRaisesRegex(RuntimeArchiveVerificationError, "archive_run_not_completed"):
                 verify_runtime_archive_cryptographically(archive, {
                     "history_anchor_public_key": anchor_key,
                     "history_anchor_key_id": "external-anchor",
