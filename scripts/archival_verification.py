@@ -73,10 +73,12 @@ def verify_archived_bundle(
             raise RegistryHistoryError("authenticated_registry_history_required")
         history_report = verify_registry_history(history_records, history_checkpoint)
         key_id = resolved["trusted_key_id"]
+        key_events = [event for event in history_report["events"] if event["key_id"] == key_id]
+        if any(event["action"] == "key_revoked" for event in key_events):
+            raise RegistryHistoryError("registry_history_key_revoked")
         lifecycle = history_report["key_lifecycle"].get(key_id)
         if lifecycle != resolved["status"]:
             raise RegistryHistoryError("registry_history_lifecycle_mismatch")
-        key_events = [event for event in history_report["events"] if event["key_id"] == key_id]
         additions = [event for event in key_events if event["action"] == "key_added"]
         if len(additions) != 1:
             raise RegistryHistoryError("registry_history_key_addition_missing_or_duplicated")
@@ -84,8 +86,6 @@ def verify_archived_bundle(
             retirements = [event for event in key_events if event["action"] == "key_retired"]
             if len(retirements) != 1 or retirements[0]["effective_at"] != resolved["retired_at"]:
                 raise RegistryHistoryError("registry_history_retirement_mismatch")
-        if any(event["action"] == "key_revoked" for event in key_events):
-            raise RegistryHistoryError("registry_history_key_revoked")
     report["status"] = "archived_verified"
     report["trust_resolution"] = resolved
     report["history_verification"] = history_report
