@@ -31,16 +31,19 @@ python scripts/validate_skill_selection.py \
   --pretty
 ```
 
-Run the runtime adapter protocol tests:
-
-```bash
-python -m unittest TESTS.test_handoff_runtime -v
-```
-
-Run the provider-neutral runtime interface tests:
+Run the provider-neutral runtime and handoff protocol tests:
 
 ```bash
 python -m unittest TESTS.test_provider_neutral_runtime -v
+python -m unittest TESTS.test_handoff_runtime -v
+python -m unittest TESTS.test_planner_handoff_bridge -v
+```
+
+Run the reusable workflow catalog validator and tests:
+
+```bash
+python scripts/validate_workflow_catalog.py --pretty
+python -m unittest TESTS.test_workflow_catalog -v
 ```
 
 Run the scenario-specific security regression tests:

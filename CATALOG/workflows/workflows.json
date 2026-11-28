@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0",
+  "catalog_id": "hoadf-reviewed-workflows",
+  "workflows": [
+    {
+      "workflow_id": "security-review-four-skill-chain",
+      "catalog_status": "reviewed_fixture",
+      "classification": "synthetic_demo",
+      "description": "Synthetic security review chain for testing cross-Skill handoffs; not an operational runbook.",
+      "root_input_ref": "scenario",
+      "stages": [
+        {
+          "id": "crypto-security",
+          "skill_id": "crypto-security",
+          "required_fields": ["risk", "decision", "incident_events", "automatic_actions"],
+          "require_evidence": true
+        },
+        {
+          "id": "code-audit",
+          "skill_id": "code-audit",
+          "required_fields": ["execution", "findings"],
+          "require_evidence": true
+        },
+        {
+          "id": "python-development",
+          "skill_id": "python-development",
+          "required_fields": ["patch_status", "patch_summary", "regression_test_plan", "fixture_dependencies_installed"],
+          "require_evidence": true
+        },
+        {
+          "id": "devops-vps",
+          "skill_id": "devops-vps",
+          "required_fields": ["systemd_findings", "hardening_proposal", "remote_access", "production_changes", "ssh_attempted"],
+          "require_evidence": true
+        }
+      ],
+      "rules": [
+        {
+          "id": "incident_recommendations_ordered",
+          "stage": "crypto-security",
+          "path": "incident_events",
+          "type": "ordered_values",
+          "item_field": "event",
+          "values": ["credential_revocation_recommended", "host_isolation_recommended"]
+        },
+        {
+          "id": "no_automatic_position_or_order_action",
+          "stage": "crypto-security",
+          "path": "automatic_actions",
+          "type": "is_empty"
+        },
+        {
+          "id": "no_fixture_execution",
+          "stage": "code-audit",
+          "path": "execution",
+          "type": "equals",
+          "value": "not_executed"
+        },
+        {
+          "id": "patch_not_applied",
+          "stage": "python-development",
+          "path": "patch_status",
+          "type": "equals",
+          "value": "proposed_not_applied"
+        },
+        {
+          "id": "fixture_dependencies_not_installed",
+          "stage": "python-development",
+          "path": "fixture_dependencies_installed",
+          "type": "equals",
+          "value": false
+        },
+        {
+          "id": "remote_access_not_checked",
+          "stage": "devops-vps",
+          "path": "remote_access",
+          "type": "equals",
+          "value": "not_checked"
+        },
+        {
+          "id": "production_changes_not_performed",
+          "stage": "devops-vps",
+          "path": "production_changes",
+          "type": "equals",
+          "value": "not_performed"
+        },
+        {
+          "id": "ssh_not_attempted",
+          "stage": "devops-vps",
+          "path": "ssh_attempted",
+          "type": "equals",
+          "value": false
+        }
+      ],
+      "constraints": [
+        "Synthetic fixture only; do not execute or deploy it.",
+        "No remote access, production changes, or financial actions are authorized."
+      ]
+    }
+  ]
+}
