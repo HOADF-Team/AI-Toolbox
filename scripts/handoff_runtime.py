@@ -68,6 +68,30 @@ def stage_result_sha256(result: dict[str, Any]) -> str:
     content = {key: value for key, value in result.items() if key not in unsigned_fields}
     return sha256_bytes(canonical_json_bytes(content))
 
+
+def _validate_timestamp_key_window(
+    timestamp_report: dict[str, Any], trust_resolution: dict[str, Any]
+) -> None:
+    """Require TSA genTime to fall inside the registry key's authorized validity window."""
+    generation_time = timestamp_report.get("gen_time")
+    if not isinstance(generation_time, str) or not generation_time:
+        raise IntegrityVerificationError("trusted_timestamp_generation_time_missing")
+    try:
+        timestamp = datetime.fromisoformat(generation_time.replace("Z", "+00:00"))
+        valid_from = datetime.fromisoformat(
+            str(trust_resolution["valid_from"]).replace("Z", "+00:00")
+        )
+        valid_until = datetime.fromisoformat(
+            str(trust_resolution["valid_until"]).replace("Z", "+00:00")
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise IntegrityVerificationError("trusted_key_validity_window_unavailable") from exc
+    if any(value.tzinfo is None or value.utcoffset() is None for value in (timestamp, valid_from, valid_until)):
+        raise IntegrityVerificationError("trusted_timestamp_or_key_window_timezone_missing")
+    if timestamp < valid_from or timestamp >= valid_until:
+        raise IntegrityVerificationError("trusted_timestamp_outside_signing_key_validity")
+
+
 def _resolve_skill_manifest(skills_root: Path, relative_path: Path) -> Path:
     """Resolve a canonical Skill manifest without following links outside the checkout."""
     try:
@@ -263,13 +287,40 @@ def _validate_stage_result(
                         "skill_id": str(stage["skill_id"]),
                         "input_ref": str(envelope["input_ref"]),
                     }
+                require_trusted_timestamp = integrity_policy.get("require_trusted_timestamp", False)
+                if not isinstance(require_trusted_timestamp, bool):
+                    raise IntegrityVerificationError("invalid_require_trusted_timestamp_policy")
+                timestamp_responses = integrity_policy.get("timestamp_responses", {})
+                if not isinstance(timestamp_responses, dict) or any(
+                    not isinstance(key, str) or not key
+                    or not isinstance(value, str) or not value
+                    for key, value in timestamp_responses.items()
+                ):
+                    raise IntegrityVerificationError("invalid_timestamp_response_map")
+                timestamp_response_path = timestamp_responses.get(str(stage["id"]))
+                if require_trusted_timestamp and timestamp_response_path is None:
+                    raise IntegrityVerificationError("stage_trusted_timestamp_required")
+                timestamp_ca_path = integrity_policy.get("timestamp_ca_file")
+                timestamp_chain_path = integrity_policy.get("timestamp_untrusted_chain_file")
+                if timestamp_response_path is not None and not isinstance(timestamp_ca_path, str):
+                    raise IntegrityVerificationError("timestamp_ca_file_required")
                 report = verify_integrity_bundle(
                     artifact_provenance, bundle,
                     trusted_public_key, trusted_key_id,
                     Path(integrity_policy["evidence_root"]),
                     expected_execution_context=expected_execution_context,
                     max_age_seconds=integrity_policy.get("max_signature_age_seconds", 900),
+                    timestamp_response=Path(timestamp_response_path) if timestamp_response_path else None,
+                    timestamp_ca_file=Path(timestamp_ca_path) if timestamp_response_path else None,
+                    timestamp_untrusted_chain_file=(
+                        Path(timestamp_chain_path)
+                        if timestamp_response_path and isinstance(timestamp_chain_path, str)
+                        else None
+                    ),
+                    require_trusted_timestamp=require_trusted_timestamp,
                 )
+                if report.get("trusted_timestamp") is not None and "valid_from" in resolved:
+                    _validate_timestamp_key_window(report["trusted_timestamp"], resolved)
                 report["trust_resolution"] = resolved
                 result["integrity_verification"] = report
             except (IntegrityVerificationError, TrustRegistryError, KeyError, TypeError, OSError):
