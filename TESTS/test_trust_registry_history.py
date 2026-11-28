@@ -114,7 +114,7 @@ class TrustRegistryHistoryTests(unittest.TestCase):
             verify_registry_history(records, build_history_checkpoint(records))
 
     def test_rotation_event_requires_replacement_and_reason(self) -> None:
-        event = self.event("evt-rotation", "key_rotated", replacement_key_id="next-key")
+        event = self.event("evt-rotation", "key_rotated", replacement_key_id="next-key", reason="planned rotation")
         record = build_history_record(event, 1)
         with self.assertRaisesRegex(
             RegistryHistoryError, "key_rotated_without_active_key"
