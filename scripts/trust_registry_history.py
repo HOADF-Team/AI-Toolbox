@@ -9,7 +9,7 @@ import re
 from datetime import datetime
 from typing import Any
 
-from artifact_integrity import IntegrityVerificationError, canonical_json_bytes, sha256_bytes
+from artifact_integrity import canonical_json_bytes, sha256_bytes
 
 GENESIS_HASH = "0" * 64
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
