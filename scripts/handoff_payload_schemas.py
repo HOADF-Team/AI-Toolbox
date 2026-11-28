@@ -100,7 +100,6 @@ def validate_stage_payloads(
     workflow: dict[str, Any], interfaces: dict[str, Any], schemas: dict[str, Any],
     artifacts: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    registry = {entry.get("artifact_type"): entry for entry in schemas.get("artifacts", []) if isinstance(entry, dict)}
     interface_map = {entry.get("skill_id"): entry for entry in interfaces.get("interfaces", []) if isinstance(entry, dict)}
     errors: list[str] = []
     checks: list[dict[str, Any]] = []
