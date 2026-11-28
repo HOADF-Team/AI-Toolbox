@@ -9,7 +9,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from artifact_provenance import validate_provenance_envelope\nfrom handoff_contract import validate_handoff_chain
+from artifact_provenance import validate_provenance_envelope
+from handoff_contract import validate_handoff_chain
 
 
 class RuntimeProtocolError(ValueError):
