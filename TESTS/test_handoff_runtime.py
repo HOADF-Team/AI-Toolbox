@@ -29,7 +29,8 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
 
     def make_root(self, skill_ids: list[str] | None = None) -> Path:
         root = Path(tempfile.mkdtemp())
-        for skill_id in skill_ids or [stage["id"] for stage in self.contract["stages"]]:
+        selected = skill_ids if skill_ids is not None else [stage["id"] for stage in self.contract["stages"]]
+        for skill_id in selected:
             path = root / "skills" / skill_id / "SKILL.md"
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(f"# {skill_id}\n", encoding="utf-8")
