@@ -133,3 +133,51 @@ Tests MUST NOT contact a public TSA, external service, exchange, VPS, production
 5. Add CLI and documentation only after the Python API and tests are stable.
 
 Do not change live runtime authorization behavior as part of this archive feature.
+
+
+## 9. Implemented milestone: archive package v1
+
+The first implementation is available in `scripts/runtime_run_archive.py`:
+
+- `create_runtime_archive(source_root, destination, metadata, files)` creates a directory archive from an explicit allowlist mapping archive-relative paths to source-relative paths. It generates `archive.json` and `MANIFEST.json`; metadata is never inferred from the host.
+- `verify_runtime_archive(archive_root)` checks the exact file set, normalized paths, symlink/non-regular-file exclusions, byte sizes and SHA-256 digests without network access.
+- `RuntimeArchiveError` exposes stable machine-readable error identifiers in its message.
+
+Example:
+
+```python
+from pathlib import Path
+from runtime_run_archive import create_runtime_archive, verify_runtime_archive
+
+metadata = {
+    "run_id": "run-001",
+    "workflow_id": "workflow-001",
+    "stage_ids": ["stage-a"],
+    "skill_ids": ["example-skill"],
+    "personal_ai_library_revision": "<40-character-commit-sha>",
+    "ai_toolbox_revision": "<40-character-commit-sha>",
+    "created_at": "2026-11-28T12:00:00Z",
+    "run_status": "incomplete",
+    "verification_policy": {
+        "require_trusted_timestamps": True,
+        "require_registry_history": True,
+    },
+}
+report = create_runtime_archive(
+    source_root=Path("./run-output"),
+    destination=Path("./run-archive"),
+    metadata=metadata,
+    files={
+        "report/runtime-report.json": "runtime-report.json",
+        "stages/000-stage-a/artifact.json": "stage-a/artifact.json",
+        "stages/000-stage-a/integrity-bundle.json": "stage-a/integrity-bundle.json",
+        "stages/000-stage-a/timestamp.tsr": "stage-a/timestamp.tsr",
+    },
+)
+assert report["status"] == "archive_integrity_verified"
+assert verify_runtime_archive(Path("./run-archive"))["status"] == "archive_integrity_verified"
+```
+
+The source map is an allowlist: no directory is recursively copied and no secret/private key is automatically collected. The caller must explicitly select only public trust material and evidence required by policy. The archive destination must not already exist.
+
+**Important v1 boundary:** the implemented verifier currently authenticates only the package's internal file set and SHA-256 consistency. The manifest is not signed and does not authenticate itself. The implementation does not yet invoke `verify_archived_bundle`, validate RFC 3161 responses, authenticate trust-registry history, or validate the complete handoff chain. Do not describe a v1 pass as cryptographic proof of a runtime run. Those checks remain the next implementation milestone.
