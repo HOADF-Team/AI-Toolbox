@@ -4,6 +4,7 @@ import json
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 from typing import Any
 
@@ -187,6 +188,61 @@ class RuntimeAdapterProtocolTests(unittest.TestCase):
         }
         report = execute_with_adapter(self.contract, self.plan(), adapter, integrity_policy=policy)
         self.assertIn("missing_integrity_bundle", report["stages"][0]["errors"])
+
+
+    def test_runtime_binds_signature_to_current_run_and_stage(self) -> None:
+        adapter, _ = self.adapter_for()
+
+        def signed_result(envelope: dict[str, Any]) -> dict[str, Any]:
+            result = adapter(envelope)
+            result["integrity_bundle"] = {"key_id": "test-key"}
+            return result
+
+        policy = {
+            "trusted_public_key": "/tmp/mock-public-key.pem",
+            "trusted_key_id": "test-key",
+            "evidence_root": "/tmp/mock-evidence",
+            "require_execution_context": True,
+            "run_id": "runtime-run-001",
+            "max_signature_age_seconds": 600,
+        }
+        with patch(
+            "handoff_runtime.verify_integrity_bundle",
+            return_value={"status": "verified"},
+        ) as verifier:
+            report = execute_with_adapter(
+                self.contract, self.plan(), signed_result, integrity_policy=policy
+            )
+        self.assertEqual(report["status"], "completed")
+        self.assertEqual(
+            verifier.call_args.kwargs["expected_execution_context"],
+            {
+                "run_id": "runtime-run-001",
+                "workflow_id": self.contract["workflow_id"],
+                "stage_id": "crypto-security",
+                "skill_id": "crypto-security",
+                "input_ref": "scenario:demo",
+            },
+        )
+
+    def test_runtime_requires_run_id_when_replay_protection_enabled(self) -> None:
+        adapter, _ = self.adapter_for()
+
+        def signed_result(envelope: dict[str, Any]) -> dict[str, Any]:
+            result = adapter(envelope)
+            result["integrity_bundle"] = {"key_id": "test-key"}
+            return result
+
+        policy = {
+            "trusted_public_key": "/tmp/mock-public-key.pem",
+            "trusted_key_id": "test-key",
+            "evidence_root": "/tmp/mock-evidence",
+            "require_execution_context": True,
+        }
+        report = execute_with_adapter(
+            self.contract, self.plan(), signed_result, integrity_policy=policy
+        )
+        self.assertIn("artifact_integrity_verification_failed", report["stages"][0]["errors"])
 
 
 if __name__ == "__main__":
